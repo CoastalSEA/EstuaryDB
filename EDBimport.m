@@ -31,9 +31,24 @@ classdef EDBimport < muiDataSet
             obj = EDBimport;  
             [newdst,fname] = EDBimport.loadFile();
             if isempty(newdst), return; end
-            newdst = EDBimport.updateDSproperties(newdst);            
-            %assign metadata about data
-            newdst.Source{1} = fname;
+
+            promptxt = 'Provide a short description of the sources used for the data';
+            answer = inputdlg(promptxt,'EDBimport',1);
+
+            if isa(newdst,'struct')
+                dsetnames = fieldnames(newdst);
+                for j=1:length(dsetnames)
+                    dst = dsetnames{j};
+                    newdst.(dst) = EDBimport.updateDSproperties(newdst.(dst)); 
+                    newdst.(dst).Source{1} = fname;
+                    newdst.(dst).MetaData = answer{1};
+                end
+            else
+                newdst = EDBimport.updateDSproperties(newdst);            
+                %assign metadata about data
+                newdst.Source{1} = fname;
+                newdst.MetaData = answer{1};
+            end
             %setDataRecord classobj, muiCatalogue obj, dataset, classtype
             setDataSetRecord(obj,muicat,newdst,'data');           
         end 
@@ -46,12 +61,16 @@ function [newdst,fname] = loadFile()
             [~,~,ext] = fileparts(fname);
 
             if strcmp(ext,'.mat')
-                %load data from an existing Matlab table
+                %load data from an existing Matlab dstable or table
                 inp = load([path,fname]);
                 tablename = fieldnames(inp);
                 intable = inp.(tablename{1});
-                rownames = intable.Properties.RowNames;
-                newdst = dstable(intable,'RowNames',rownames);
+                if isa(intable,'table')                              
+                    rownames = intable.Properties.RowNames;
+                    newdst = dstable(intable,'RowNames',rownames);
+                else
+                    newdst = inp.(tablename{1});
+                end
             elseif strcmp(ext,'.txt')
                 %read a text file with the row names defined in the first
                 %column and the variable names defined in the first row
@@ -72,7 +91,7 @@ function [newdst,fname] = loadFile()
             aa = dst.DSproperties;               
             vardef = getDSpropsStruct(aa,2);
             vardef.Variables.QCflag = 'none';
-            vardef.Row.Format = 'eg empty:''''; char; or time: dd-MMM-yyyy HH:mm:ss.SSS';
+            vardef.Row.Format = '''';
             setDefaultDSproperties(aa,...
                         'Variables',vardef.Variables,'Row',vardef.Row);
             dst.DSproperties = setDSproperties(aa);
@@ -156,14 +175,59 @@ function [newdst,fname] = loadFile()
             datasetname = getDataSetName(obj);
             dst = obj.Data.(datasetname);
             %--------------------------------------------------------------
-            varnames = dst.VariableDescriptions;
-            idx = listdlg('PromptString','Select variable:',...
+            if strcmp(datasetname,'Images')
+                img = dst.image;
+                location = dst.RowNames;
+                idv = listdlg('PromptString','Select estuary:',...
                            'SelectionMode','single',...
-                           'ListString',varnames);
-            %extract data vectors, eg:
+                           'ListString',location);
+                imshow(img{idv});
+            else
+                varnames = dst.VariableDescriptions;
+                idv = listdlg('PromptString','Select variable:',...
+                               'SelectionMode','single',...
+                               'ListString',varnames);
+                if isempty(idv), return; end
+
+                if size(dst.DataTable{1,1},2)>1
+                    varns = varnames(~strcmp(varnames,'Image'));
+                    idx = listdlg('PromptString','Select X-variable:',...
+                               'SelectionMode','single',...
+                               'ListString',varns);
+                    if isempty(idv), return; end
+                    vectorplot(obj,ax,dst,idv,idx);
+                else
+                    scalarplot(obj,ax,dst,varnames{idv});
+                end
+            end
+        end    
+
+%%
+        function vectorplot(~,ax,dst,idv,idx)
+            %plot selected variable for all locations
+            location = dst.RowNames;
+            var = dst.(dst.VariableNames{idv});
+            Xvar = dst.(dst.VariableNames{idx});
+            hold on
+            for i=1:size(var,1)
+                pvar = var(i,:)/max(var(i,:));   
+                xvar = Xvar(i,:)/max(Xvar(i,:));
+                p1 = plot(ax,xvar,pvar,'DisplayName',location{i});
+                p1.ButtonDownFcn = {@godisplay};
+            end
+            hold off
+            xlabel(sprintf('Normalised %s',dst.VariableLabels{idx}))
+            ylabel(sprintf('Normalised %s',dst.VariableLabels{idv}))
+            title(dst.Description)
+            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
+        end
+
+%%
+        function scalarplot(~,ax,dst,idv)
+            %plot selected variable as function of location
             location = dst.RowNames;
             rn = categorical(location,location);
-            x = dst.DataTable{:,idx};
+            x = dst.DataTable{:,idv};
             if iscell(x) && ischar(x{1})                   
                 x = categorical(x,'Ordinal',true);    
                 cats = categories(x);
@@ -173,13 +237,13 @@ function [newdst,fname] = loadFile()
             end
             %bar plot of selected variable
             bar(ax,rn,x);          
-            title (varnames{idx});
+            title (dst.Description);
             if ~isempty(cats)
                 yticks(1:length(cats));
                 yticklabels(cats);
             end
-            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
-        end    
+            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot     
+        end
 
     end
 end

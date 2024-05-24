@@ -20,7 +20,8 @@ function edb_tools(mobj)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %     
-    listxt = {'Geyer-McCready plot','Convergence plot',...
+    listxt = {'Dataset table','Type plot',...
+              'Geyer-McCready plot','Convergence plot',...
                                   'Convergence analysis','User plot'};
     ok = 1;
     while ok>0
@@ -30,6 +31,10 @@ function edb_tools(mobj)
         if isempty(selection), ok = 0; continue; end
 
         switch listxt{selection}
+            case 'Dataset table'
+                get_dataTable(mobj);
+            case 'Type plot'
+                get_typePlot(mobj)
             case 'Geyer-McCready plot'
                 get_GMplot(mobj);
             case 'Convergence plot'
@@ -42,6 +47,56 @@ function edb_tools(mobj)
     end
 end
 
+%%
+function get_dataTable(mobj)
+    %generate table figure of selected data set
+    promptxt = 'Select Case to tabulate';
+    [cobj,~,datasets,idd] = selectCaseDataset(mobj,promptxt);
+    dst = cobj.Data.(datasets{idd});
+    title = sprintf('Data for %s table',datasets{idd});
+    desc = sprintf('Source:%s\nMeta-data: %s',dst.Source{1},dst.MetaData);
+    tablefigure(title,desc,dst);
+end
+
+%%
+function get_typePlot(mobj)
+    %generate a plot 
+    promptxt = 'Select Case to tabulate';
+    [cobj,~,datasets,idd] = selectCaseDataset(mobj,promptxt);
+
+    ax.Tag = 'FigButton';                                            
+    tabPlot(cobj,ax);  %generate default Qplot figure
+
+        %select variable to use for classification
+    dst = cobj.Data.(datasets{idd});
+    varnames = dst.VariableNames;
+    vardesc = dst.VariableDescriptions;
+    
+    promptxt = 'Select classification variable:';   
+    idv = listdlg('PromptString',promptxt,'ListString',vardesc,...
+                            'SelectionMode','single','ListSize',[180,300]);
+    if isempty(idv), return; end
+
+    typevar = dst.(varnames{idv});
+    types = unique(typevar);
+    if length(types)==length(typevar)
+
+    end
+
+    %adjust bar face color to class colors
+    ax = gca;
+    hb = findobj(ax.Children,'Type','bar');
+    custom_colormap = colormap(parula(length(types)));
+
+    hb.FaceColor = 'flat';
+    for k = 1:size(typevar)
+        hb.CData(k,:) = custom_colormap(types==typevar(k),:);
+    end
+    cb = colorbar;
+    cb.Ticks = (0.5:1:length(types)-0.5)/length(types);
+    cb.TickLabels = num2str(types);
+    cb.Label.String = vardesc{idv};
+end
 %%
 function get_GMplot(mobj)
     %prompt user to select variables to be used in plot and call 
@@ -96,3 +151,15 @@ function isvalid = checkdimensions(x,y)
     end
 end
 
+%%
+function [cobj,classrec,datasets,idd] = selectCaseDataset(mobj,promptxt)
+    %select case and dataset for use in plot or analysis
+    [cobj,classrec] = selectCaseObj(mobj.Cases,[],{'EDBimport'},promptxt);
+    datasets = fields(cobj.Data);
+    idd = 1;
+    if length(datasets)>1
+        idd = listdlg('PromptString','Select table:','ListString',datasets,...
+                            'SelectionMode','single','ListSize',[160,200]);
+        if isempty(idd), return; end
+    end
+end

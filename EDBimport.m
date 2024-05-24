@@ -95,6 +95,18 @@ function [newdst,fname] = loadFile()
             setDefaultDSproperties(aa,...
                         'Variables',vardef.Variables,'Row',vardef.Row);
             dst.DSproperties = setDSproperties(aa);
+
+            %add data type to format
+            varnames = dst.VariableNames;
+            for i=1:length(varnames)
+                value = dst.(varnames{i})(1);
+                if isdatetime(value) || isduration(value)
+                    dtype = value.Format;
+                else
+                    dtype = getdatatype(value);                    
+                end
+                dst.VariableQCflags{i} = dtype{1};
+            end
         end
 
     end   
@@ -183,21 +195,21 @@ function [newdst,fname] = loadFile()
                            'ListString',location);
                 imshow(img{idv});
             else
-                varnames = dst.VariableDescriptions;
+                varnames = dst.VariableNames;
+                vardesc = dst.VariableDescriptions;
                 idv = listdlg('PromptString','Select variable:',...
                                'SelectionMode','single',...
-                               'ListString',varnames);
+                               'ListString',vardesc);
                 if isempty(idv), return; end
 
                 if size(dst.DataTable{1,1},2)>1
-                    varns = varnames(~strcmp(varnames,'Image'));
                     idx = listdlg('PromptString','Select X-variable:',...
                                'SelectionMode','single',...
-                               'ListString',varns);
+                               'ListString',vardesc);
                     if isempty(idv), return; end
                     vectorplot(obj,ax,dst,idv,idx);
                 else
-                    scalarplot(obj,ax,dst,varnames{idv});
+                    scalarplot(obj,ax,dst,idv);
                 end
             end
         end    
@@ -242,7 +254,13 @@ function [newdst,fname] = loadFile()
                 yticks(1:length(cats));
                 yticklabels(cats);
             end
-            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot     
+            xlabel(dst.RowLabel)
+            ylabel(dst.VariableLabels{idv})
+            answer = questdlg('Linear or Log y-axis?','Qplot','Linear','Log','Linear');
+            if strcmp(answer,'Log')
+                ax.YScale = 'log';
+            end
+            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
         end
 
     end

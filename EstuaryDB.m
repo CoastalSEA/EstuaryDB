@@ -91,11 +91,13 @@ classdef EstuaryDB < muiModelUI
             
             %list as per muiModelUI.projectMenuOptions
             % submenu for Scenarios
-            menu.Project(2).List = {'Edit Description','Edit DS properties','Edit Data Set',...
+            menu.Project(2).List = {'Edit Description','Edit DS properties',...
+                                    'Edit Data Set','Modify Variable Type',...
                                     'Save Data Set','Delete Case','Reload Case',...
                                     'View Case Settings'};                                               
-            menu.Project(2).Callback = repmat({@obj.projectMenuOptions},[1,7]);
-            
+            menu.Project(2).Callback = repmat({@obj.projectMenuOptions},[1,8]);
+            menu.Project(2).Separator = {'off','on','off','off','off','off','on','off'}; 
+
             % submenu for 'Export/Import'                                          
             menu.Project(3).List = {'Export Case','Import Case'};
             menu.Project(3).Callback = repmat({@obj.projectMenuOptions},[1,2]);

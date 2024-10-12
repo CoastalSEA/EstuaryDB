@@ -105,9 +105,9 @@ classdef EstuaryDB < muiModelUI
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Data','Input Parameters',...
                                       'Model Constants'};                                    
-            menu.Setup(1).Callback = [{'gcbo;'},repmat({@obj.setupMenuOptions},[1,3])];
+            menu.Setup(1).Callback = [{'gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','off','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
@@ -143,6 +143,7 @@ classdef EstuaryDB < muiModelUI
             %where <tagname> is the struct fieldname for the top level tab.
             tabs.Cases  = {'   Cases  ',@obj.refresh};       
             tabs.Inputs = {'  Inputs  ',@obj.InputTabSummary};
+            tabs.Table = {'  Table  ',@obj.getTabData};
             tabs.Plot   = {'  Q-Plot  ',@obj.getTabData};
             %if subtabs are not required eg for Stats
             tabs.Stats = {'   Stats   ',@obj.setTabAction};
@@ -172,7 +173,9 @@ classdef EstuaryDB < muiModelUI
                 case 'Stats'
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
-                    tabStats(lobj,src); 
+                    tabStats(lobj,src);
+                case 'Table'
+                    tabTable(cobj,src);     
             end
         end      
 %% ------------------------------------------------------------------------

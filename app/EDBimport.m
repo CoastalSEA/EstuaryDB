@@ -195,7 +195,6 @@ function [newdst,fname] = loadFile()
                            'ListString',location);
                 imshow(img{idv});
             else
-                varnames = dst.VariableNames;
                 vardesc = dst.VariableDescriptions;
                 idv = listdlg('PromptString','Select variable:',...
                                'SelectionMode','single',...
@@ -247,6 +246,10 @@ function [newdst,fname] = loadFile()
             else
                 cats = [];
             end
+            %option to plot alphabetically or in index order
+            answer = questdlg('Sort x?','Index','Alphabetical','Unsorted','Index');
+            [rn,x] = sortXdata(rn,x,answer);
+            
             %bar plot of selected variable
             bar(ax,rn,x);          
             title (dst.Description);
@@ -262,6 +265,14 @@ function [newdst,fname] = loadFile()
             end
             ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
         end
-
+%%
+        function [rn,x]  = sortXdata(~,dst,rn,x,answer)
+            %function to sort x-axis data to required order
+            if strcmp(answer,'Index')
+                
+            elseif strcmp(answer,'Alphabetical')  
+    
+            end
+        end
     end
 end

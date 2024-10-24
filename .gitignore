@@ -2,3 +2,5 @@
 app/EstuaryDB.mlappinstall
 app/Data
 app/Working Docs
+app/*.mat
+app/.xlsx

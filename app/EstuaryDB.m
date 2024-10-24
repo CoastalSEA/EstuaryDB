@@ -103,25 +103,39 @@ classdef EstuaryDB < muiModelUI
             menu.Project(3).Callback = repmat({@obj.projectMenuOptions},[1,2]);
             
             %% Setup menu -------------------------------------------------
-            menu.Setup(1).List = {'Import Data','Input Parameters',...
+            menu.Setup(1).List = {'Import Table Data','Import Vector Data','Input Parameters',...
                                       'Model Constants'};                                    
-            menu.Setup(1).Callback = [{'gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
+            menu.Setup(1).Callback = [{'gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','off','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
-            menu.Setup(2).List = {'Load','Add','Delete'};
-            menu.Setup(2).Callback = repmat({@obj.loadMenuOptions},[1,3]);
-            
+            menu.Setup(2).List = {'Load','Add to Table','Delete from Table'};
+            menu.Setup(2).Callback = {@obj.loadTableOptions,'gcbo;','gcbo;'};
+
+            menu.Setup(3).List = {'Rows','Variables','Dataset'};
+            menu.Setup(3).Callback = repmat({@obj.loadTableOptions},[1,3]);
+
+            menu.Setup(4).List = {'Rows','Variables','Dataset'};
+            menu.Setup(4).Callback = repmat({@obj.loadTableOptions},[1,3]);
+
+            menu.Setup(5).List = {'Load','Add Vector Data','Delete Vector Data'};
+            menu.Setup(5).Callback = {@obj.loadMenuOptions,'gcbo;','gcbo;'};
+
+            menu.Setup(6).List = {'Rows','Variables','Dataset'};
+            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
+
+            menu.Setup(7).List = {'Rows','Variables','Dataset'};
+            menu.Setup(7).Callback = repmat({@obj.loadMenuOptions},[1,3]);
             %% Run menu ---------------------------------------------------
-            menu.Run(1).List = {'Run Model','Derive Output'};
+            menu.Run(1).List = {'User Tools','Derive Output'};
             menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,2]);
             
             %% Plot menu --------------------------------------------------  
-            menu.Analysis(1).List = {'Plots','Statistics','Bespoke Plots','EDB Tools'};
-            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,4]);
-            menu.Analysis(1).Separator = {'off','off','on','off'}; %separator preceeds item
+            menu.Analysis(1).List = {'Plots','Statistics','User Plots'};
+            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,3]);
+            menu.Analysis(1).Separator = {'off','off','on'}; %separator preceeds item
             
             %% Help menu --------------------------------------------------
             menu.Help.List = {'Documentation','Manual'};
@@ -204,26 +218,51 @@ classdef EstuaryDB < muiModelUI
             end
         end  
 %%
-        function loadMenuOptions(obj,src,~)
-            %callback functions to import data
-            classname = 'EDBimport';
+        function loadTableOptions(obj,src,~)
+            %callback functions to import tabular data
+            classname = 'muiTableImport';
             switch src.Text
                 case 'Load'
-                    EDBimport.loadData(obj.Cases);
-                case 'Add'
-                    useCase(obj.Cases,'single',{classname},'addData');
-                case 'Delete'
-                    useCase(obj.Cases,'single',{classname},'deleteData');
+                    muiTableImport.loadData(obj.Cases);
+                otherwise
+                    switch src.Parent.Text
+                        case 'Add'
+                            functxt = ['add',src.Text];
+                        case 'Delete'
+                            functxt = ['del',src.Text];
+                        otherwise
+                            functxt = [];
+                    end
+                    useCase(obj.Cases,'single',{classname},functxt);
             end
             DrawMap(obj);
         end   
-
+%%
+        function loadMenuOptions(obj,src,~)
+            %callback functions to import vector data
+            classname = 'EDBimport';
+            switch src.Text
+                case 'Load'
+                    EDBimport.loadData(obj.Cases,classname);
+                otherwise
+                    switch src.Parent.Text
+                        case 'Add'
+                            functxt = ['add',src.Text];
+                        case 'Delete'
+                            functxt = ['del',src.Text];
+                        otherwise
+                            functxt = [];
+                    end
+                    useCase(obj.Cases,'single',{classname},functxt);
+            end
+            DrawMap(obj);
+        end
         %% Run menu -------------------------------------------------------
         function runMenuOptions(obj,src,~)
             %callback functions to run model
             switch src.Text                   
-                case 'Run Model'
-
+                case 'User Tools'
+                    edb_user_tools(obj);  
                 case 'Derive Output'
                     obj.mUI.Manip = muiManipUI.getManipUI(obj);
             end            
@@ -236,10 +275,8 @@ classdef EstuaryDB < muiModelUI
                     obj.mUI.PlotsUI = muiPlotsUI.getPlotsUI(obj);
                 case 'Statistics'
                     obj.mUI.StatsUI = muiStatsUI.getStatsUI(obj);
-                case 'Bespoke plots'
-                    obj.mUI.ProbeUI = EDB_ProbeUI.getProbeUI(obj);                    
-                case 'EDB Tools'                            
-                    edb_tools(obj);     
+                case 'User Plots'                            
+                    edb_user_plots(obj);     
             end            
         end
 

@@ -12,7 +12,7 @@ function edb_regression_plot(obj)
 % OUTPUT
 %   
 % NOTES
-%    selectd case must have variables that use the ZM SeaZone data set
+%    selected case must have variables that use the ZM SeaZone data set
 %    conventions, with variables named:
 %    'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW','xCh'
 % SEE ALSO

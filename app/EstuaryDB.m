@@ -226,9 +226,9 @@ classdef EstuaryDB < muiModelUI
                     muiTableImport.loadData(obj.Cases);
                 otherwise
                     switch src.Parent.Text
-                        case 'Add'
+                        case 'Add to Table'
                             functxt = ['add',src.Text];
-                        case 'Delete'
+                        case 'Delete from Table'
                             functxt = ['del',src.Text];
                         otherwise
                             functxt = [];
@@ -246,9 +246,9 @@ classdef EstuaryDB < muiModelUI
                     EDBimport.loadData(obj.Cases,classname);
                 otherwise
                     switch src.Parent.Text
-                        case 'Add'
+                        case 'Add Vector Data'
                             functxt = ['add',src.Text];
-                        case 'Delete'
+                        case 'Delete Vector Data'
                             functxt = ['del',src.Text];
                         otherwise
                             functxt = [];

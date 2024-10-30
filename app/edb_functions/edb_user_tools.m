@@ -20,7 +20,7 @@ function edb_user_tools(mobj)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %     
-    listxt = {'Table figure','Convergence analysis'};
+    listxt = {'Table figure','Derived gross properties','Convergence analysis'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
@@ -31,6 +31,8 @@ function edb_user_tools(mobj)
         switch listxt{selection}
             case 'Table figure'
                 get_dataTable(mobj);
+            case 'Derived gross properties'
+                edb_derived_props(mobj)
             case 'Convergence analysis'
                 get_ConvergenceAnalysis(mobj);
         end
@@ -41,10 +43,14 @@ end
 function get_dataTable(mobj)
     %generate table figure of selected data set
     promptxt = 'Select Case to tabulate';
-    [cobj,~,datasets,idd] = selectCaseDataset(mobj,promptxt);
+    [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],...
+                                             {'muiTableImport'},promptxt);
     dst = cobj.Data.(datasets{idd});
     firstcell = dst.DataTable{1,1};
-    if ~isscalar(firstcell) || (iscell(firstcell) && ~isscalar(firstcell{1}))
+    if ~isscalar(firstcell) || ...
+            (iscell(firstcell) &&...
+            ~(iscellstr(firstcell) || isstring(firstcell)) && ...
+            ~isscalar(firstcell{1}))
         %not tabular data
         warndlg('Selected dataset is not tabular')
         return; 
@@ -59,18 +65,6 @@ function get_dataTable(mobj)
                'HorizontalAlignment','center','Tag','titletxt');
 end
 
-%%
-function [cobj,classrec,datasets,idd] = selectCaseDataset(mobj,promptxt)
-    %select case and dataset for use in plot or analysis
-    [cobj,classrec] = selectCaseObj(mobj.Cases,[],{'EDBimport'},promptxt);
-    datasets = fields(cobj.Data);
-    idd = 1;
-    if length(datasets)>1
-        idd = listdlg('PromptString','Select table:','ListString',datasets,...
-                            'SelectionMode','single','ListSize',[160,200]);
-        if isempty(idd), return; end
-    end
-end
 %% additional functions here or external-----------------------------------
 
 function get_ConvergenceAnalysis(mobj)
@@ -90,3 +84,5 @@ function get_ConvergenceAnalysis(mobj)
     %setDataRecord classobj, muiCatalogue obj, dataset, classtype
     updateCase(mobj.Cases,cobj,classrec,true);
 end
+
+

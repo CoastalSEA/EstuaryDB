@@ -1,4 +1,6 @@
 classdef EDB_ProbeUI < muiDataUI
+
+   %%TAKEN FROM EF_ProbeUI AND STILL TO BE EDITED TO NEEDS OF EDB **********
 %
 %-------class help------------------------------------------------------
 % NAME
@@ -16,7 +18,7 @@ classdef EDB_ProbeUI < muiDataUI
     properties (Transient)
         %Abstract variables for muiDataUI---------------------------        
         %names of tabs providing different data accces options
-        TabOptions = {'Along Channel','Tidal Cycle','Summary Plots'}; 
+        TabOptions = {'Along Channel','Range'}; 
         %selections that force a call to setVariableLists
         updateSelections = {'Case','Dataset','Variable'};
         %Additional variables for application------------------------------
@@ -42,7 +44,7 @@ classdef EDB_ProbeUI < muiDataUI
                 warndlg('No data available to plot');
                 obj = [];
                 return;
-            elseif isfield(mobj.mUI,'ProbeUI') && isa(mobj.mUI.ProbeUI,'EF_ProbeUI')
+            elseif isfield(mobj.mUI,'ProbeUI') && isa(mobj.mUI.ProbeUI,'EDB_ProbeUI')
                 obj = mobj.mUI.ProbeUI;
                 if isempty(obj.dataUI.Figure)
                     %initialise figure 
@@ -76,8 +78,8 @@ classdef EDB_ProbeUI < muiDataUI
             switch src.Tag
                 case 'Along Channel'
                     setAC_tab(obj,src);
-                case 'Tidal Cycle'
-                    setTC_tab(obj,src);   
+                case 'Range'
+                    setRange_tab(obj,src);   
                 case 'Summary Plots'
                     setSum_tab(obj,src);
             end             
@@ -135,7 +137,7 @@ classdef EDB_ProbeUI < muiDataUI
             else
                 %some tabs use sub-selections of Cases and/or Variables
                 %however muiDataUI already checks for subselection and adjusts
-               EF_Probe.getPlot(obj,mobj);
+               EDB_Probe.getPlot(obj,mobj);
             end
         end 
     end
@@ -193,7 +195,7 @@ classdef EDB_ProbeUI < muiDataUI
         end
 
 %%
-        function setTC_tab(obj,src)
+function setRange_tab(obj,src)
             %customise the layout of the Tidal Cycle analysis tab
             %overload defaults defined in muiDataUI.defaultTabContent
             itab = strcmp(obj.Tabs2Use,src.Tag);
@@ -201,61 +203,26 @@ classdef EDB_ProbeUI < muiDataUI
             
             %Header size and text
             S.HeadPos = [0.88,0.1];    %header vertical position and height
-            txt1 = 'For a Tidal Cycle plot, select a Case, Dataset, Variable and plot Type)';
-            txt2 = 'Select the Time and Chainage to define the Tine and X variables';
-            txt3 = 'Ensure that Time and X selections are correctly matched to the dimensions of the variable';
+            txt1 = 'For a Range plot, select a Case and';
+            txt2 = '';
+            txt3 = '';
             S.HeadText = sprintf('1 %s\n2 %s\n3 %s',txt1,txt2,txt3);
             %Specification of uicontrol for each selection variable  
             %Use default lists except for:
             %Use default lists except
-            S.Type = {'X-T surf','Summary @ X','Phase','User'}; 
+            %S.Style = {'popupmenu','text','text','popupmenu'};
+            S.Type = {'Range plot','Geyer-McCready plot','User'}; 
 
             %Tab control button options
-            S.TabButText = {'Run','Clear'};         %labels for tab button definition
-            S.TabButPos = [0.1,0.03;0.3,0.03];      %default positions
+            S.TabButText = {'Select','Clear'}; %labels for tab button definition
+            S.TabButPos = [0.1,0.03;0.3,0.03]; %default positions
             
             %XYZ panel definition (if required)
-            S.XYZnset = 3;                          %minimum number of buttons to use
-            S.XYZmxvar = [3,1,1,1];                 %maximum number of dimensions per selection
-            S.XYZpanel = [0.04,0.14,0.91,0.40];     %position for XYZ button panel
-            S.XYZlabels = {'Var','Time','X'};       %button labels
-            
-            %Action button specifications - use defaults
-    
-            obj.TabContent(itab) = S;                %update object            
-        end   
-
-%%
-        function setSum_tab(obj,src)
-            %customise the layout of the Tidal Cycle analysis tab
-            %overload defaults defined in muiDataUI.defaultTabContent
-            itab = strcmp(obj.Tabs2Use,src.Tag);
-            S = obj.TabContent(itab);
-            
-            %Header size and text
-            S.HeadPos = [0.88,0.1];    %header vertical position and height
-            txt1 = 'For a Summary plot, select a Case with an Energy Dataset';
-            txt2 = 'Dataset and Variable do not need to be selected (IGNORE variable when assigning to button)';
-            txt3 = 'When assiging Case to Var button, Time and Distance ranges can be adjusted';
-            S.HeadText = sprintf('1 %s\n2 %s\n3 %s',txt1,txt2,txt3);
-            %Specification of uicontrol for each selection variable  
-            %Use default lists except for:
-            %Use default lists except
-            S.Style = {'popupmenu','text','text','popupmenu'};
-            S.Type = {'Channel Average','Channel Net','Channel Total',...
-                      'Channel Gradient','Channel Components','Flood-Ebb',...
-                      'Rates of Change','Most Probable','User'}; 
-
-            %Tab control button options
-            S.TabButText = {'New','Add','Clear'};         %labels for tab button definition
-            S.TabButPos = [0.1,0.14;0.3,0.14;0.5,0.14];   %default positions
-            
-            %XYZ panel definition (if required)
-            S.XYZnset = 1;                           %minimum number of buttons to use
-            S.XYZmxvar = [3,0,0];                    %maximum number of dimensions per selection
+            S.XYZnset = 3;                           %minimum number of buttons to use
+            S.XYZmxvar = [1,1,1];                    %maximum number of dimensions per selection
                                                      %set to 0 to ignore subselection
-            S.XYZpanel = [0.04,0.25,0.91,0.15];      %position for XYZ button panel
-            S.XYZlabels = {'Var'};                   %default button labels
+            S.XYZpanel = [0.05,0.2,0.9,0.3];    %position for XYZ button panel
+            S.XYZlabels = {'Upper','Central','Lower'};        %default button labels
 
             %Action button specifications - use defaults
 

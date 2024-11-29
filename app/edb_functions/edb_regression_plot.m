@@ -1,4 +1,4 @@
-function edb_regression_plot(obj)                       
+function edb_regression_plot(obj,datasetname)                       
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -9,6 +9,7 @@ function edb_regression_plot(obj)
 %   edb_regression_plot(obj)
 % INPUTS
 %   obj - selected case to use for plot
+%   datasetname - selected dataset name
 % OUTPUT
 %   
 % NOTES
@@ -22,16 +23,9 @@ function edb_regression_plot(obj)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %
-    dst = obj.Data.Data;    
-    rownames = dst.RowNames;
-    casedesc = dst.Description;
-    ide = listdlg("ListString",rownames,"PromptString",'Select option:',...
-                  'SelectionMode','single','ListSize',[150,200],'Name','EDBtools');
-    if isempty(ide), return; end
-    d = getDSTable(dst,'RowNames',rownames(ide));
-    
+    d = obj.Data.(datasetname);    
+    casedesc = d.Description;
     h_pan = panelFigure('Convergence plots',casedesc);    
-
     lab.x = 'Distance from mouth (km)';
     %lab.leg = {'Low water','Mean tide','High water'};
     lab.leg = {'LW','MT','HW'};
@@ -39,24 +33,28 @@ function edb_regression_plot(obj)
     
     ax1 = subplot(2,2,2,'Parent',h_pan);
     lab.y = 'Width (m)';
-    res = getsubplot(ax1,d.xCh,[d.wLW;d.wMT;d.wHW],lab,res);
+    res = getsubplot(ax1,d.xCh,[d.wLW,d.wMT,d.wHW],lab,res);
     %title(ax1,casedesc);
     
     ax2 = subplot(2,2,3,'Parent',h_pan);
     lab.y = 'Cross-section area (m^2)';
-    res = getsubplot(ax2,d.xCh,[d.aLW;d.aMT;d.aHW],lab,res);
+    res = getsubplot(ax2,d.xCh,[d.aLW,d.aMT,d.aHW],lab,res);
     
     ax3 = subplot(2,2,4,'Parent',h_pan);
     lab.y = 'Hydraulic depth (m)';
-    res = getsubplot(ax3,d.xCh,[d.hLW;d.hMT;d.hHW],lab,res);
-    
-    ax4 = subplot(2,2,1,'Parent',h_pan);
-    ax4.Position = [0.05,0.5,0.45,0.45];
-    estmap =  obj.Data.Images.DataTable{ide,1};
-    image(ax4,estmap{1})
-    axis equal
-    axis off
-    set(ax4,'XTickLabel','','YTickLabel','')
+    res = getsubplot(ax3,d.xCh,[d.hLW,d.hMT,d.hHW],lab,res);
+       
+    if any(contains(fieldnames(obj.Data),'image','IgnoreCase',true))
+        dsetnames = fieldnames(obj.Data);
+        idn = contains(dsetnames,'image','IgnoreCase',true);
+        ax4 = subplot(2,2,1,'Parent',h_pan);
+        ax4.Position = [0.05,0.5,0.45,0.45];
+        estmap =  obj.Data.(dsetnames{idn}).DataTable{1,1};
+        image(ax4,estmap{1})
+        axis equal
+        axis off
+        set(ax4,'XTickLabel','','YTickLabel','')
+    end
     
     %add a summary line to res to ease creation of consolidated data set
     res = [res;{res{1,1}/1000,res{2,2},res{2,3},res{2,4},res{5,2},...
@@ -73,17 +71,16 @@ function res = getsubplot(ax,x,y,labels,res)
     markers = {':k','-.k','--k'};
     maxy = max(max(y))*1.1;
     hold on
-    for i=1:size(y,1)
-        plot(ax,x/1000,y(i,:));
+    for i=1:size(y,2)
+        plot(ax,x/1000,y(:,i));
         ylim([0,maxy]);
-        %[a,b,Rsq,ex,ey,~] = modelRegression(x,y(:,i),'Exponential');
-        [a,b,Rsq,ex,ey,~] = regression_model(x,y(i,:),'Exponential');
+        [a,b,Rsq,ex,ey,~] = regression_model(x,y(:,i),'Exponential');
         hp = plot(ax,ex/1000,ey,markers{i});
         set(get(get(hp,'Annotation'),'LegendInformation'),...
                     'IconDisplayStyle','off'); % Exclude line from legend
         labels.leg{i} = sprintf('%s: a=%-3.2e, b=%-3.2e, R^2=%-3.2g',...
                                                 labels.leg{i},a,1/b,Rsq); 
-        res = [res;{x(end)-x(1),y(i,1),a,1/b,Rsq,mean(y(i,:)),std(y(i,:))}];                                 
+        res = [res;{x(end)-x(1),y(1,i),a,1/b,Rsq,mean(y(:,i)),std(y(:,i))}];                                 
     end
     hold off
     xlabel(labels.x);

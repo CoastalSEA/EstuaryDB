@@ -26,6 +26,8 @@ function output = edb_zm_data_format(funcall,varargin) % <<Edit to identify data
         %inherits from muiDataSet. The function getPlot is called from the
         %Abstract method tabPlot. The class definition can use tabDefaultPlot
         %define plot function in the class file, or call getPlot
+        case 'getFormat'
+            output = getFormat(varargin{:});
         case 'getData'
           output = getData(varargin{:});
         case 'dataQC'
@@ -35,47 +37,42 @@ function output = edb_zm_data_format(funcall,varargin) % <<Edit to identify data
             output = getPlot(varargin{:});
     end
 end
+%
+%%
+%--------------------------------------------------------------------------
+% getFormat
+%--------------------------------------------------------------------------
+function obj = getFormat(obj,formatfile)
+    %return the file import format settings
+    obj.DataFormats = {'muiUserData',formatfile,'data'};
+    obj.idFormat = 1;
+    obj.FileSpec = {'on','*.txt; *.csv; *.xlsx;*.xls;'};
+end
 %%
 %--------------------------------------------------------------------------
 % getData
 %--------------------------------------------------------------------------
-function dst = getData(obj,filename,dst) %#ok<INUSD>
-    %datable is the DataTable already loaded (if any)
-    %set metadata
-    dsp = setDSproperties;
+function newdst = getData(obj,filename) %#ok<INUSD>
     %read and load a data set from a file
+    dsp = setDSproperties;                  %set metadata
+    %load table and clean data to required format
     itable = readtable(filename);
-    itable = cleandata(itable,filename); 
-%     iname = itable.Properties.RowNames;
+    itable = cleandata(itable,filename);
     idx = 1:height(itable);
     dst = dstable(itable,'RowNames',idx,'DSproperties',dsp);
-%     if isempty(dst)
-%         dst = dstable(itable,'RowNames',iname,'DSproperties',dsp);
-%     else
-%         itable.Properties.VariableNames = {dsp.Variables.Name};
-%         if any(~ismatch(dst.VariableNames,itable.Properties.VariableNames))
-%             warndlg(sprintf('File %s not added',filename))
-%             return;
-%         end
-%         %[dst.DataTable,itable] = checkdims(dst.DataTable,itable);
-%         %load the results into a dstable
-%         %dst = dstable(itable,'RowNames',iname,'DSproperties',dsp);
-%         %dst= [dst;idst];
-%     end
-    %dst.Dimensions.X = 1:size(dst.DataTable{1,1},2);
+    dst.Description = itable.Properties.Description;
+    newdst.ZMdata = dst;                    %ZMdata is the dataset name for this format
 end
 %%
 %--------------------------------------------------------------------------
-% dataDSproperties
+% setDSproperties
 %--------------------------------------------------------------------------
 function dsp = setDSproperties()
-    %define the variables in the dataset
-    %define the metadata properties for the demo data set
+    %define the variables and metadata properties for the dataset
     dsp = struct('Variables',[],'Row',[],'Dimensions',[]);  
     %define each variable to be included in the data table and any
     %information about the dimensions. dstable Row and Dimensions can
     %accept most data types but the values in each vector must be unique
-
     %struct entries are cell arrays and can be column or row vectors
     dsp.Variables = struct(...                      
         'Name',{'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW','xCh'},...
@@ -102,32 +99,16 @@ function dsp = setDSproperties()
         'Label',{''},...
         'Format',{''});   
 end
-%%
-%--------------------------------------------------------------------------
-% dataQC
-%--------------------------------------------------------------------------
-function output = dataQC(obj)                        % <<Add any quality control to be applied (optional)
-    %quality control a dataset
-    % datasetname = getDataSetName(obj); %prompts user to select dataset if more than one
-    % dst = obj.Data.(datasetname);      %selected dstable
-    warndlg('No quality control defined for this format');
-    output = [];    %if no QC implemented in dataQC
-end
-%%
-%--------------------------------------------------------------------------
-% getPlot
-%--------------------------------------------------------------------------
-function ok = getPlot(obj,src)                       % <<Add code for bespoke Q-Plot is required (optional)
-    %generate a plot on the src graphical object handle    
-    ok = 0;  %ok=0 if no plot implemented in getPlot
-    %return some other value if a plot is implemented here
-end
+
 %%
 function datable = cleandata(datable,fname)
+    %ZM data has no header and the following variables (columns)
+    %
     %correct issues in data and re-order variables
-%     if datable{1,8}>datable{end,8}
-%         datable = varfun(@flipud,datable);
-%     end  
+    if datable{1,8}>datable{end,8}
+        datable = varfun(@flipud,datable);
+    end  
+    
 %     datable = varfun(@transpose,datable);
     [~,location,~] = fileparts(fname);    
     %datable.Properties.RowNames = {location};
@@ -140,44 +121,59 @@ function datable = cleandata(datable,fname)
     datable = movevars(datable,9,'After',7);        %move mtl values after lw values
     for i=1:3
         %find data with zero depth but a defined width and set to 0.5
-        idx = datable{1,i}==0 & datable{1,i+3}>0;
-        datable{1,i}(idx) = 0.5;
-        datable{1,i+6}(idx) = 0.5*datable{1,i+3}(idx);
+        idx = datable{:,i}==0 & datable{:,i+3}>0;
+        datable{idx,i} = 0.5;
+        datable{idx,i+6} = 0.5*datable{idx,i+3};
     end
     %check that distance starts at zero
-    if datable{1,10}(1)>0
-        datable{1,10} = datable{1,10}-datable{1,10}(1);
+    if datable{1,10}>0
+        datable{:,10} = datable{:,10}-datable{1,10};
     end    
 end
 
 %%
-function [datable,itable] = checkdims(datable,itable)
-    %check that the variables in the two tables are the same size and if
-    %not pad the short table
-    if size(datable{1,1},2)==size(itable{1,1},2), return; end %matches
-    
-    ndat = size(datable{1,1},2);
-    nita = size(itable{1,1},2);
-    nrec = nita-ndat;
-    danames = datable.Properties.VariableNames;
-    darows = datable.Properties.RowNames;
-    itnames = itable.Properties.VariableNames;
-    itrows = itable.Properties.RowNames;
+%--------------------------------------------------------------------------
+% getPlot
+%--------------------------------------------------------------------------
+function ok = getPlot(obj,src,dsetname)                    
+    %generate a plot on the src graphical object handle  
+    ok = [];
+    tabcb  = @(src,evdat)tabPlot(obj,src);
+    ax = tabfigureplot(obj,src,tabcb,false);
+    %get data and variable id - select lw value and plot lw,mt,hw
+    varoffset = [1,4,7];
+    [dst,idv,props] = selectVariable(obj,dsetname,varoffset);        %dataset specific
+    if isempty(idv), return; end
+    %create props to define labels for each variable to be plotted
+    props = repmat(props,3,1);
+    idv = varoffset(idv);
+    props(2).desc = dst.VariableDescriptions{idv+1};
+    props(3).desc = dst.VariableDescriptions{idv+2}; 
+    idv = idv:idv+2;
+    %test for a vector data set
+    if isvector(dst.(dst.VariableNames{idv(1)}))
+        idx = find(strcmp(dst.VariableNames,'xCh')); %index of distance from mouth
+        pmax = EDBimport.vectorplot(ax,dst,props,idv,idx);
 
-    if nita>ndat           %if table has longer records, pad datable
-        nrow = height(datable);
-        addrec = NaN(nrow,nrec);
-        myfun = @(X) horzcat(X,addrec);
-        datable = varfun(myfun,datable);    
-        datable.Properties.VariableNames = danames;
-        datable.Properties.RowNames = darows;
-    else                   %datable has longer records, pad itable
-        addrec = NaN(1,-nrec);
-        myfun = @(X) [X,addrec]; 
-        itable = varfun(myfun,itable);
-        itable.Properties.VariableNames = itnames;
-        itable.Properties.RowNames = itrows;
+        %add text box with min max range of variable and length
+        boxtxt = sprintf('Length: %.0f m\nMax at LW: %.1e, MT: %.1e, HW: %.1e',pmax.x,pmax.var{:});
+        ydist = ax.YLim(1);
+        text(0.1,ydist+0.06,boxtxt) 
+        ok = 1;
+    else
+        ok = 0;  %no plot implemented in getPlot
     end
 end
 
+%%
+%--------------------------------------------------------------------------
+% dataQC
+%--------------------------------------------------------------------------
+function output = dataQC(ob1j) %#ok<INUSD> 
+    %quality control a dataset
+    % datasetname = getDataSetName(obj); %prompts user to select dataset if more than one
+    % dst = obj.Data.(datasetname);      %selected dstable
+    warndlg('No quality control defined for this format');
+    output = [];    %if no QC implemented in dataQC
+end
 

@@ -1,7 +1,30 @@
 function geyer_mccready_plot(x,y,tabledata,inp)
-    %generate figure the matches Figure 6 in Geyer W R and MacCready P, 
-    %2014, The Estuarine Circulation. Annual Review of Fluid Mechanics, 
-    %46 (1), 175-197
+%
+%-------function help------------------------------------------------------
+% NAME
+%   geyer_mccready_plot.m
+% PURPOSE
+%   create at 
+% USAGE
+%   geyer_mccready_plots(dst)
+% INPUTS
+%   
+% OUTPUT
+%   
+% NOTES
+%   generate figure the matches Figure 6 in Geyer W R and MacCready P, 
+%   2014, The Estuarine Circulation. Annual Review of Fluid Mechanics, 
+%   46 (1), 175-197
+% SEE ALSO
+%   EstuaryDB, called from edb_user_tools
+%
+% Author: Ian Townend
+% CoastalSEA (c) May 2024
+%--------------------------------------------------------------------------
+%     
+
+
+
     
     %get Frf and M parameters
     [x,y,inp] = getPlotVariables(x,y,tabledata,inp);
@@ -142,12 +165,12 @@ function ax = getGMfig(hf)
     ax = axes('Parent',hf);
     M = linspace(0.1,2,100);
     Frf = (M.^2/sqrt(alpha)).^3; %Eqn.22 as corrected by Maitane
-    Fr0 = (M.^2/.2).^3;        %the additional diagonals are not defined
-    id0 = Fr0>=Frf_strat_limit;%in paper. Offets obtained by changing denominator
-    Fr1 = (M.^2/5).^3;         %to give lines that are in approx right position
+    Fr0 = (M.^2/.2).^3;          %the additional diagonals are not defined
+    id0 = Fr0>=Frf_strat_limit;  %in paper. Offets obtained by changing denominator
+    Fr1 = (M.^2/5).^3;           %to give lines that are in approx right position
     id1 = Fr1<=Frf_salt_limit;
     Fr2 = (M.^2/20).^3;        
-    plot(ax,M,Frf,'-r','HandleVisibility','off')                           %plot main diagnal based on Eq.22
+    plot(ax,M,Frf,'-r','HandleVisibility','off')                           %plot main diagonal based on Eq.22
     ax.YScale = 'log';
     ax.XScale = 'log';
 %     ax.YLim = [1e-4,1.0];

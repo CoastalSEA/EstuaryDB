@@ -103,7 +103,7 @@ classdef EstuaryDB < muiModelUI
             menu.Project(3).Callback = repmat({@obj.projectMenuOptions},[1,2]);
             
             %% Setup menu -------------------------------------------------
-            menu.Setup(1).List = {'Import Table Data','Import Vector Data','Input Parameters',...
+            menu.Setup(1).List = {'Import Table Data','Import Spatial Data','Input Parameters',...
                                       'Model Constants'};                                    
             menu.Setup(1).Callback = [{'gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
@@ -120,18 +120,14 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(4).List = {'Rows','Variables','Dataset'};
             menu.Setup(4).Callback = repmat({@obj.loadTableOptions},[1,3]);
 
-            menu.Setup(5).List = {'Load','Add Vector Data','Delete Vector Data'};
-            menu.Setup(5).Callback = {@obj.loadMenuOptions,'gcbo;','gcbo;'};
-
-            menu.Setup(6).List = {'Rows','Variables','Dataset'};
-            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
-
-            menu.Setup(7).List = {'Rows','Variables','Dataset'};
-            menu.Setup(7).Callback = repmat({@obj.loadMenuOptions},[1,3]);
-            %% Run menu ---------------------------------------------------
-            menu.Run(1).List = {'User Tools','Derive Output'};
-            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,2]);
+            menu.Setup(5).List = {'Load or Add dataset','Delete dataset'};
+            menu.Setup(5).Callback = repmat({@obj.loadMenuOptions},[1,2]);
             
+            %% Run menu ---------------------------------------------------
+            menu.Run(1).List = {'Models','Derive Output','User Tools'};
+            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,3]);
+            menu.Run(1).Separator = {'off','off','on'}; %separator preceeds item
+
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics','User Plots'};
             menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,3]);
@@ -154,8 +150,9 @@ classdef EstuaryDB < muiModelUI
             %    tabs.<tagname> = {<tab label>,<callback function>};
             %format for subtabs: 
             %    subtabs.<tagname>(i,:) = {<subtab label>,<callback function>};
-            %where <tagname> is the struct fieldname for the top level tab.
-            tabs.Cases  = {'   Cases  ',@obj.refresh};       
+            %where <tagname> is the struct fieldname for the top level tab. 
+            tabs.Data  = {'   Data  ',@obj.refresh};        
+            tabs.Models = {'  Models  ',@obj.refresh};           
             tabs.Inputs = {'  Inputs  ',@obj.InputTabSummary};
             tabs.Table = {'  Table  ',@obj.getTabData};
             tabs.Plot   = {'  Q-Plot  ',@obj.getTabData};
@@ -242,18 +239,10 @@ classdef EstuaryDB < muiModelUI
             %callback functions to import vector data
             classname = 'EDBimport';
             switch src.Text
-                case 'Load'
+                case 'Load or Add dataset'
                     EDBimport.loadData(obj.Cases,classname);
-                otherwise
-                    switch src.Parent.Text
-                        case 'Add Vector Data'
-                            functxt = ['add',src.Text];
-                        case 'Delete Vector Data'
-                            functxt = ['del',src.Text];
-                        otherwise
-                            functxt = [];
-                    end
-                    useCase(obj.Cases,'single',{classname},functxt);
+                case 'Delete dataset'
+                    useCase(obj.Cases,'single',{classname},'delDataset');  
             end
             DrawMap(obj);
         end
@@ -261,10 +250,12 @@ classdef EstuaryDB < muiModelUI
         function runMenuOptions(obj,src,~)
             %callback functions to run model
             switch src.Text                   
-                case 'User Tools'
-                    edb_user_tools(obj);  
+                case 'Models'
+                    obj.mUI.ProbeUI = EDB_ProbeUI.getProbeUI(obj);
                 case 'Derive Output'
-                    obj.mUI.Manip = muiManipUI.getManipUI(obj);
+                    obj.mUI.ManipUI = muiManipUI.getManipUI(obj);
+                case 'User Tools'
+                    edb_user_tools(obj);     
             end            
         end               
             
@@ -316,10 +307,75 @@ classdef EstuaryDB < muiModelUI
 %% ------------------------------------------------------------------------
 % Overload muiModelUI.MapTable to customise Tab display of records (if required)
 %--------------------------------------------------------------------------     
-%         function MapTable(obj,ht)
-%             %create tables for Record display tabs - called by DrawMap
-%             % ht - tab handle
-%         end
+        function MapTable(obj,ht)
+            %create tables for Data and Model tabs - called by DrawMap
+            % load case descriptions
+            muicat = obj.Cases;
+            caserec = find(tabSubset(obj,ht.Tag));
+            caseid = muicat.Catalogue.CaseID(caserec);
+            casedesc = muicat.Catalogue.CaseDescription(caserec);
+            caseclass = muicat.Catalogue.CaseClass(caserec);
+
+            cdata = {'0','Type','Description of individual cases',''};
+            irec = 1;
+            for i=1:length(caseid)
+                case_id = num2str(caseid(i));
+                if ~isfield(muicat.DataSets,caseclass{i}) || ...
+                                  isempty(muicat.DataSets.(caseclass{i}))
+                    type = 'New';
+                else
+                    type = caseclass{i};
+                    if contains(type,'CT_')
+                        type = split(type,'_');
+                        type = type{2};
+                    elseif strcmpi(type(1:2),'ct')
+                        type = type(3:end);
+                    end
+                end
+                %
+                dst = getDataset(muicat,caserec(i),1);
+                if isempty(dst), continue; end
+%                 %range = getVarAttRange(dst,1,'Time');
+%                 range = dst.RowRange;                
+%                 qualcl = '';
+                reclen = num2str(height(dst.DataTable));
+%                 if ~isempty(dst.RowRange)                    
+%                     stdate = char(range{1},'dd-MMM-yyyy'); %control ouput format
+%                     endate = char(range{2},'dd-MMM-yyyy');                    
+%                     if ~isempty(dst.VariableQCflags)
+%                         qualcl = dst.VariableQCflags{1};
+%                     end
+%                     cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen...
+%                                                      };
+%                 else
+%                     cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen...
+%                                                           };             
+%                 end
+
+                cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen}; 
+                irec = irec+1;
+            end
+            
+            if strcmp(ht.Tag,'Models')
+                headers = {'ID','Model Type','Model Description','Nrec'...
+                };
+            else
+                headers = {'ID','Data Type','Data Description','Nrec'...
+                };
+            end
+            
+            % draw table of case descriptions
+            tc=uitable('Parent',ht,'Units','normalized',...
+                'CellSelectionCallback',@obj.caseCallback,...
+                'Tag','cstab');
+            tc.ColumnName = headers;
+            tc.RowName = {};
+            tc.Data = cdata;
+            tc.ColumnWidth = {25 100 200 50};
+            tc.RowStriping = 'on';
+            tc.Position(3:4)=[0.935 0.8];    %may need to use tc.Extent?
+            tc.Position(2)=0.9-tc.Position(4);
+        end   
     end    
 end    
     

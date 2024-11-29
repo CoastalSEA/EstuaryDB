@@ -1,4 +1,4 @@
-function cnvdst = edb_regression_analysis(obj)                       
+function cnvdst = edb_regression_analysis(dst)                       
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -6,9 +6,9 @@ function cnvdst = edb_regression_analysis(obj)
 % PURPOSE
 %   user functions to do additional analysis on data loaded in EstuaryDB
 % USAGE
-%   edb_regression_analysis(obj)
+%   edb_regression_analysis(dst)
 % INPUTS
-%   obj - selected case to use for plot
+%   dst - selected dataset to use for analysis
 % OUTPUT
 %   cnvdst - table of convergence properties for estuary data set
 % NOTES
@@ -16,26 +16,25 @@ function cnvdst = edb_regression_analysis(obj)
 %    conventions, with variables named:
 %    'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW','xCh'
 % SEE ALSO
-%   EstuaryDB
+%   EstuaryDB, called from edb_user_tools
 %
 % Author: Ian Townend
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
-%
-    dst = obj.Data.Data;    
-    rownames = dst.RowNames;
-
-    var = {'wLW','wMT','wHW';'aLW','aMT','aHW';'hLW','hMT','hHW'};
-    nrec = length(rownames);
+% 
+    var = {'wLW','wMT','wHW';'aLW','aMT','aHW';'hLW','hMT','hHW'};    
+	nrec = length(dst);
     a = zeros(nrec,3,3); L = a; Rsq = a; emean = a; estd = a; Vo = a; Le = a; 
-    
-    for i=1:nrec
-        d = getDSTable(dst,'RowNames',rownames(i));
-        x = d.xCh;      
+    rownames{nrec,1} = [];
+    for i=1:nrec        
+        d = dst(i);
+        x = d.xCh;  
+        rownames{i} = d.Description;
         for j=1:3
             for k=1:3
                 y = d.(var{j,k});
                 [a(i,j,k),b,Rsq(i,j,k),~,~,~] = regression_model(x,y,'Exponential');
+                if isinf(Rsq(i,j,k)), Rsq(i,j,k) = 0; end
                 L(i,j,k) = 1/b;
                 Vo(i,j,k) = y(1);
                 Le(i,j,k) = x(find(y>0,1,'last'))-x(1);
@@ -48,9 +47,8 @@ function cnvdst = edb_regression_analysis(obj)
     dsp = getDSproperties;
     cnvdst = dstable(a,L,Rsq,Le,Vo,emean,estd,'RowNames',rownames,...
                                                     'DSproperties',dsp);
-    cnvdst.Dimensions.Var = {'Width','Area','Depth'};
-    cnvdst.Dimensions.WL = {'LW','MT','HW'};
-    cnvdst.Description = dst.Description;
+    cnvdst.Dimensions.Var = ["Width","Area","Depth"];
+    cnvdst.Dimensions.WL = ["LW","MT","HW"];
 end
 
 %%

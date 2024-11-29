@@ -1,4 +1,6 @@
 classdef EDB_Probe < muiPlots
+
+    %%TAKEN FROM EF_Probe AND STILL TO BE EDITED TO NEEDS OF EDB **********
 %
 %-------class help---------------------------------------------------------
 % NAME
@@ -45,18 +47,18 @@ classdef EDB_Probe < muiPlots
             %types of plot avaiable based on number of dimensions
             obj.Plot.FigNum = [];
             obj.Plot.CurrentFig = [];  
-            obj.Plot.Order = EF_Probe.setVarOrder;
+            obj.Plot.Order = EDB_Probe.setVarOrder;
         end      
     end
 %%    
     methods (Static)
         function getPlot(gobj,mobj)
             %get existing instance or create new class instance
-            if isfield(mobj.mUI,'Probe') && isa(mobj.mUI.Probe,'EF_Probe') 
+            if isfield(mobj.mUI,'Probe') && isa(mobj.mUI.Probe,'EDB_Probe') 
                 obj = mobj.mUI.Probe;    %get existing instance          
                 clearPreviousPlotData(obj);
             else
-                obj = EF_Probe;                   %create new instance
+                obj = EDB_Probe;                   %create new instance
             end
 
             obj.UIsel = gobj.UIselection;
@@ -915,7 +917,7 @@ classdef EDB_Probe < muiPlots
     end
 %%
 %--------------------------------------------------------------------------
-% Static EF_Probe functions
+% Static EDB_Probe functions
 %--------------------------------------------------------------------------
     methods(Static, Access=protected)
         function varorder = setVarOrder()

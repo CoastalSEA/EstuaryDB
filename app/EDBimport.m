@@ -58,7 +58,9 @@ classdef EDBimport < muiDataSet
             
             [fname,path,nfiles] = getfiles('MultiSelect',obj.FileSpec{1},...
                 'FileType',obj.FileSpec{2},'PromptText','Select file(s):');
-            if ~iscell(fname)
+            if isnumeric(fnames) && fnames==0
+                return;            %user cancelled
+            elseif ~iscell(fname)
                 fname = {fname};   %single select returns char
             end
          

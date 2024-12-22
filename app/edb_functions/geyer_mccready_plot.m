@@ -1,16 +1,17 @@
-function geyer_mccready_plot(x,y,tabledata,inp)
+function ax = geyer_mccready_plot(cobj,dset)
 %
 %-------function help------------------------------------------------------
 % NAME
 %   geyer_mccready_plot.m
 % PURPOSE
-%   create at 
+%   create a plot of X against Y as proposed by Geyer and McCready, 2014
 % USAGE
-%   geyer_mccready_plots(dst)
+%   geyer_mccready_plots(select)
 % INPUTS
-%   
+%   cobj - handle to selected case instance
+%   dset - name of dataset from case to be used
 % OUTPUT
-%   
+%   Geyer and McCready plot
 % NOTES
 %   generate figure the matches Figure 6 in Geyer W R and MacCready P, 
 %   2014, The Estuarine Circulation. Annual Review of Fluid Mechanics, 
@@ -19,40 +20,46 @@ function geyer_mccready_plot(x,y,tabledata,inp)
 %   EstuaryDB, called from edb_user_tools
 %
 % Author: Ian Townend
-% CoastalSEA (c) May 2024
+% CoastalSEA (c) Nov 2024
 %--------------------------------------------------------------------------
 %     
-
-
-
-    
-    %get Frf and M parameters
-    [x,y,inp] = getPlotVariables(x,y,tabledata,inp);
-    mxx = max(max(x)); mnx = min(min(x));
-    mxy = max(max(y)); mny = min(min(y));
-    %xy1 = [min(mnx,mny),max(mxx,mxy)]; 
+    dst = cobj.Data.(dset);  %selected dataset
+    %experimental options for depth, prism and csa.
+    promptxt = {'Hydraulic depth (1-3)','Tidal prism (1-2)','CSA at mouth (1-2)'};
+    inp = inputdlg(promptxt,'GM plot',1,{'3','2','1'});
+    if isempty(inp),return; end
+    inp = num2cell(str2double(inp));
+    %get Freshwater Fround number and Mixing parameters
+    [x,y,loc] = getPlotVariables(dst,inp{:});
+    mnmxX = minmax(x,'omitnan');
+    mnmxY = minmax(y,'omitnan');
     
     hf = figure('Name','GMcC-diagram','Units','normalized', ......
                 'Resize','on','HandleVisibility','on', ...
                 'Tag','PlotFig');
     ax = getGMfig(hf);
     
-    rn = tabledata.Properties.RowNames;
     hold on
-    ax = rangeplot(ax,x,y,rn);
+        ax = var_range_plot(ax,x,y,loc,{'low-mean-high','no flow data'},1);
+        he = findobj(ax,'Tag','ErrSym');
+        he.Color = 'b';
     hold off
 
     ax.XAxisLocation = 'origin';
     ax.YAxisLocation = 'origin';
-    xlim([mnx,mxx]);
-    ylim([mny,mxy]);
-    xlabel(replace(inp.xvar,'_',' '));
-    ylabel(replace(inp.yvar,'_',' '));
+    xlim([mnmxX(:)]);
+    ylim([mnmxY(:)]);
+    
+    ax.Title.String = sprintf('%s (%d, %d, %d)',ax.Title.String,inp{:});
     legend({'low-mean-high','no flow data'},'Location','best');     
 end
 %%
-function [M,Frf,inp] = getPlotVariables(x,y,tabledata,inp)
+function [M,Frf,loc] = getPlotVariables(dst,op1,op2,op3)
     %modify flow and tidal range to Froude no. Frf, and mixing parameter, M
+    % op1 - hydrualic depth
+    % op2 - tidal prism
+    % op3 - area at mouth
+
     %define constants
     g = 9.81;                   %acceleration due to gravity
     cD = 0.002;                 %friction coefficient    
@@ -60,133 +67,142 @@ function [M,Frf,inp] = getPlotVariables(x,y,tabledata,inp)
     s = 34;                     %ocean sainity
     omega = 2*pi()/(12.4*3600); %tidal angular frequency
     
-    %scaling variables
-    vHW = tabledata.HWvolume;
-    vLW = tabledata.LWvolume;
-    sHW = tabledata.HWarea;
-    sLW = tabledata.LWarea;
-    aMT = tabledata.Xsect_area;
-    wMT = tabledata.Mouth_width;
+    %main variables - tidal range and river discharge
+    x(:,1) = dst.NeapRange;
+    x(:,2) = dst.MeanRange;
+    x(:,3) = dst.SpringRange;
+    y(:,1) = dst.Qlow;
+    y(:,2) = dst.Qmean;
+    y(:,3) = dst.Qhigh;
+    loc = dst.RowNames;
+
+    %remove rows with missing values
+    TT = [x(:,2),y(:,2)];            %central values
+    [~,idn] = rmmissing(TT,1);       %removing rows with NaN central values
     
+    TT = [dst.Vmtl,dst.Amtl];        %volume and csa to use
+    [~,idv] = rmmissing(TT,1);       %removing rows with NaN central values
+
+    id0 = dst.Vmtl==0 | dst.Amtl==0; %zero values
+
+    idx = find(~idn & ~idv & ~id0);  %combined valid indices
+
+    promptxt = sprintf('Subsample estuaries\nSelect values to include\nPress Cancel to use full list'); 
+    idl = listdlg('PromptString',promptxt,'ListString',loc(idx),...
+                         'SelectionMode','multiple','ListSize',[180,300]);
+    if isempty(idl), idl = 1:length(loc(idx)); end
+  
+    %For scaling variables to match need to apply location selection to 
+    %any removal of missing rows
+    idx = idx(idl);
+    %subselect main variables
+    x = x(idx,:); y = y(idx,:); loc = loc(idx);
+
+    %scaling variables - assumes that the variable names are as used in
+    %app/example/Estuary_DSproperties.xlsx
+    vHW = dst.Vmhw(idx);
+    vLW = dst.Vmlw(idx);
+    vMT = dst.Vmtl(idx);
+    sHW = dst.Smhw(idx);
+    sLW = dst.Smlw(idx);
+    sMT = dst.Smtl(idx);
+    aMT = dst.Amtl(idx);
+    wMT = dst.Wmouth(idx);
+
     %derived parameters
-    H = (vHW+vLW)./(sHW+sLW);  %average hydraulic depth
-    H = 1.5*(vHW+vLW)./(sHW+sLW);  %hydraulic depth at mouth Ho=H.Lw/La
-    NoH = sqrt(beta*g*s*H);    %factor for Frf and M
-    P = (sHW+sLW)/2.*x;        %tidal prism
-    
-    isarea = true;
-    
-    if isarea
-        A = aMT;               %csa at mouth
-        atxt = "Amtl";
-    else
-        A = wMT.*H;            %csa at mouth based on width and av.depth
-        atxt = "Wmtl.H";
+    switch op1                             %hydraulic depth
+        case 1
+            H = (vHW+vLW)./(sHW+sLW);      %average hydraulic depth
+        case 2
+            H = vMT./sMT;
+        case 3
+            H = 1.5*(vHW+vLW)./(sHW+sLW);  %hydraulic depth at mouth Ho=H.Lw/La
     end
 
-    Ur = y./A;
-    Ut = omega*P./2./A;
-    inp.xvar = sprintf('M using %s+%s',inp.xvar,atxt);
-    inp.yvar = sprintf('Frf using %s+%s',inp.yvar,atxt);
+    switch op2                            %tidal prism
+        case 1
+            P = sMT/2.*x;                 %tidal prism
+        case 2
+            P = (vHW-vLW).*x./x(:,2);     %scale mean tide volume estimate
+    end
+  
+    switch op3                           %CSA at mouth
+        case 1
+            A = aMT;                     %csa at mouth
+        case 2
+            A = wMT.*H;                  %csa at mouth based on width and av.depth
+    end
     
-    Frf = Ur./NoH;
-    M = (cD/omega./NoH./H).*Ut.^2;    
-end
-%%
-function ax = rangeplot(ax,X,Y,estnames)
-    %plot mean values with high and low bars. x and y are 3 column matrices
-    %offsets from mean to low and high values
-%     mxx = max(max(X)); mnx = min(min(X));
-%     mxy = max(max(Y)); mny = min(min(Y));
-%     xy1 = [min(mnx,mny),max(mxx,mxy)]; 
+    NoH = sqrt(beta*g*s*H);              %factor for Frf and M
+    Ur = y./A;                           %river velocity
+    Ut = omega*P./2./A;                  %tidal velocity
     
-    x = X(:,2);
-    xneg = x-X(:,1);
-    xpos = X(:,3)-x;
-    y = Y(:,2);
-    yneg = y-Y(:,1);
-    ypos = Y(:,3)-y;
-    %find +ve/-ve values of offset from MT values
-%     yneg = getposnegvalues(yneg);
-%     ypos = getposnegvalues(ypos);
-%     xneg = getposnegvalues(xneg);
-%     xpos = getposnegvalues(xpos); 
-    
-    %find out of bounds HW or LW estuaries
-    idv = isnan(xneg) | isnan(xpos) | isnan(yneg) | isnan(ypos);
-    divx = x; 
-    divx(~idv) = NaN; 
-    divy = y; 
-    divy(~idv) = NaN;
-    
-    %offset position for text estuary names
-%     xtxt = x+sum([xneg(:,2),xpos(:,1)],2,'omitnan')*1.1;
-%     idt = xneg(:,2)>0 & xpos(:,1)>0; %find two sided cases (both +ve)
-%     xtxt(idt) = x(idt)+max(xneg(idt,2),xpos(idt,1))*1.1; %use maximum of thw two
-    xtxt = x+sum([xneg,xpos],2,'omitnan')*1.1;
-    idt = xneg>0 & xpos>0; %find two sided cases (both +ve)
-    xtxt(idt) = x(idt)+max(xneg(idt),xpos(idt))*1.1; %use maximum of thw two   
-    %index for points that are to be plotted in reverse order (-ve offsets)
-   % idr = ~isnan(yneg) | ~isnan(ypos) | ~isnan(xneg) | ~isnan(xpos);
-%     rx = x; rx(~idr) = NaN; 
-%     ry = y; ry(~idr) = NaN;
-    
-    %generate plot  
-    errorbar(ax,x,y,yneg,ypos,xneg,xpos,'o','CapSize',8)
-%     errorbar(ax,x,y,yneg(:,1),ypos(:,1),xneg(:,1),xpos(:,1),'o','CapSize',8)   
-%     errorbar(ax,rx,ry,ypos(:,2),yneg(:,2),xpos(:,2),xneg(:,2),'o','CapSize',8)
-    plot(divx,divy,'og')
-%    plot(xy1,xy1,'-.','Color',[0.5,0.5,0.5])
-    text(xtxt,y,estnames,'FontSize',8);
-%     if strcmp(plp.axes{1},'1')
-%         ax.XScale = 'log';
-%     end
-%     if strcmp(plp.axes{2},'1')
-%         ax.YScale = 'log';
-%     end 
+    Frf = Ur./NoH;                       %freshwater Froude number
+    M = (cD/omega./NoH./H).*Ut.^2;       %mixing coefficient
+end 
 
-end
-%%
-function pndata = getposnegvalues(data)
-    %splits data into positive and negative values and returns absolute
-    %values in columns 1(+ve) and 2(-ve)
-    idx = data<0;
-    pndata = NaN(length(data),2);
-    pndata(~idx,1) = data(~idx);      %positive values
-    pndata(idx,2) = abs(data(idx));        %negative values
-end
 %%
 function ax = getGMfig(hf)
     %generate the base plot for the Geyer_McCready diagram
-    alpha = 3.4;                %fit coefficient
-    Frf_salt_limit = 7e-2;
-    Frf_strat_limit = 2.3e-3;
+    alpha = 3.4;                 %fit coefficient
+    Frf_salt_limit = 7e-2;       %limit for salt wedge
+    Frf_strat_limit = 2.3e-3;    %limit for startification
     
     ax = axes('Parent',hf);
-    M = linspace(0.1,2,100);
+    M = linspace(0.1,2,500);     %100 points between 0.1 and 2
     Frf = (M.^2/sqrt(alpha)).^3; %Eqn.22 as corrected by Maitane
     Fr0 = (M.^2/.2).^3;          %the additional diagonals are not defined
-    id0 = Fr0>=Frf_strat_limit;  %in paper. Offets obtained by changing denominator
-    Fr1 = (M.^2/5).^3;           %to give lines that are in approx right position
-    id1 = Fr1<=Frf_salt_limit;
-    Fr2 = (M.^2/20).^3;        
-    plot(ax,M,Frf,'-r','HandleVisibility','off')                           %plot main diagonal based on Eq.22
-    ax.YScale = 'log';
-    ax.XScale = 'log';
-%     ax.YLim = [1e-4,1.0];
-%     ax.XTick = [0.1,.2,.5,1,2];
-     
+    Fr1 = (M.^2/5).^3;           %in paper. Offets obtained by changing denominator
+    Fr2 = (M.^2/20).^3;          %to give lines that are in approx right position
+   
+    id0 = Fr0>=Frf_strat_limit & Fr0>1e-5; %limit extent of boundary lines
+    id1 = Fr1<=Frf_salt_limit & Fr1>1e-5;  %based on salt wedge and stratification
+    id2 = Fr2>1e-5;                        %limits and a lower bound of 1e-5
+    idf = Frf>1e-5;
+
+    Mst_salt =interp1(Fr0,M,Frf_salt_limit);     %start of salt limit    
+    Mnd_strat = interp1(Fr1,M,Frf_strat_limit);  %end of stratification limit
+    
+    %find intersections that define corner points of polygons
+    [~,idm1] = min(abs(Frf-7e-2));        %eq(22) and salt wedge limit
+    [~,idm2] = min(abs(Frf-2.3e-3));      %eq(22) and stratification limit
+    [~,idm3] = min(abs(Fr0-2.3e-3));      %upper boundary and stratification limit
+    [~,idm4] = min(abs(Fr1-7e-2));        %first lower boundary salt wedge limit
+    [~,idm5] = min(abs(Fr1-2.3e-3));      %second lower boundary and stratification limit
+
+    %polygon of domain examined by Geyer and McCready
+    p1 = polyshape([M(1),M(end),M(end),M(1)],[1,1,1e-5,1e-5]);
+    %polygon of domain for stongly stratified systems
+    x = [Mst_salt,M(idm1),M(idm2),M(idm3)];
+    y = [7e-2,7e-2,2.3e-3,2.3e-3]; %uppe and lower limits of stratification
+    p2 = polyshape(x,y);   
+    %polygon of domain for partially stratified systems
+    x = [M(idm1),M(idm4),M(idm5),M(idm2)];
+    p3 = polyshape(x,y);
+
+    %plot polygons and bounding lines
+    plot(p1,'FaceColor', 'y', 'FaceAlpha', 0.1, 'EdgeColor','none','HandleVisibility','off');
+
+    xlim_salt = [Mst_salt, M(end)];                          
+    xlim_strat = [M(idm3),Mnd_strat];
+    green = mcolor('green'); 
     hold on 
-    plot(ax,M,Fr0.*(id0),'--r','HandleVisibility','off')                   %plot boundary
-    plot(ax,M,Fr1.*(id1),'--r','HandleVisibility','off')                   %plot sedondary diagonal
-    plot(ax,M,Fr2,'--r','HandleVisibility','off')                          %plot lower boundary
-    xlim_salt = [interp1(Fr0,M,Frf_salt_limit), ax.XLim(2)];
-    xlim_strat = [ax.XLim(1),interp1(Fr1,M,Frf_strat_limit)];
-    plot(xlim_salt, Frf_salt_limit*[1 1],'--r','HandleVisibility','off');  %plot salt wedge limit
-    plot(xlim_strat, Frf_strat_limit*[1 1],'--r','HandleVisibility','off');%plot stratification limit
+        plot(p2,'FaceColor', green, 'FaceAlpha', 0.2, 'EdgeColor','none','HandleVisibility','off');
+        plot(p3,'FaceColor', 'g', 'FaceAlpha', 0.2, 'EdgeColor','none','HandleVisibility','off');
+        plot(ax,M(idf),Frf(idf),'-r','HandleVisibility','off')             %plot main diagonal based on Eq.22
+        plot(ax,M(id0),Fr0(id0),'--r','HandleVisibility','off')            %plot boundary
+        plot(ax,M(id1),Fr1(id1),'--r','HandleVisibility','off')            %plot sedondary diagonal
+        plot(ax,M(id2),Fr2(id2),'--r','HandleVisibility','off')            %plot lower boundary
+        plot(xlim_salt, Frf_salt_limit*[1 1],'-.r','HandleVisibility','off');  %plot salt wedge limit
+        plot(xlim_strat, Frf_strat_limit*[1 1],'-.r','HandleVisibility','off');%plot stratification limit
     hold off
-    %
-    ax.XLabel.String = 'M';
-    ax.YLabel.String = 'Fr_f';
+
+    %change axis scale to log and add labels
+    ax.XLim(1) = 0; ax.YLim(1) = 0; %set the xy limits to be non-negative
+    ax.XScale = 'log';
+    ax.YScale = 'log';
+
+    ax.XLabel.String = 'Mixing parameter, M';
+    ax.YLabel.String = ('Freshwater Froude number, Fr_f');
     ax.Title.String = 'Geyer-McCready Diagram';
 end

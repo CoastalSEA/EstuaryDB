@@ -3,4 +3,6 @@ app/EstuaryDB.mlappinstall
 app/Data
 app/Working Docs
 app/*.mat
-app/.xlsx
+app/*.xlsx
+app/example/*.xlsx
+*.asv

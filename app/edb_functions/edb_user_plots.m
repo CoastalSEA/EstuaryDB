@@ -47,10 +47,9 @@ end
 
 %%
 % Default functions can be found in muitoolbox/psfunctions folder
-% function scatter_plot(mobj)
-% function type_plot(mobj)
+% function: scatter_plot(mobj)
+% function: type_plot(mobj)
 
-%% additional functions here or external-----------------------------------
 function range_plot(mobj)
     %prompt user to select variables to be used in plot and call 
     %plot function geyer_mccready_plot
@@ -59,19 +58,31 @@ function range_plot(mobj)
                 'Select variables for Y-Axis:'};
     %multiple selection returning 2 variables each with 3 selections for
     %upper, central and lower values of a variable
-    select = multivar_selection(mobj,varnames,promptxt,...       %muitoolbox function
-                       'XYZnset',3,...                           %minimum number of buttons to use for selection
-                       'XYZmxvar',[1,1,1],...                    %maximum number of dimensions per selection button, set to 0 to ignore subselection
-                       'XYZpanel',[0.05,0.2,0.9,0.3],...         %position for XYZ button panel [left,bottom,width,height]
-                       'XYZlabels',{'Upper','Central','Lower'}); %default button labels 
+    [select,set] = multivar_selection(mobj,varnames,promptxt,1,... %muitoolbox function
+                       'XYZnset',3,...                             %minimum number of buttons to use for selection
+                       'XYZmxvar',[1,1,1],...                      %maximum number of dimensions per selection button, set to 0 to ignore subselection
+                       'XYZpanel',[0.05,0.2,0.9,0.3],...           %position for XYZ button panel [left,bottom,width,height]
+                       'XYZlabels',{'Upper','Central','Lower'});   %default button labels 
     hfig = figure('Name','Range plot','Tag','FigPlot');
     X = [select.Xvar(:).data];
     Y = [select.Yvar(:).data];
 
-    ax = var_range_plot(hfig,X,Y,select.names);    %muitoolbox function
+    islog = strcmp(set.Xvar(1).scale,'Log') | strcmp(set.Yvar(1).scale,'Log'); %only test first selection
+    ax = var_range_plot(hfig,X,Y,select.names,[],islog);    %muitoolbox function
     ax.XLabel.String = select.Xvar(1).label;
     ax.YLabel.String = select.Yvar(1).label;
     ax.Title.String = get_selection_text(select.Xvar(1),0); %0 = case (dataset)
+end
+
+%%
+function get_GMplot(mobj)
+    %generate figure the matches Figure 6 in Geyer and MacCready, 2014
+    %this is bespoke code that uses the variable names as defined in
+    %app/example/Estuary_DSproperties.xlsx
+    promptxt = 'Select Case to use';
+    [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
+    if isempty(cobj), return; end
+    geyer_mccready_plot(cobj,datasets{idd});
 end
 
 %%
@@ -86,4 +97,28 @@ function get_ConvergencePlot(mobj)
                             'SelectionMode','single','ListSize',[160,200]);
     end
     edb_regression_plot(cobj,datasets{idd});
+end
+
+%% additional functions here or external-----------------------------------
+
+function [select,set,dst] = xy_select(mobj)
+    %code to select a X and Y vectors and check they are same length
+    varnames = {'Var'};
+    promptxt = {'Select variables:'};
+    %multiple selection returning 1 variable set with 2 selections for
+    %X and Y values to use
+    ok = 0;
+    while ok<1   %need to ensure same number of rows in each variable
+        [select,set] = multivar_selection(mobj,varnames,promptxt,0,... %muitoolbox function
+                       'XYZnset',2,...                             %minimum number of buttons to use for selection
+                       'XYZmxvar',[1,1,1],...                      %maximum number of dimensions per selection button, set to 0 to ignore subselection
+                       'XYZpanel',[0.05,0.2,0.9,0.3],...           %position for XYZ button panel [left,bottom,width,height]
+                       'XYZlabels',{'X','Y'});                     %default button labels
+        if length(select.Var(1).data)==length(select.Var(2).data)            
+            ok = 1;          %same number of rows in each variable
+        end
+    end
+    %retrieve the dstable used for the X variable
+    cobj = getCase(mobj.Cases,set.Var(1).caserec);
+    dst = cobj.Data.(select.Var(1).dset);
 end

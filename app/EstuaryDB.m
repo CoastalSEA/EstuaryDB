@@ -103,11 +103,11 @@ classdef EstuaryDB < muiModelUI
             menu.Project(3).Callback = repmat({@obj.projectMenuOptions},[1,2]);
             
             %% Setup menu -------------------------------------------------
-            menu.Setup(1).List = {'Import Table Data','Import Spatial Data','Input Parameters',...
-                                      'Model Constants'};                                    
-            menu.Setup(1).Callback = [{'gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
+            menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
+                                  'Gridded Data','Input Parameters','Model Constants'};                                                                         
+            menu.Setup(1).Callback = [{'gcbo;','gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','off','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','off','on','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
@@ -122,6 +122,20 @@ classdef EstuaryDB < muiModelUI
 
             menu.Setup(5).List = {'Load or Add dataset','Delete dataset'};
             menu.Setup(5).Callback = repmat({@obj.loadMenuOptions},[1,2]);
+
+            menu.Setup(6).List = {'Grid Parameters','Grid Tools'};
+            menu.Setup(6).Callback = [{@obj.loadGridOptions},{'gcbo;'}];
+
+            menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
+                                  'Re-Grid','Sub-Grid',...
+                                  'Combine Grids','Add Surface',...
+                                  'To curvilinear','From curvilinear',... 
+                                  'Display Dimensions','Difference Plot',...
+                                  'Plot Sections','Digitise Line',...
+                                  'Export xyz Grid','User Function'};                                                                          
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,14]);
+            menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
+                             {'on','off','on','off','off','on','on','on'}];%separator preceeds item
             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -170,8 +184,9 @@ classdef EstuaryDB < muiModelUI
             % (rows) and width of input text and values. Inidicative
             % positions:  top left [0.95,0.48];    top right [0.95,0.97]
             %         bottom left [0.45, 0.48]; bottom right [0.45,0.97]
-            props = {...                                     
-                'EDBparameters','Inputs',[0.95,0.48],{180,60},'Input parameters:'};
+            props = {... 
+                'GD_GridProps','Inputs',[0.90,0.95],{160,90}, 'Grid parameters:';...
+                'EDBparameters','Inputs',[0.90,0.48],{180,60},'Input parameters:'};
         end    
  %%
         function setTabAction(~,src,cobj)
@@ -186,7 +201,12 @@ classdef EstuaryDB < muiModelUI
                     if isempty(lobj), return; end
                     tabStats(lobj,src);
                 case 'Table'
-                    tabTable(cobj,src);     
+                    classname = metaclass(cobj).Name;
+                    if strcmp(classname,'EDBimport')
+
+                    else
+                        tabTable(cobj,src);   
+                    end
             end
         end      
 %% ------------------------------------------------------------------------
@@ -240,12 +260,38 @@ classdef EstuaryDB < muiModelUI
             classname = 'EDBimport';
             switch src.Text
                 case 'Load or Add dataset'
-                    EDBimport.loadData(obj.Cases,classname);
+                    EDBimport.loadData(obj.Cases);
                 case 'Delete dataset'
                     useCase(obj.Cases,'single',{classname},'delDataset');  
             end
             DrawMap(obj);
         end
+%%
+        function loadGridOptions(obj,src,~)
+            %callback functions to import data
+            classname = 'EDB_GridImport';
+            switch src.Text
+                case 'Load'
+                    fname = sprintf('%s.loadData',classname);
+                    callStaticFunction(obj,classname,fname); 
+                case 'Add'
+                    useCase(obj.Cases,'single',{classname},'addData');
+                case 'Delete'
+                    useCase(obj.Cases,'single',{classname},'deleteGrid');
+                case 'Grid Parameters'
+                    GD_GridProps.setInput(obj);  
+            end
+            DrawMap(obj);
+        end  
+%%
+        function gridMenuOptions(obj,src,~)
+            %callback functions for grid tools options
+            gridclasses = {'EDBimport'};
+            %CF_FromModel inherits GDinterface, which includes the grid tools
+            GDinterface.gridMenuOptions(obj,src,gridclasses);
+            DrawMap(obj);
+        end    
+
         %% Run menu -------------------------------------------------------
         function runMenuOptions(obj,src,~)
             %callback functions to run model
@@ -316,7 +362,7 @@ classdef EstuaryDB < muiModelUI
             casedesc = muicat.Catalogue.CaseDescription(caserec);
             caseclass = muicat.Catalogue.CaseClass(caserec);
 
-            cdata = {'0','Type','Description of individual cases',''};
+            cdata = {'0','Type','Description of individual cases','#'};
             irec = 1;
             for i=1:length(caseid)
                 case_id = num2str(caseid(i));
@@ -335,32 +381,16 @@ classdef EstuaryDB < muiModelUI
                 %
                 dst = getDataset(muicat,caserec(i),1);
                 if isempty(dst), continue; end
-%                 %range = getVarAttRange(dst,1,'Time');
-%                 range = dst.RowRange;                
-%                 qualcl = '';
                 reclen = num2str(height(dst.DataTable));
-%                 if ~isempty(dst.RowRange)                    
-%                     stdate = char(range{1},'dd-MMM-yyyy'); %control ouput format
-%                     endate = char(range{2},'dd-MMM-yyyy');                    
-%                     if ~isempty(dst.VariableQCflags)
-%                         qualcl = dst.VariableQCflags{1};
-%                     end
-%                     cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen...
-%                                                      };
-%                 else
-%                     cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen...
-%                                                           };             
-%                 end
-
                 cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen}; 
                 irec = irec+1;
             end
             
             if strcmp(ht.Tag,'Models')
-                headers = {'ID','Model Type','Model Description','Nrec'...
+                headers = {'ID','Model Class','Model Description','Nrec'...
                 };
             else
-                headers = {'ID','Data Type','Data Description','Nrec'...
+                headers = {'ID','Data Class','Data Description','Nrec'...
                 };
             end
             
@@ -371,7 +401,7 @@ classdef EstuaryDB < muiModelUI
             tc.ColumnName = headers;
             tc.RowName = {};
             tc.Data = cdata;
-            tc.ColumnWidth = {25 100 200 50};
+            tc.ColumnWidth = {25 100 380 70};
             tc.RowStriping = 'on';
             tc.Position(3:4)=[0.935 0.8];    %may need to use tc.Extent?
             tc.Position(2)=0.9-tc.Position(4);

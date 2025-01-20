@@ -1,24 +1,29 @@
-function output = edb_hyps_data_format(funcall,varargin) 
+function output = edb_w_hyps_format(funcall,varargin) 
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_hyps_data_format.m
+%   edb_w_hyps_format.m
 % PURPOSE
 %   Functions to define metadata, read and load data from file for:
-%   hypsometry estuary data (z,S), tidal data and river flow data
+%   hypsometry estuary data (z,W(x))
 % USAGE
-%   output = edb_hyps_data_format(funcall,varargin)
+%   output = edb_w_hyps_format(funcall,varargin)
 % INPUTS
 %   funcall - function being called
 %   varargin - function specific input (filename,class instance,dsp,src, etc)
 % OUTPUT
 %   output - function specific output
 % NOTES
-%   ZM analysed UK estuaries using the SEAZONE bathymetry. This file loads
-%   the along-channel data
+%  This file loads the along-channel data for width hypsometry
+%   Input data format is a spreadsheet with header row defining x, first
+%   column defining z and the data starting in cell B2.
+%           z |  x0  |  x23.5  |  x53.3  |  x100.0  |  etc
+%       -12.3 |  34  |  12     |    0    |     0    |
+%       -1.2  |  230 |  123    |   43    |     0    |
+%        1.2  |  420 |  213    |   96    |  27.5    |
 %
 % Author: Ian Townend
-% CoastalSEA (c) Oct 2024
+% CoastalSEA (c) Jam 2025
 %--------------------------------------------------------------------------
 %
     switch funcall
@@ -52,16 +57,24 @@ end
 %--------------------------------------------------------------------------
 % getData
 %--------------------------------------------------------------------------
-function newdst = getData(~,filename) 
+function newdst = getData(~,filename,metatxt) 
     %read and load a data set from a file
     dsp = setDSproperties;                  %set metadata
     %load table and clean data to required format
-    itable = readtable(filename);
-    itable = cleandata(itable,filename);
-    idx = 1:height(itable);
-    dst = dstable(itable,'RowNames',idx,'DSproperties',dsp);
-    dst.Description = itable.Properties.Description;
-    newdst.ZMdata = dst;                    %ZMdata is the dataset name for this format
+    opts = detectImportOptions(filename,'FileType','spreadsheet');
+    itable = readtable(filename,opts);
+    %itable = cleandata(itable,filename); %may not be needed
+    [~,estname] = fileparts(filename);
+    input = reshape(itable{:,2:end}',1,[],height(itable));
+    dst = dstable(input,'RowNames',{estname},'DSproperties',dsp);
+    X = strip(itable.Properties.VariableNames(2:end),'x'); %remove leading x
+    dst.Dimensions.X = cellfun(@str2num, X)';   %convert to double
+    dst.Dimensions.Z =itable{:,1};
+    dst.Description = estname;
+    dst.Source = filename;
+    dst.MetaData = metatxt;
+    dst.UserData = [];       %unused
+    newdst.Width= dst;       %Width is the dataset name for this format
 end
 %%
 %--------------------------------------------------------------------------
@@ -75,54 +88,23 @@ function dsp = setDSproperties()
     %accept most data types but the values in each vector must be unique
     %struct entries are cell arrays and can be column or row vectors
     dsp.Variables = struct(...                      
-        'Name',{'Sa'},...
-        'Description',{'Surface area'},...
-        'Unit',{'m^2'},...
-        'Label',{'Surface area (m^2)'},...
+        'Name',{'W'},...
+        'Description',{'Width'},...
+        'Unit',{'m'},...
+        'Label',{'Width (m)'},...
         'QCflag',{'data'}); 
     dsp.Row = struct(...
-        'Name',{'Z'},...
-        'Description',{'Elevation'},...
-        'Unit',{'mAD'},...
-        'Label',{'Elevation (mAD)'},...
-        'Format',{''});        
+        'Name',{'Location'},...
+        'Description',{'Estuary'},...
+        'Unit',{'-'},...
+        'Label',{'Estuary'},...
+        'Format',{''});                    
     dsp.Dimensions = struct(...    
-        'Name',{''},...
-        'Description',{''},...
-        'Unit',{''},...
-        'Label',{''},...
-        'Format',{''});   
-end
-
-%%
-function datable = cleandata(datable,fname)
-    %ZM data has no header and the following variables (columns)
-    %
-    %correct issues in data and re-order variables
-    if datable{1,8}>datable{end,8}
-        datable = varfun(@flipud,datable);
-    end  
-    
-%     datable = varfun(@transpose,datable);
-    [~,location,~] = fileparts(fname);    
-    %datable.Properties.RowNames = {location};
-    datable.Properties.Description = location;
-    datable = removevars(datable,1);                %remove id
-    datable = movevars(datable,[2,4,6],'Before',1); %move depths to start
-    datable = movevars(datable,7,'After',10);       %move distance to end
-    datable = movevars(datable,3,'After',1);        %move mtl values after lw values
-    datable = movevars(datable,6,'After',4);        %move mtl values after lw values
-    datable = movevars(datable,9,'After',7);        %move mtl values after lw values
-    for i=1:3
-        %find data with zero depth but a defined width and set to 0.5
-        idx = datable{:,i}==0 & datable{:,i+3}>0;
-        datable{idx,i} = 0.5;
-        datable{idx,i+6} = 0.5*datable{idx,i+3};
-    end
-    %check that distance starts at zero
-    if datable{1,10}>0
-        datable{:,10} = datable{:,10}-datable{1,10};
-    end    
+        'Name',{'X','Z'},...
+        'Description',{'Distance','Elevation'},...
+        'Unit',{'m','mAD'},...
+        'Label',{'Distance to mouth (m)','Elevation (mAD)'},...
+        'Format',{'',''});   
 end
 
 %%
@@ -134,29 +116,22 @@ function ok = getPlot(obj,src,dsetname)
     ok = [];
     tabcb  = @(src,evdat)tabPlot(obj,src);
     ax = tabfigureplot(obj,src,tabcb,false);
-    %get data and variable id - select lw value and plot lw,mt,hw
-    varoffset = [1,4,7];
-    [dst,idv,props] = selectVariable(obj,dsetname,varoffset);        %dataset specific
-    if isempty(idv), return; end
+    %get data and variable id
+    dst = obj.Data.(dsetname);
+    W = squeeze(dst.W);
+    x = dst.Dimensions.X;
+    z = dst.Dimensions.Z;
     %create props to define labels for each variable to be plotted
-    props = repmat(props,3,1);
-    idv = varoffset(idv);
-    props(2).desc = dst.VariableDescriptions{idv+1};
-    props(3).desc = dst.VariableDescriptions{idv+2}; 
-    idv = idv:idv+2;
-    %test for a vector data set
-    if isvector(dst.(dst.VariableNames{idv(1)}))
-        idx = find(strcmp(dst.VariableNames,'xCh')); %index of distance from mouth
-        pmax = EDBimport.vectorplot(ax,dst,props,idv,idx);
-
-        %add text box with min max range of variable and length
-        boxtxt = sprintf('Length: %.0f m\nMax at LW: %.1e, MT: %.1e, HW: %.1e',pmax.x,pmax.var{:});
-        ydist = ax.YLim(1);
-        text(0.1,ydist+0.06,boxtxt) 
-        ok = 1;
-    else
-        ok = 0;  %no plot implemented in getPlot
-    end
+    [X,Z] = meshgrid(x,z);
+    contourf(ax,X,Z,W')
+    colormap('parula')
+    shading interp
+    hc = colorbar;
+    hc.Label.String = dst.VariableLabels{1};
+    xlabel(dst.DimensionLabels{1})
+    ylabel(dst.DimensionLabels{2});
+    title(dst.Description)
+    ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end
 
 %%

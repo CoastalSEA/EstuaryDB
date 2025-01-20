@@ -1,21 +1,20 @@
-function output = edb_zm_image_format(funcall,varargin) % <<Edit to identify data type
+function output = edb_image_format(funcall,varargin)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_zm_image_format.m
+%   edb_image_format.m
 % PURPOSE
-%   Functions to define metadata, read and load data from file for:
-%   Zhang Min's estuary image data
+%   Functions to define metadata, read and load data from file for estuary
+%   image data
 % USAGE
-%   output = edb_zm_image_format(funcall,varargin)
+%   output = edb_image_format(funcall,varargin)
 % INPUTS
 %   funcall - function being called
 %   varargin - function specific input (filename,class instance,dsp,src, etc)
 % OUTPUT
 %   output - function specific output
 % NOTES
-%   ZM analysed UK estuaries using the SEAZONE bathymetry. This file loads
-%   the images showing the location of the sections used
+%   This file loads an image e.g. showing the location of the sections used
 %
 % Author: Ian Townend
 % CoastalSEA (c) Oct 2024
@@ -51,15 +50,18 @@ end
 %--------------------------------------------------------------------------
 % getData
 %--------------------------------------------------------------------------
-function newdst = getData(obj,filename) %#ok<INUSD>
+function newdst = getData(obj,filename,metatxt) %#ok<INUSD>
     %read and load a data set from a file
     dsp = setDSproperties;                 %set metadata
     [~,location,~] = fileparts(filename);   
     imdata = {imread(filename)};
-    %load the results into a dstable - ZMimage is the dataset name for this format
+    %load the results into a dstable - Image is the dataset name for this format
     dst = dstable(imdata,'RowNames',{location},'DSproperties',dsp);  
     dst.Description = location;
-    newdst.ZMimage = dst;                    %ZMdata is the dataset name for this format
+    dst.Source = filename;
+    dst.MetaData = metatxt;
+    dst.UserData = [];         %unused
+    newdst.Image = dst;        %Image is the dataset name for this format
 end
 
 %%
@@ -81,10 +83,10 @@ function dsp = setDSproperties()
         'QCflag',repmat({'data'},1,1)); 
     dsp.Row = struct(...
         'Name',{'Location'},...
-        'Description',{''},...
+        'Description',{'Estuary'},...
         'Unit',{'-'},...
-        'Label',{'Location'},...
-        'Format',{''});        
+        'Label',{'Estuary'},...
+        'Format',{''});         
     dsp.Dimensions = struct(...    
         'Name',{''},...
         'Description',{''},...
@@ -102,19 +104,21 @@ function ok = getPlot(obj,src,dsetname)
     ok = [];
     tabcb  = @(src,evdat)tabPlot(obj,src);
     tabfigureplot(obj,src,tabcb,false);
+    ax = gca;
     %get data and variable id
-    [dst,idv,props] = selectVariable(obj,dsetname);     %dataset specific
-    if isempty(idv), return; end
+    dst = obj.Data.(dsetname);
+    if isempty(dst), return; end
     %test for array of allowed data types for a color image
     isim = isimage(dst.DataTable{1,1});
     if isim(1) %isim(1) is color and isim(2) is greyscale
-        img = dst.(dst.VariableNames{idv});
+        img = dst.image;
         imshow(img{1});        
-        title(get_selection_text(props,1));
+        title(dst.Description);
+        ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
         ok = 1;
     else
         ok = 0;  %no plot implemented in getPlot
-    end
+    end   
 end
 
 %%

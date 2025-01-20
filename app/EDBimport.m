@@ -1,4 +1,4 @@
-classdef EDBimport < muiDataSet                       
+classdef EDBimport < GDinterface                   
 %
 %-------class help---------------------------------------------------------
 % NAME
@@ -25,6 +25,11 @@ classdef EDBimport < muiDataSet
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
+        %formatypes
+    end
+
+    properties (Transient)
+        formatypes
     end
     
     methods 
@@ -49,16 +54,32 @@ classdef EDBimport < muiDataSet
 %   data formats are defined in the format files
 %--------------------------------------------------------------------------
     methods  (Static)
-        function obj = loadData(muicat,classname,~)
+        function obj = loadData(muicat)
             %load user data set from one or more files
             % mobj - handle to modelui instance 
-            % classname - name of class being loaded
-            obj = EDBimport;
+            listxt = {'Surface area','Width','Bathymetry','Image'};
+            selection = listdlg('PromptString','Select data type to import:',...
+                'ListString',listxt,'ListSize',[100,100],'SelectionMode','single');
+            if isempty(selection), return; end
+
+            switch selection
+                case 1 %surface area
+                    formatfile = 'edb_s_hyps_format';
+                case 2 %width
+                    formatfile = 'edb_w_hyps_format';
+                case 3 %bathymetry
+                    formatfile = 'edb_bathy_format';
+                case 4 %image
+                    formatfile = 'edb_image_format';
+            end
+
+            obj = EDBimport(formatfile);   
             if isempty(obj.DataFormats), return; end
+            classname = metaclass(obj).Name; 
             
             [fname,path,nfiles] = getfiles('MultiSelect',obj.FileSpec{1},...
                 'FileType',obj.FileSpec{2},'PromptText','Select file(s):');
-            if isnumeric(fnames) && fnames==0
+            if isnumeric(fname) && fname==0
                 return;            %user cancelled
             elseif ~iscell(fname)
                 fname = {fname};   %single select returns char
@@ -67,7 +88,7 @@ classdef EDBimport < muiDataSet
             %assume metatxt description of data source applies to all files
             promptxt = {'Provide description of the data source          >'};
             metatxt = inputdlg(promptxt,'EDBimport',1);
-    
+            waitfor(metatxt)
             funcname = 'getData';
             hw = waitbar(0, 'Loading data. Please wait');  
 
@@ -75,44 +96,45 @@ classdef EDBimport < muiDataSet
             %have multiple estuaries (ie locations)            
             for jf=1:nfiles
                 filename = [path fname{jf}];
-                [newdata,ok] = callFileFormatFcn(obj,funcname,obj,filename);
+                [newdata,ok] = callFileFormatFcn(obj,funcname,obj,filename,metatxt);
                 if ok<1 || isempty(newdata), continue; end
                 dstname = fieldnames(newdata);
                 estname = newdata.(dstname{1}).Description;
-                newdata.(dstname{1}).MetaData = metatxt{1};
+
+                %newdata.(dstname{1}).MetaData = metatxt{1};
                 %newdst is a struct of dstables with estuaryname as the fieldname
+                
                 idx = strcmp(muicat.Catalogue.CaseClass,classname);
                 existest = muicat.Catalogue.CaseDescription(idx);
-                %loop round and add each profile as a new record
+                %if the estuary does not exist save as new record                    
+                if isempty(existest) || ...
+                                    all(~strcmp(existest,estname))
 
-                    %newdata = newdata.(profid{ip}); %dstable of profile data
-                    %if the estuary does not exist save as new record                    
-                    if isempty(existest) || ...
-                                        all(~strcmp(existest,estname))
-                        %cumulative list of files names used to load data
-                        newdata.(dstname{1}).Source{1} = filename;   
-                        %add file format
-                        newdata.(dstname{1}).UserData = obj.DataFormats{2};
-                        %add estuary as a new case record
-                        %classobj,muicat,dataset,casetype,casedesc,SupressPrompts
-                        dtype = obj.DataFormats{3};
-                        setDataSetRecord(obj,muicat,newdata,dtype,{estname},true); 
-                        obj = EDBimport(obj.DataFormats{2}); %initialise next instance
-                    else
-                        %estuary exists - add data to existing record
-                        classrec = find(strcmp(existest,estname)); 
-                        localObj = muicat.DataSets.(classname)(classrec);
-                        if isfield(localObj.Data,dstname{1})
-                            answer = questdlg(sprintf('%s dataset already exists, Overwrite?',dstname{1}),...
-                                                       'Overwrite','Yes','No','Yes');
-                            if strcmp(answer,'No')
-                                obj = []; close(hw); return; 
-                            end
+                    %cumulative list of files names used to load data
+                    %newdata.(dstname{1}).Source{1} = filename;   
+                    %add file format
+                    %newdata.(dstname{1}).UserData = obj.DataFormats{2};
+
+                    %add estuary as a new case record
+                    %classobj,muicat,dataset,casetype,casedesc,SupressPrompts
+                    dtype = obj.DataFormats{3};
+                    setDataSetRecord(obj,muicat,newdata,dtype,{estname},true); 
+                    obj = EDBimport(obj.DataFormats{2}); %initialise next instance
+                else
+                    %estuary exists - add data to existing record
+                    classrec = find(strcmp(existest,estname)); 
+                    localObj = muicat.DataSets.(classname)(classrec);
+                    if isfield(localObj.Data,dstname{1})
+                        answer = questdlg(sprintf('%s dataset already exists, Overwrite?',dstname{1}),...
+                                                   'Overwrite','Yes','No','Yes');
+                        if strcmp(answer,'No')
+                            obj = []; close(hw); return; 
                         end
-                        localObj.Data.(dstname{1}) = newdata.(dstname{1});
-                        localObj.Data.(dstname{1}).UserData = obj.DataFormats{2};
-                        updateCase(muicat,localObj,classrec,false);
-                    end  
+                    end
+                    localObj.Data.(dstname{1}) = newdata.(dstname{1});
+                    %localObj.Data.(dstname{1}).UserData = obj.DataFormats{2};
+                    updateCase(muicat,localObj,classrec,false);
+                end  
                
                 clear existest newdata estname dstname
                 waitbar(jf/nfiles)
@@ -150,7 +172,14 @@ classdef EDBimport < muiDataSet
         end
     end
 %%
-    methods     
+    methods   
+        function fmt = get.formatypes(obj) %#ok<MANU> 
+            %create look-up table
+            dsetnames = {'SurfaceArea','Width','Grid','Image'};
+            files = {'edb_s_hyps_format';'edb_w_hyps_format';'edb_bathy_format';'edb_image_format'};
+            fmt = table(files,'RowNames',dsetnames);
+        end
+%%
         function delDataset(obj,classrec,~,muicat)
             %delete a dataset
             dst = obj.Data;
@@ -181,7 +210,7 @@ classdef EDBimport < muiDataSet
 
             %format file to call depends on the data type. dynamically
             %update the DataFormat to the user dataset selection
-            obj.DataFormats{2} = obj.Data.(datasetname).UserData;
+            obj.DataFormats{2} = obj.formatypes{datasetname,1}{1};
 
             [var,ok] = callFileFormatFcn(obj,funcname,obj,src,datasetname);
             if ok<1, return; end

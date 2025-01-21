@@ -81,8 +81,8 @@ function newdst = getData(obj,filename,metatxt)
     dims = struct('x',grid.x,'y',grid.y,'t',[]);
                                  
     %assign metadata about data source and save grid
-    meta.source = filename;
-    meta.data = sprintf('%s/nRotate option = %d',metatxt{1},rotate);
+    meta.source{1} = filename;  %can be multiple files in GDinterface
+    meta.data = sprintf('%s (Rotate option = %d)',metatxt,rotate);
     newgrid(1,:,:) = grid.z;
     obj = setGrid(obj,{newgrid},dims,meta);
 
@@ -90,39 +90,6 @@ function newdst = getData(obj,filename,metatxt)
     dst.Description = estname;
     newdst.Grid = dst;  %Grid is the dataset name for this format
 end
-%%
-%--------------------------------------------------------------------------
-% setDSproperties
-%--------------------------------------------------------------------------
-% function dsp = setDSproperties()
-%     %define the metadata properties for the demo data set
-%     dsp = struct('Variables',[],'Row',[],'Dimensions',[]);  
-%     %define each variable to be included in the data table and any
-%     %information about the dimensions. dstable Row and Dimensions can
-%     %accept most data types but the values in each vector must be unique
-%     % *note: these would be better in the gd_property functions so
-%     % *that the defintion is in the same file as the assignment
-%     
-%     %struct entries are cell arrays and can be column or row vectors
-%     dsp.Variables = struct(...
-%                     'Name',{'Z'},...                  
-%                     'Description',{'Elevation'},...
-%                     'Unit',{'mAD'},...
-%                     'Label',{'Elevation (mAD)'},...
-%                     'QCflag',{'model'});   
-%     dsp.Row = struct(...
-%                     'Name',{'Time'},...
-%                     'Description',{'Time'},...
-%                     'Unit',{'y'},...
-%                     'Label',{'Time (yr)'},...
-%                     'Format',{'y'});       
-%     dsp.Dimensions = struct(...    
-%                     'Name',{'X','Y'},...
-%                     'Description',{'X-axis','Y-axis'},...
-%                     'Unit',{'m','m'},...
-%                     'Label',{'X-axis (m)','Y-axis (m)'},...
-%                     'Format',{'',''});   
-% end  
 
 %%
 function grid = formatGridData(data)
@@ -181,12 +148,11 @@ function ok = getPlot(obj,src,dsetname)
 
     %plot form as a contour plot
     contourf(grid.x,grid.y,grid.z');
-    ax = gd_ax_dir(ax,grid.x,grid.y);
-   
-    % colormap('parula')
-   
+    ax = gd_ax_dir(ax,grid.x,grid.y);    
     gd_colormap([min(grid.z,[],'all'),max(grid.z,[],'all')])
     cb = colorbar;
+    lims = clim;
+    clim([lims(1),20])
     cb.Label.String = 'Elevation (mAD)';
     xlabel('Length (m)'); 
     ylabel('Width (m)');    

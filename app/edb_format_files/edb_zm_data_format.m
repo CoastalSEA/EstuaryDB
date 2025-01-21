@@ -153,7 +153,7 @@ function ok = getPlot(obj,src,dsetname)
     %test for a vector data set
     if isvector(dst.(dst.VariableNames{idv(1)}))
         idx = find(strcmp(dst.VariableNames,'xCh')); %index of distance from mouth
-        pmax = EDBimport.vectorplot(ax,dst,props,idv,idx);
+        pmax = vectorplot(ax,dst,props,idv,idx);
 
         %add text box with min max range of variable and length
         boxtxt = sprintf('Length: %.0f m\nMax at LW: %.1e, MT: %.1e, HW: %.1e',pmax.x,pmax.var{:});
@@ -176,4 +176,27 @@ function output = dataQC(ob1j) %#ok<INUSD>
     warndlg('No quality control defined for this format');
     output = [];    %if no QC implemented in dataQC
 end
-
+%%
+function [pmax] = vectorplot(ax,dst,props,idv,idx)
+    %plot selected variable for all locations 
+    %props - array of props, same size as idv to define legend
+    Xvar = dst.(dst.VariableNames{idx});
+    xvar = Xvar/max(Xvar);
+    hold on
+    for i=1:length(idv)
+        var = dst.(dst.VariableNames{idv(i)});
+        pvar = var/max(var);  
+        cname = get_selection_text(props(i),1);
+        pl = plot(ax,xvar,pvar,'DisplayName',cname);
+        pl.ButtonDownFcn = {@godisplay};
+        varmax(i) = max(var); %#ok<AGROW> 
+    end
+    pmax.var = num2cell(varmax);
+    pmax.x = max(Xvar);
+    hold off
+    legend
+    xlabel(sprintf('Normalised %s',dst.VariableLabels{idx}))
+    ylabel(sprintf('Normalised %s',dst.VariableLabels{idv(1)}))
+    title(['Case: ',dst.Description])
+    ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
+end

@@ -30,6 +30,7 @@ classdef EDBimport < GDinterface
 
     properties (Transient)
         formatypes
+        datasetnames
     end
     
     methods 
@@ -59,7 +60,7 @@ classdef EDBimport < GDinterface
             % mobj - handle to modelui instance 
             listxt = {'Surface area','Width','Bathymetry','Image'};
             selection = listdlg('PromptString','Select data type to import:',...
-                'ListString',listxt,'ListSize',[100,100],'SelectionMode','single');
+                'ListString',listxt,'ListSize',[140,100],'SelectionMode','single');
             if isempty(selection), return; end
 
             switch selection
@@ -96,25 +97,15 @@ classdef EDBimport < GDinterface
             %have multiple estuaries (ie locations)            
             for jf=1:nfiles
                 filename = [path fname{jf}];
-                [newdata,ok] = callFileFormatFcn(obj,funcname,obj,filename,metatxt);
+                [newdata,ok] = callFileFormatFcn(obj,funcname,obj,filename,metatxt{1});
                 if ok<1 || isempty(newdata), continue; end
                 dstname = fieldnames(newdata);
                 estname = newdata.(dstname{1}).Description;
-
-                %newdata.(dstname{1}).MetaData = metatxt{1};
-                %newdst is a struct of dstables with estuaryname as the fieldname
-                
                 idx = strcmp(muicat.Catalogue.CaseClass,classname);
                 existest = muicat.Catalogue.CaseDescription(idx);
                 %if the estuary does not exist save as new record                    
                 if isempty(existest) || ...
                                     all(~strcmp(existest,estname))
-
-                    %cumulative list of files names used to load data
-                    %newdata.(dstname{1}).Source{1} = filename;   
-                    %add file format
-                    %newdata.(dstname{1}).UserData = obj.DataFormats{2};
-
                     %add estuary as a new case record
                     %classobj,muicat,dataset,casetype,casedesc,SupressPrompts
                     dtype = obj.DataFormats{3};
@@ -131,8 +122,7 @@ classdef EDBimport < GDinterface
                             obj = []; close(hw); return; 
                         end
                     end
-                    localObj.Data.(dstname{1}) = newdata.(dstname{1});
-                    %localObj.Data.(dstname{1}).UserData = obj.DataFormats{2};
+                    localObj.Data.(dstname{1}) = newdata.(dstname{1}); 
                     updateCase(muicat,localObj,classrec,false);
                 end  
                
@@ -145,40 +135,49 @@ classdef EDBimport < GDinterface
                 getdialog(sprintf('Data loaded in class: %s',classname)); 
             end
         end
-
 %%
-        function [pmax] = vectorplot(ax,dst,props,idv,idx)
-            %plot selected variable for all locations 
-            %props - array of props, same size as idv to define legend
-            Xvar = dst.(dst.VariableNames{idx});
-            xvar = Xvar/max(Xvar);
-            hold on
-            for i=1:length(idv)
-                var = dst.(dst.VariableNames{idv(i)});
-                pvar = var/max(var);  
-                cname = get_selection_text(props(i),1);
-                pl = plot(ax,xvar,pvar,'DisplayName',cname);
-                pl.ButtonDownFcn = {@godisplay};
-                varmax(i) = max(var); %#ok<AGROW> 
+function loadTable(muicat,newdataset)
+            %use bathymetry to create a SurfaceArea or Width table
+            ok = 0;
+            while ok<1
+                promptxt = 'Select case with bathymetry:';
+                [cobj,classrec] = selectCaseObj(muicat,{'data'},{'EDBimport'},promptxt);
+                if isempty(cobj), return; end
+                dsetnames = fieldnames(cobj.Data);
+                if any(contains(dsetnames,'Grid')), ok = 1; end
             end
-            pmax.var = num2cell(varmax);
-            pmax.x = max(Xvar);
-            hold off
-            legend
-            xlabel(sprintf('Normalised %s',dst.VariableLabels{idx}))
-            ylabel(sprintf('Normalised %s',dst.VariableLabels{idv(1)}))
-            title(['Case: ',dst.Description])
-            ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  
+
+            dset2add = cobj.datasetnames{newdataset,1}{1};            
+            %create new table and add to case object
+            if strcmp(dset2add,'SurfaceArea')
+                cobj = edb_surfacearea_table(cobj);
+            elseif strcmp(dset2add,'Width')
+                cobj = edb_width_table(cobj);
+            else
+                errdlg('Should not be here'); return;
+            end
+
+            %write new table to Case record
+            updateCase(muicat,cobj,classrec,true);
         end
     end
 %%
     methods   
         function fmt = get.formatypes(obj) %#ok<MANU> 
-            %create look-up table
+            %create look-up table for file formats from dataset names
             dsetnames = {'SurfaceArea','Width','Grid','Image'};
             files = {'edb_s_hyps_format';'edb_w_hyps_format';'edb_bathy_format';'edb_image_format'};
             fmt = table(files,'RowNames',dsetnames);
         end
+
+%%
+        function dsname = get.datasetnames(obj) %#ok<MANU> 
+            %create look-up table for dataset names from call text
+            calltxt = {'Surface area','Width','Grid','Image'};
+            dsetnames = {'SurfaceArea';'Width';'Grid';'Image'};            
+            dsname = table(dsetnames,'RowNames',calltxt);
+        end
+
 %%
         function delDataset(obj,classrec,~,muicat)
             %delete a dataset
@@ -189,12 +188,16 @@ classdef EDBimport < GDinterface
                 warndlg(sprintf('There is only one dataset in this Case\nTo delete the Case use: Project > Cases > Delete Case'))
                 return
             else
-                datasetname = getDataSetName(obj); %prompts user to select dataset if more than one
+                promptxt = 'Select whihc datasets to delete:';
+                datasets = getDataSetName(obj,promptxt,'multiple'); %prompts user to select dataset if more than one
+                if ischar(datasets), datasets = {datasets}; end
                 %get user to confirm selection
-                checktxt = sprintf('Deleting the following dataset: %s',datasetname);
-                answer = questdlg(checktxt,'Delete','Continue','Quit','Quit');
-                if strcmp(answer,'Quit'), return; end
-                dst = rmfield(dst,datasetname);    %delete selected dstable
+                for i=1:length(datasets)    
+                    checktxt = sprintf('Deleting the following dataset: %s',datasets{i});
+                    answer = questdlg(checktxt,'Delete','Continue','Skip','Skip');
+                    if strcmp(answer,'Skip'), continue; end
+                    dst = rmfield(dst,datasets{i});    %delete selected dstable
+                end
             end
 
             obj.Data = dst;
@@ -210,7 +213,12 @@ classdef EDBimport < GDinterface
 
             %format file to call depends on the data type. dynamically
             %update the DataFormat to the user dataset selection
-            obj.DataFormats{2} = obj.formatypes{datasetname,1}{1};
+            try
+                obj.DataFormats{2} = obj.formatypes{datasetname,1}{1};
+            catch
+                sourcename = extractBefore(datasetname,digitsPattern);
+                obj.DataFormats{2} = obj.formatypes{sourcename,1}{1};
+            end
 
             [var,ok] = callFileFormatFcn(obj,funcname,obj,src,datasetname);
             if ok<1, return; end
@@ -218,6 +226,18 @@ classdef EDBimport < GDinterface
             if var==0  %no plot defined so use muiDataSet default plot
                 tabDefaultPlot(obj,src);
             end
+        end
+
+%%
+        function tabTable(obj,src)
+            %generate table for display on Table tab
+            ht = findobj(src,'-not','Type','uitab'); %clear any existing content
+            delete(ht)
+            datasetname = getDataSetName(obj);
+            dst = obj.Data.(datasetname);
+
+            %generate table
+            table_figure(dst,src)
         end
 
 %%
@@ -246,28 +266,5 @@ classdef EDBimport < GDinterface
             props.dset = datasetname;
             props.desc = vardesc{idv};
         end        
-
- %%
-        function tabTable(obj,src)
-            %generate table for display on Table tab
-            ht = findobj(src,'-not','Type','uitab'); %clear any existing content
-            delete(ht)
-            datasetname = getDataSetName(obj);
-            dst = obj.Data.(datasetname);
-            firstcell = dst.DataTable{1,1};
-            if ~isscalar(firstcell) || (iscell(firstcell) && ~isscalar(firstcell{1}))
-                %not tabular data
-                warndlg('Selected dataset is not tabular')
-                return; 
-            end 
-
-            desc = sprintf('Source:%s\nMeta-data: %s',dst.Source{1},dst.MetaData);
-            tablefigure(src,desc,dst);        
-            src.Units = 'normalized';
-            uicontrol('Parent',src,'Style','text',...
-                       'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
-                       'String',['Case: ',dst.Description],'FontSize',10,...
-                       'HorizontalAlignment','center','Tag','titletxt');
-        end       
     end
 end

@@ -104,7 +104,7 @@ classdef EstuaryDB < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
-                                  'Gridded Data','Input Parameters','Model Constants'};                                                                         
+                                  'Add table from bathymetry','Input Parameters','Model Constants'};                                                                         
             menu.Setup(1).Callback = [{'gcbo;','gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
             menu.Setup(1).Separator = {'off','off','off','on','on'}; %separator preceeds item
@@ -123,18 +123,21 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(5).List = {'Load or Add dataset','Delete dataset'};
             menu.Setup(5).Callback = repmat({@obj.loadMenuOptions},[1,2]);
 
-            menu.Setup(6).List = {'Grid Parameters','Grid Tools'};
-            menu.Setup(6).Callback = [{@obj.loadGridOptions},{'gcbo;'}];
+            menu.Setup(6).List = {'Surface area','Width','Properties'};
+            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,2]);
 
-            menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
+            menu.Setup(7).List = {'Grid Parameters','Grid Tools'};
+            menu.Setup(7).Callback = [{@obj.loadGridOptions},{'gcbo;'}];
+
+            menu.Setup(8).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
                                   'Combine Grids','Add Surface',...
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
                                   'Plot Sections','Digitise Line',...
                                   'Export xyz Grid','User Function'};                                                                          
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,14]);
-            menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
+            menu.Setup(8).Callback = repmat({@obj.gridMenuOptions},[1,14]);
+            menu.Setup(8).Separator = [repmat({'off'},[1,6]),...
                              {'on','off','on','off','off','on','on','on'}];%separator preceeds item
             
             %% Run menu ---------------------------------------------------
@@ -202,11 +205,12 @@ classdef EstuaryDB < muiModelUI
                     tabStats(lobj,src);
                 case 'Table'
                     classname = metaclass(cobj).Name;
-                    if strcmp(classname,'EDBimport')
-
-                    else
-                        tabTable(cobj,src);   
-                    end
+                    tabTable(cobj,src); 
+%                     if strcmp(classname,'EDBimport')
+% 
+%                     else
+%                         tabTable(cobj,src);   
+%                     end
             end
         end      
 %% ------------------------------------------------------------------------
@@ -262,7 +266,13 @@ classdef EstuaryDB < muiModelUI
                 case 'Load or Add dataset'
                     EDBimport.loadData(obj.Cases);
                 case 'Delete dataset'
-                    useCase(obj.Cases,'single',{classname},'delDataset');  
+                    useCase(obj.Cases,'single',{classname},'delDataset'); 
+                case 'Surface area'
+                    EDBimport.loadTable(obj.Cases,src.Text);
+                case 'Width'
+                    EDBimport.loadTable(obj.Cases,src.Text);
+                case 'Properties'
+                    EDBimport.getProperties(obj.Cases,src.Text);
             end
             DrawMap(obj);
         end

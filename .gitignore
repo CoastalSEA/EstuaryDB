@@ -6,6 +6,8 @@ app/Saved plot selections
 app/*.mat
 app/*.xlsx
 app/example/*.xlsx
+app/edb_functions/InsidePoly
+app/edb_functions/m_map1.4
 app/remapppath.m
 app/setapppath.m
 *.asv

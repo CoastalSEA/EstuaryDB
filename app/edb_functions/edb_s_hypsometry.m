@@ -1,12 +1,12 @@
-function hyps = edb_hypsometry(grid,uplimit,histint,isplot)
+function hyps = edb_s_hypsometry(grid,uplimit,histint,isplot)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_hypsometry.m
+%   edb_s_hypsometry.m
 % PURPOSE
 %   compute area hypsometry from grid data
 % USAGE
-%   hyps = edb_hypsometry(grid,uplimit)
+%   hyps = edb_s_hypsometry(grid,uplimit)
 % INPUTS
 %   grid - struct of x,y,z values that define grid 
 %   uplimit - upper limit for determining surface areas

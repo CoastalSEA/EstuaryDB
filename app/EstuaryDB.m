@@ -124,7 +124,7 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(5).Callback = repmat({@obj.loadMenuOptions},[1,2]);
 
             menu.Setup(6).List = {'Surface area','Width','Properties'};
-            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,2]);
+            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
             menu.Setup(7).List = {'Grid Parameters','Grid Tools'};
             menu.Setup(7).Callback = [{@obj.loadGridOptions},{'gcbo;'}];
@@ -272,7 +272,7 @@ classdef EstuaryDB < muiModelUI
                 case 'Width'
                     EDBimport.loadTable(obj.Cases,src.Text);
                 case 'Properties'
-                    EDBimport.getProperties(obj.Cases,src.Text);
+                    EDBimport.loadProperties(obj.Cases);
             end
             DrawMap(obj);
         end

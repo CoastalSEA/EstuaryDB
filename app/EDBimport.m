@@ -136,7 +136,7 @@ classdef EDBimport < GDinterface
             end
         end
 %%
-function loadTable(muicat,newdataset)
+        function loadTable(muicat,newdataset)
             %use bathymetry to create a SurfaceArea or Width table
             ok = 0;
             while ok<1
@@ -160,6 +160,15 @@ function loadTable(muicat,newdataset)
             %write new table to Case record
             updateCase(muicat,cobj,classrec,true);
         end
+
+%%
+        function loadProperties(muicat)
+            %add gross properties dataset from bathymetry or exising
+            %hypsometry dataset
+            dset2add = 'Properties';       
+
+                warndlg('Gross properties not yet implemented')     
+        end
     end
 %%
     methods   
@@ -173,8 +182,8 @@ function loadTable(muicat,newdataset)
 %%
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
-            calltxt = {'Surface area','Width','Grid','Image'};
-            dsetnames = {'SurfaceArea';'Width';'Grid';'Image'};            
+            calltxt = {'Surface area','Width','Grid','Image','Gross properties'};
+            dsetnames = {'SurfaceArea';'Width';'Grid';'Image','Properties'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
 

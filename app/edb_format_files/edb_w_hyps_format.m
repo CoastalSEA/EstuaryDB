@@ -125,7 +125,6 @@ function ok = getPlot(obj,src,dsetname)
     [X,Z] = meshgrid(x,z);
     contourf(ax,X,Z,W')
     colormap('parula')
-    shading interp
     hc = colorbar;
     hc.Label.String = dst.VariableLabels{1};
     xlabel(dst.DimensionLabels{1})

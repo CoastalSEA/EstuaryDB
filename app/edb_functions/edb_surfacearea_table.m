@@ -60,7 +60,7 @@ function obj = edb_surfacearea_table(obj)
     end
 
     %compute the hypsometry
-    hyps = edb_hypsometry(grid,uplimit,histint,false); %logical true generates plot
+    hyps = edb_s_hypsometry(grid,uplimit,histint,false); %logical true generates plot
     %write results to a dstable and update class instance
     dst = dstable(hyps(:,3)','RowNames',{estuaryname},'DSproperties',setDSproperties);
     dst.Dimensions.Z = hyps(:,1);

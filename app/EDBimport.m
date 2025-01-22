@@ -183,7 +183,7 @@ classdef EDBimport < GDinterface
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
             calltxt = {'Surface area','Width','Grid','Image','Gross properties'};
-            dsetnames = {'SurfaceArea';'Width';'Grid';'Image','Properties'};            
+            dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
 

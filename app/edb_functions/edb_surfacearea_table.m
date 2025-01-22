@@ -81,12 +81,12 @@ function grid = applyBoundary(grid,path,filename,isplot)
     [~,shapename,~] = fileparts(filename);
     if istoolbox
         Shp = shaperead([path,shapename]);   %requires Mapping toolbox
-    elseif isfile('m_shaperead')
+    elseif isfile('m_shaperead.m')
         shp = m_shaperead([path,shapename]); %use M-Map function instead
         Shp.X = shp.ncst{1}(:,1); 
         Shp.Y = shp.ncst{1}(:,2);
     else
-        errdlg('Unable to load Shape file\nCheck Mapping toolbox or M-Map is installed'); return;
+        errordlg('Unable to load Shape file\nCheck Mapping toolbox or M-Map is installed'); return;
     end
 
     [xq,yq] = meshgrid(grid.x,grid.y);

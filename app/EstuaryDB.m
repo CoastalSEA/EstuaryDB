@@ -104,10 +104,11 @@ classdef EstuaryDB < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
-                                  'Add table from bathymetry','Input Parameters','Model Constants'};                                                                         
-            menu.Setup(1).Callback = [{'gcbo;','gcbo;','gcbo;'},repmat({@obj.setupMenuOptions},[1,2])];
+                                  'Add table from bathymetry','Grids','Sections',...
+                                  'Input Parameters','Model Constants'};                                                                         
+            menu.Setup(1).Callback = [repmat({'gcbo;'},[1,5]),repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','off','on','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','off','on','off','on','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
@@ -139,6 +140,12 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(8).Callback = repmat({@obj.gridMenuOptions},[1,14]);
             menu.Setup(8).Separator = [repmat({'off'},[1,6]),...
                              {'on','off','on','off','off','on','on','on'}];%separator preceeds item
+
+            menu.Setup(9).List = {'Bounding polygon','Section Tools'};
+            menu.Setup(9).Callback = [{@obj.loadSectionOptions},{'gcbo;'}];
+
+            menu.Setup(10).List = {'Load','Add','Edit','Delete'};
+            menu.Setup(10).Callback = repmat({@obj.loadSectionOptions},[1,4]);
             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};

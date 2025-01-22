@@ -32,7 +32,7 @@ function obj = edb_width_table(obj)
         answer = questdlg('Overwrite existing or Add new table?','EDB table',...
                           'Overwrite','Add','Quit','Add');
         if strcmp(answer,'Quit')
-            return
+            obj = []; return;
         elseif strcmp(answer,'Add')
             nrec = sum(contains(datasetnames,'Width'))+1;
             datasetname = sprintf('Width%d',nrec);

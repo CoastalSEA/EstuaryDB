@@ -29,7 +29,7 @@ function obj = edb_surfacearea_table(obj)
         answer = questdlg('Overwrite existing or Add new table?','EDB table',...
                           'Overwrite','Add','Quit','Add');
         if strcmp(answer,'Quit')
-            return
+            obj = []; return;
         elseif strcmp(answer,'Add')
             nrec = sum(contains(datasetnames,'SurfaceArea'))+1;
             datasetname = sprintf('SurfaceArea%d',nrec);
@@ -40,11 +40,13 @@ function obj = edb_surfacearea_table(obj)
     grid = getGrid(obj);  %bathymetry data
 
     %get the user to define the upper limit to use for the hypsomety
-    uplimit = {num2str(max(grid.z,[],'all')),'0.1'};
-    inp = inputdlg({'Upper limit for hypsometry (mAD):','Vertical interval (m)'},...        
+    uplimit = {num2str(max(grid.z,[],'all')),'0.1','1'};
+    inp = inputdlg({'Upper limit for hypsometry (mAD):',...
+                    'Vertical interval (m)','Check plots (1/0)'},...        
                                                     'EDBhyps',1,uplimit);
     uplimit = str2double(inp{1});
     histint = str2double(inp{2});
+    isplot  = logical(str2double(inp{3}));     %logical true generates plot
 
     %see if bounding polgon is to be applied from a shape file
     estuaryname = obj.Data.Grid.Description;
@@ -53,14 +55,15 @@ function obj = edb_surfacearea_table(obj)
                                                      'FileType','*.shp;');
     if nfile>0  
         %load a shape file and apply bounding polygon
-        grid = applyBoundary(grid,spath,sname,false); %logical true generates plot
+        grid = applyBoundary(grid,spath,sname,isplot);
+        if isempty(grid), obj = []; return; end                 %failed to load shape file
         metatxt = sprintf('Use bathymetry to upper limit of %.2f within polygon defined by %s',uplimit,sname);
     else
         metatxt = sprintf('Use bathymetry to upper limit of %.2f without bounding polygon',uplimit);
     end
 
     %compute the hypsometry
-    hyps = edb_s_hypsometry(grid,uplimit,histint,false); %logical true generates plot
+    hyps = edb_s_hypsometry(grid,uplimit,histint,isplot);
     %write results to a dstable and update class instance
     dst = dstable(hyps(:,3)','RowNames',{estuaryname},'DSproperties',setDSproperties);
     dst.Dimensions.Z = hyps(:,1);
@@ -71,7 +74,7 @@ function obj = edb_surfacearea_table(obj)
 end
 %%
 function grid = applyBoundary(grid,path,filename,isplot)
-    %load a shape file and apply bounding polygon
+    %load a shape file and apply bounding polygon    
     istoolbox = license('test','MAP_Toolbox');   %toolbox is licensed to use
     if istoolbox
         addons = matlab.addons.installedAddons;
@@ -81,27 +84,33 @@ function grid = applyBoundary(grid,path,filename,isplot)
     [~,shapename,~] = fileparts(filename);
     if istoolbox
         Shp = shaperead([path,shapename]);   %requires Mapping toolbox
-    elseif isfile('m_shaperead.m')
+    elseif isfile(which('m_shaperead.m'))    %isfile only works for specified or current path
         shp = m_shaperead([path,shapename]); %use M-Map function instead
-        Shp.X = shp.ncst{1}(:,1); 
-        Shp.Y = shp.ncst{1}(:,2);
+        Shp.X = [shp.ncst{1,1}(:,1);NaN];    %the added NaN fixes a problem when
+        Shp.Y = [shp.ncst{1,1}(:,2);NaN];    %using the polygon in insidepoly
     else
-        errordlg('Unable to load Shape file\nCheck Mapping toolbox or M-Map is installed'); return;
+        grid = [];
+        errordlg('Unable to load Shape file\nCheck Mapping toolbox or M-Map is installed'); 
+        return;
     end
 
     [xq,yq] = meshgrid(grid.x,grid.y);
     %insidepoly is faster but only works reliably with shape files 
     %loaded using shaperead which requires mapping toolbox
-    if istoolbox
+    if isfile(which('insidepoly.m'))
+        [inpoints,onpoints] = insidepoly(xq,yq,Shp.X,Shp.Y);
+    elseif istoolbox
         [inpoints,onpoints] = inpolygon(xq,yq,Shp.X,Shp.Y);
     else
-        [inpoints,onpoints] = insidepoly(xq,yq,Shp.X,Shp.Y);
+        grid = [];
+        errordlg('No function available to find points in polygon\nCheck M-Map or inspolygon is installed'); 
+        return;
     end
 
     inpoints = logical(inpoints+onpoints);
     grid.z(~inpoints') = NaN;
     if isplot
-     checkplot(grid,Shp)
+        checkplot(grid,Shp)
     end
 end
 %%

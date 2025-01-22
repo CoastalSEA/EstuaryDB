@@ -158,7 +158,9 @@ classdef EDBimport < GDinterface
             end
 
             %write new table to Case record
-            updateCase(muicat,cobj,classrec,true);
+            if ~isempty(cobj)
+                updateCase(muicat,cobj,classrec,true);
+            end
         end
 
 %%

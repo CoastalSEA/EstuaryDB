@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Menu Options</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2024-10-11"><meta name="DC.source" content="estdb_menus.m"><style type="text/css">
+      --><title>Menu Options</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-01-24"><meta name="DC.source" content="estdb_menus.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -67,7 +67,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>Menu Options</h1><!--introduction--><p>Summary of the options available for each drop down menu.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">File</a></li><li><a href="#2">Tools</a></li><li><a href="#3">Project</a></li><li><a href="#5">Setup</a></li><li><a href="#6">Run</a></li><li><a href="#7">Analysis</a></li><li><a href="#8">Help</a></li><li><a href="#9">See Also</a></li></ul></div><h2 id="1">File</h2><div><ul><li><b>New</b>: clears any existing model (prompting to save if not already saved) and a popup dialog box prompts for Project name and Date (default is current date).</li><li><b>Open</b>: existing Asmita models are saved as *.mat files. User selects a model from dialog box.</li><li><b>Save</b>: save a file that has already been saved.</li><li><b>Save as</b>: save a file with a new or different name.</li><li><b>Exit</b>: exit the program. The close window button has the same effect.</li></ul></div><h2 id="2">Tools</h2><div><ul><li><b>Refresh</b>: updates Cases tab.</li><li><b>Clear all &gt; Project</b>: deletes the current project, including all Setup data and all Cases.</li><li><b>Clear all &gt; Figures</b>: deletes all results plot figures (useful if a large number of plots have been produced).</li><li><b>Clear all &gt; Cases</b>: deletes all Cases listed on the Cases tab but does not affect the model setup.</li></ul></div><h2 id="3">Project</h2><div><ul><li><b>Project Info</b>: edit the Project name and Date</li><li><b>Cases &gt; Edit Description</b>: user selects a Case to edit the Case description.</li><li><b>Cases &gt; Edit DS properties</b>: initialises the  UI for editing Data Set properties (DSproperties).</li><li><b>Cases &gt; Edit Data Set</b>: initialises the Edit Data UI for editing data sets.</li><li><b>Cases &gt; Save</b>: user selects a data set to be saved from a list box of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet.</li><li><b>Cases &gt; Delete</b>: user selects Case(s) to be deleted from a list box of Cases and results are then deleted (model setup is not changed).</li><li><b>Cases &gt; Reload</b>: user selects a Case to reload as the current parameter settings.</li><li><b>Cases &gt; View settings</b>: user selects a Case to display a table listing the parameters used for the selected Case.</li><li><b>Export/Import &gt; Export</b>: user selects a Case class instance to export as a mat file.</li><li><b>Export/Import &gt; Import</b>: user selects an exported Case class instance (mat file) to be loaded.</li></ul></div><p><b>NB</b>: to export the data from a Case for use in another application (eg text file, Excel, etc), use the <b>Project&gt;Cases&gt;Edit Data Set</b> option to make a selection and then use the &#8216;Copy to Clipboard&#8217; button to paste the selection to the clipboard.</p><h2 id="5">Setup</h2><div><ul><li><b>Import Data</b>: dialogue to import data from a file.</li><li><b>Input Parameters</b>: dialogue to define model input parameters.</li><li><b>Model Constants</b>: a number of constants are used in the model. Generally, the default values are appropriate but these can be adjusted and saved with the project if required.</li></ul></div><h2 id="6">Run</h2><div><ul><li><b>Run Model</b>: runs model, prompts for a Case description, which is added to the listing on the Cases tab.</li><li><b>Derive Output</b>: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.</li></ul></div><h2 id="7">Analysis</h2><div><ul><li><b>Plots</b>: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists,</li><li><b>Statistics</b>: initialiss the Statistics UI to select data and run a range of standard statistical methods.</li></ul></div><h2 id="8">Help</h2><div><ul><li><b>Help</b>: access the online documentation for CoastalTools.</li></ul></div><h2 id="9">See Also</h2><p>The <a href="matlab:xxx_open_manual">manual</a> provides further details of setup and configuration of the model.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+  </style></head><body><div class="content"><h1>Menu Options</h1><!--introduction--><p>Summary of the options available for each drop down menu.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">File</a></li><li><a href="#2">Tools</a></li><li><a href="#3">Project</a></li><li><a href="#5">Setup &gt; Import Table Data</a></li><li><a href="#10">Setup &gt; Add Table from Bathymetry</a></li><li><a href="#12">Setup &gt; Import Spatial Data</a></li><li><a href="#13">Setup &gt; Grids</a></li><li><a href="#14">Setup &gt; Sections</a></li><li><a href="#17">Run</a></li><li><a href="#18">Analysis</a></li><li><a href="#19">Help</a></li><li><a href="#20">See Also</a></li></ul></div><h2 id="1">File</h2><div><ul><li><b>New</b>: clears any existing model (prompting to save if not already saved) and a popup dialog box prompts for Project name and Date (default is current date).</li><li><b>Open</b>: existing Asmita models are saved as *.mat files. User selects a model from dialog box.</li><li><b>Save</b>: save a file that has already been saved.</li><li><b>Save as</b>: save a file with a new or different name.</li><li><b>Exit</b>: exit the program. The close window button has the same effect.</li></ul></div><h2 id="2">Tools</h2><div><ul><li><b>Refresh</b>: updates Cases tab.</li><li><b>Clear all &gt; Project</b>: deletes the current project, including all Setup data and all Cases.</li><li><b>Clear all &gt; Figures</b>: deletes all results plot figures (useful if a large number of plots have been produced).</li><li><b>Clear all &gt; Cases</b>: deletes all Cases listed on the Cases tab but does not affect the model setup.</li></ul></div><h2 id="3">Project</h2><div><ul><li><b>Project Info</b>: edit the Project name and Date</li><li><b>Cases &gt; Edit Description</b>: user selects a Case to edit the Case description.</li><li><b>Cases &gt; Edit DS properties</b>: initialises the  UI for editing Data Set properties (DSproperties).</li><li><b>Cases &gt; Edit Data Set</b>: initialises the Edit Data UI for editing data sets.</li><li><b>Cases &gt; Modify Variable Type</b>: select a variable and modify the data type of that variable. Used mainly to make data categorical or ordinal.</li><li><b>Cases &gt; Save Data Set</b>: user selects a data set to be saved from a list of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet.</li><li><b>Cases &gt; Delete Case</b>: user selects Case(s) to be deleted from a list of Cases and these are deleted (model setup is not changed).</li><li><b>Cases &gt; Reload</b>: user selects a Case to reload as the current parameter settings.</li><li><b>Cases &gt; View settings</b>: user selects a Case to display a table listing the parameters used for the selected Case.</li><li><b>Export/Import &gt; Export Case</b>: user selects a Case class instance to export as a mat file.</li><li><b>Export/Import &gt; Import Case</b>: user selects an exported Case class instance (mat file) to be loaded.</li></ul></div><p><b>NB</b>: to export the data from a Case for use in another application (eg text file, Excel, etc), use the <b>Project&gt;Cases&gt;Edit Data Set</b> option to make a selection and then use the &#8216;Copy to Clipboard&#8217; button to paste the selection to the clipboard.</p><h2 id="5">Setup &gt; Import Table Data</h2><p><b>Load to Table</b> - load tabular scalar data from a text file, Excel spreadsheet, or a mat file containing a table or a dstable.</p><p><b>Add to Table</b></p><div><ul><li><b>Rows</b> - add rows to an existing table (must be same variables)</li><li><b>Variables</b> - add one or more variables to an existing table (must be the same number of rows)</li><li><b>Dataset</b> - add another tabular dataset to the same case record.</li></ul></div><p><b>Delete from Table</b></p><div><ul><li><b>Rows</b> - delete rows from an existing table</li><li><b>Variables</b> - delete one or more variables from an existing table</li><li><b>Dataset</b> - delete a dataset from a case record.</li></ul></div><h2 id="10">Setup &gt; Add Table from Bathymetry</h2><p>Use a loaded bathymetry data set to construct surface area or along-channel width hypsometry datasets. Tese options replicate the data formats tha can be imported using the <b>Import Table Data</b> option.</p><div><ul><li><b>Surface area</b> -- derive the surface area hypsometry from an imported bathymetry (to save space import the grid, run the utility and then delete the grid).</li><li><b>Width</b> - derive the along-channel width hypsometry from an imported bathymetry (to save space import the grid, run the utility and then delete the grid).</li><li><b>Properties</b> - derive gross properties for an estuary. Can use bathymetry, surface area hypsometry table or width hypsometry table.</li></ul></div><h2 id="12">Setup &gt; Import Spatial Data</h2><div><ul><li><b>Load or Add Dataset</b> - load various forms of spatial data, such as bathymetry, surface area hypsometry, along-channel width hypsometry and images. the format to be loaded is defined in a format file (see further details <a href="matlab:doc('estdb_class_fcns')">here</a>.)  and the file name is used to assign either create an estuary Case or add the data as a new dataset to an existing case. If the dataset already exists the user is prompted to either overwrite the existing dataset, or add another dataset of the same type.</li><li><b>Delete Dataset</b> - select an estuary case and the Dataset(s) to be deleted.</li></ul></div><h2 id="13">Setup &gt; Grids</h2><div><ul><li><b>Grid Parameters</b>: dialogue to set dimensions of default grid</li><li><b>Grid Tools &gt; Translate Grid</b>: interactively translate grid x-y coordinates;</li><li><b>Grid Tools &gt; Rotate Grid</b>: interactively flip or rotate grid;</li><li><b>Grid Tools &gt; Re-Grid</b>: regrid a gridded dataset to match another grid or to user specified dimensions;</li><li><b>Grid Tools &gt; Sub-Grid</b>: interactively define a subgrid and save grid as a new Case;</li><li><b>Grid Tools &gt; Combine Grids</b>: superimpose one grid on another based on maximum or minimum set of values;</li><li><b>Grid Tools &gt; Add Surface</b>: add horizontal surface to an extisting grid;</li><li><b>Grid Tools &gt; To curvilinear</b>: map grid from cartesian to curvilinear coordinates;</li><li><b>Grid Tools &gt; From curvilinear</b>: map grid from curvilinear to cartesian coordinates;</li><li><b>Grid Tools &gt; Display Dimensions</b>: display a table with the dimensions of a selected grid;</li><li><b>Grid Tools &gt; Difference Plot</b>: generate a plot of the difference between two grids;</li><li><b>Grid Tools &gt; Plot Sections</b>: interactively define sections and plot them on a figure;</li><li><b>Grid Tools &gt; Digitise Line</b>: interactively digitise a line (with option to add z values) using selected grid as base map;</li><li><b>Grid Tools &gt; Export xyz Grid</b>: select a Case and export grid as xyz tuples;</li></ul></div><h2 id="14">Setup &gt; Sections</h2><p><b>Shoreline</b> - Load or create a polygon, or set of lines, that define the shoreline. This is used to determine the extent of the section lines. Consequently it does not have to be be an exact, or detailed, representation of the actual shoreline but should be positioned at an elevation that captures the desired range for the hypsometry. For example to examine future change this might be close to the contour for Highest Tide + 1m to account for surge or sea level rise.</p><p><b>Section Tools</b> - Load or create a set of sections across the estuary. These are used in conjunction with the bathymetry to create a table for  the along-channel width hypsometry (see <b>Add Table from Bathymetry &gt; Width</b>)</p><div><ul><li><b>Load</b> - load a shapefile with the sections to be used.</li><li><b>Add</b> - interactively define the sections to be used.</li><li><b>Edit</b> - interactively edit the end points of an existing set of Sections.</li><li><b>Delete</b> - select sections to be deleted, or delete all of them.</li></ul></div><h2 id="17">Run</h2><div><ul><li><b>Run Model</b>: runs model, prompts for a Case description, which is added to the listing on the Cases tab.</li><li><b>Derive Output</b>: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.</li></ul></div><h2 id="18">Analysis</h2><div><ul><li><b>Plots</b>: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists,</li><li><b>Statistics</b>: initialiss the Statistics UI to select data and run a range of standard statistical methods.</li></ul></div><h2 id="19">Help</h2><div><ul><li><b>Help</b>: access the online documentation for EstuaryDB.</li></ul></div><h2 id="20">See Also</h2><p>The <a href="matlab:estdb_open_manual">manual</a> provides further details of setup and configuration of the model.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Menu Options
 % Summary of the options available for each drop down menu.
@@ -90,22 +90,104 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % * *Cases > Edit Description*: user selects a Case to edit the Case description.
 % * *Cases > Edit DS properties*: initialises the  UI for editing Data Set properties (DSproperties).
 % * *Cases > Edit Data Set*: initialises the Edit Data UI for editing data sets.
-% * *Cases > Save*: user selects a data set to be saved from a list box of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet. 
-% * *Cases > Delete*: user selects Case(s) to be deleted from a list box of Cases and results are then deleted (model setup is not changed).
+% * *Cases > Modify Variable Type*: select a variable and modify the data type of that variable. Used mainly to make data categorical or ordinal.
+% * *Cases > Save Data Set*: user selects a data set to be saved from a list of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet. 
+% * *Cases > Delete Case*: user selects Case(s) to be deleted from a list of Cases and these are deleted (model setup is not changed).
 % * *Cases > Reload*: user selects a Case to reload as the current parameter settings.
 % * *Cases > View settings*: user selects a Case to display a table listing the parameters used for the selected Case. 
-% * *Export/Import > Export*: user selects a Case class instance to export as a mat file.
-% * *Export/Import > Import*: user selects an exported Case class instance (mat file) to be loaded.
+% * *Export/Import > Export Case*: user selects a Case class instance to export as a mat file.
+% * *Export/Import > Import Case*: user selects an exported Case class instance (mat file) to be loaded.
 %%
 % *NB*: to export the data from a Case for use in another application 
 % (eg text file, Excel, etc), use the *Project>Cases>Edit Data Set* option 
 % to make a selection and then use the ‘Copy to Clipboard’ button to paste 
 % the selection to the clipboard.
 
-%% Setup
-% * *Import Data*: dialogue to import data from a file.
-% * *Input Parameters*: dialogue to define model input parameters.
-% * *Model Constants*: a number of constants are used in the model. Generally, the default values are appropriate but these can be adjusted and saved with the project if required.
+%% Setup > Import Table Data
+% *Load to Table* - load tabular scalar data from a text file, Excel spreadsheet, 
+% or a mat file containing a table or a dstable.
+%%
+% *Add to Table*
+%%
+% * *Rows* - add rows to an existing table (must be same variables)
+% * *Variables* - add one or more variables to an existing table (must be the same
+% number of rows)
+% * *Dataset* - add another tabular dataset to the same case record.
+%%
+% *Delete from Table*
+%%
+% * *Rows* - delete rows from an existing table
+% * *Variables* - delete one or more variables from an existing table
+% * *Dataset* - delete a dataset from a case record.
+
+%% Setup > Add Table from Bathymetry
+% Use a loaded bathymetry data set to construct surface area or
+% along-channel width hypsometry datasets. Tese options replicate the data
+% formats tha can be imported using the *Import Table Data* option.
+%%
+% * *Surface area* REPLACE_WITH_DASH_DASH derive the surface area hypsometry from an imported
+% bathymetry (to save space import the grid, run the utility and then delete
+% the grid).
+% * *Width* - derive the along-channel width hypsometry from an imported
+% bathymetry (to save space import the grid, run the utility and then delete
+% the grid).
+% * *Properties* - derive gross properties for an estuary. Can use
+% bathymetry, surface area hypsometry table or width hypsometry table.
+
+%% Setup > Import Spatial Data
+% * *Load or Add Dataset* - load various forms of spatial data, such as
+% bathymetry, surface area hypsometry, along-channel width hypsometry and
+% images. the format to be loaded is defined in a format file (see further details <matlab:doc('estdb_class_fcns') here>.)
+%  and the file name is used to assign either create an estuary Case or add the data as
+% a new dataset to an existing case. If the dataset already exists the user
+% is prompted to either overwrite the existing dataset, or add another dataset 
+% of the same type.
+% * *Delete Dataset* - select an estuary case and the Dataset(s) to be
+% deleted.
+
+%% Setup > Grids
+% * *Grid Parameters*: dialogue to set dimensions of default grid
+% * *Grid Tools > Translate Grid*: interactively translate grid x-y
+% coordinates;
+% * *Grid Tools > Rotate Grid*: interactively flip or rotate grid;   
+% * *Grid Tools > Re-Grid*: regrid a gridded dataset to match another grid or to user
+% specified dimensions;
+% * *Grid Tools > Sub-Grid*: interactively define a subgrid and save grid as a new Case;               
+% * *Grid Tools > Combine Grids*: superimpose one grid on another based on maximum
+% or minimum set of values;
+% * *Grid Tools > Add Surface*: add horizontal surface to an extisting
+% grid;
+% * *Grid Tools > To curvilinear*: map grid from cartesian to curvilinear coordinates; 
+% * *Grid Tools > From curvilinear*: map grid from curvilinear to cartesian
+% coordinates;
+% * *Grid Tools > Display Dimensions*: display a table with the dimensions
+% of a selected grid;
+% * *Grid Tools > Difference Plot*: generate a plot of the difference
+% between two grids;
+% * *Grid Tools > Plot Sections*: interactively define sections and plot
+% them on a figure;
+% * *Grid Tools > Digitise Line*: interactively digitise a line (with
+% option to add z values) using selected grid as base map;
+% * *Grid Tools > Export xyz Grid*: select a Case and export grid as xyz
+% tuples;
+
+%% Setup > Sections
+% *Shoreline* - Load or create a polygon, or set of lines, that define the
+% shoreline. This is used to determine the extent of the section lines.
+% Consequently it does not have to be be an exact, or detailed, representation of the actual
+% shoreline but should be positioned at an elevation that captures the 
+% desired range for the hypsometry. For example to examine future change
+% this might be close to the contour for Highest Tide + 1m to account for
+% surge or sea level rise.
+%%
+% *Section Tools* - Load or create a set of sections across the estuary.
+% These are used in conjunction with the bathymetry to create a table for
+%  the along-channel width hypsometry (see *Add Table from Bathymetry > Width*)
+%%
+% * *Load* - load a shapefile with the sections to be used.
+% * *Add* - interactively define the sections to be used.
+% * *Edit* - interactively edit the end points of an existing set of Sections.
+% * *Delete* - select sections to be deleted, or delete all of them.
 
 %% Run
 % * *Run Model*: runs model, prompts for a Case description, which is added to the listing on the Cases tab.
@@ -116,10 +198,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % * *Statistics*: initialiss the Statistics UI to select data and run a range of standard statistical methods.
 
 %% Help
-% * *Help*: access the online documentation for CoastalTools.
+% * *Help*: access the online documentation for EstuaryDB.
 
 %% See Also
-% The <matlab:xxx_open_manual manual> provides further details of setup and 
+% The <matlab:estdb_open_manual manual> provides further details of setup and 
 % configuration of the model.
 ##### SOURCE END #####
 --></body></html>

@@ -8,6 +8,8 @@ app/*.xlsx
 app/example/*.xlsx
 app/edb_functions/InsidePoly
 app/edb_functions/m_map1.4
+app/view_help.m
 app/remapppath.m
 app/setapppath.m
 *.asv
+dir.txt

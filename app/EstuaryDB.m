@@ -104,7 +104,7 @@ classdef EstuaryDB < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
-                                  'Add table from bathymetry','Grids','Sections',...
+                                  'Add Table from Bathymetry','Grids','Sections',...
                                   'Input Parameters','Model Constants'};                                                                         
             menu.Setup(1).Callback = [repmat({'gcbo;'},[1,5]),repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
@@ -127,8 +127,8 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(6).List = {'Surface area','Width','Properties'};
             menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
-            menu.Setup(7).List = {'Grid Parameters','Grid Tools'};
-            menu.Setup(7).Callback = [{@obj.loadGridOptions},{'gcbo;'}];
+            menu.Setup(7).List = {'Grid Tools','Grid Parameters'};
+            menu.Setup(7).Callback = [{'gcbo;'},{@obj.loadGridOptions}];
 
             menu.Setup(8).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
@@ -199,7 +199,7 @@ classdef EstuaryDB < muiModelUI
                 'EDBparameters','Inputs',[0.90,0.48],{180,60},'Input parameters:'};
         end    
  %%
-        function setTabAction(~,src,cobj)
+        function setTabAction(obj,src,cobj)
             %function required by muiModelUI and sets action for selected
             %tab (src)
             msg = 'No results to display';
@@ -284,18 +284,18 @@ classdef EstuaryDB < muiModelUI
             DrawMap(obj);
         end
 %%
-        function loadGridOptions(obj,src,~)
-            %callback functions to import data
-            classname = 'EDB_GridImport';
+        function loadSectionOptions(obj,src,~)
+            %callback functions to import or create sections
+            classname = 'EDBimport';
             switch src.Text
                 case 'Load'
                     fname = sprintf('%s.loadData',classname);
                     callStaticFunction(obj,classname,fname); 
                 case 'Add'
                     useCase(obj.Cases,'single',{classname},'addData');
-                case 'Delete'
+                case 'Edit'
                     useCase(obj.Cases,'single',{classname},'deleteGrid');
-                case 'Grid Parameters'
+                case 'Delete'
                     GD_GridProps.setInput(obj);  
             end
             DrawMap(obj);

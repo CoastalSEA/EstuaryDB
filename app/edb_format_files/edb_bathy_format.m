@@ -123,12 +123,11 @@ function zdata = setDataRange(zdata)
     minz = num2str(min(zdata));
     maxz = num2str(max(zdata));
     defaults = {minz,maxz};
-    promptxt = {'Minimum z value','Maximum z value'};
+    promptxt = {'Maximum z value','Minimum z value'};
     answer = inputdlg(promptxt,'Data range',1,defaults);
     if isempty(answer), return; end %user cancelled, limits unchanged
-    
-    minz = str2double(answer{1});
-    maxz = str2double(answer{2});
+    maxz = str2double(answer{1});
+    minz = str2double(answer{2});    
     zdata(zdata<minz) = NaN;
     zdata(zdata>maxz) = NaN;
 end

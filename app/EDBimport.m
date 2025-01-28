@@ -25,7 +25,6 @@ classdef EDBimport < GDinterface
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
-        %formatypes
     end
 
     properties (Transient)
@@ -159,7 +158,7 @@ classdef EDBimport < GDinterface
 
             %write new table to Case record
             if ~isempty(cobj)
-                updateCase(muicat,cobj,classrec,true);
+               updateCase(muicat,cobj,classrec,true);
             end
         end
 

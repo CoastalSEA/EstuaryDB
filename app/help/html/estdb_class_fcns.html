@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>EstuaryDB Classes and Functions</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-01-20"><meta name="DC.source" content="estdb_class_fcns.m"><style type="text/css">
+      --><title>EstuaryDB Classes and Functions</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-01-28"><meta name="DC.source" content="estdb_class_fcns.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -67,35 +67,43 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>EstuaryDB Classes and Functions</h1><!--introduction--><p>The EstuaryDB App is built using the <a href="matlab:doc('muitoolbox')">muitoolbox</a> and a number of model specific classes.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">EstuaryDB classes</a></li><li><a href="#2">EstuaryDB functions</a></li><li><a href="#4">Grid Classes</a></li><li><a href="#6">Grid Functions</a></li><li><a href="#9">See Also</a></li></ul></div><h2 id="1">EstuaryDB classes</h2><div><ul><li><b>EstuaryDB</b>: defines the behaviour of the main UI.</li><li><b>MS_RunParams</b>: UI to set pareameters used for the skill score calculation.</li></ul></div><h2 id="2">EstuaryDB functions</h2><p>Functions to analyse univariate timeseries, or gridded data, using a Taylor diagram, skill score and network analysis, along with toold to analyse the gross properties (volume, area, width, etc) of inlets or channels</p><div><ul><li><b>example/demo_format</b> &#8211; used to set up import format and metadata description of timeseries variables.</li><li><b>getTaylorPlot</b> - calls the taylor_plot function with either gridded or timeseries data.</li><li><b>getInletTools</b> - tools to extract and plot morphological properties of inlets and channels.</li><li><b>getUserTools</b> - user functions to do additional analysis on data loaded in EstuaryDB.</li><li><b>ms_userfunction</b> - user function called from Inlet Tools menu. Example code compares different ways of computing basin tidal prism.</li><li><b>network_count</b> - extract channels from a bathymetry and perform some network analysis.</li></ul></div><h2 id="4">Grid Classes</h2><p>Classes used to manipulate cartesian grids can be found in the <i>muiAppGridFcns</i> folder and include the following:</p><div><ul><li><b>GD_GridProps</b>: class inherits <a href="matlab:doc('muipropertyui')">muiPropertyUI</a> abstract class, providing an interface to define the extent and intervals of a cartesian grid.</li><li><b>FGDinterface</b>: an abstract class to support classes that need additional functionality to handle grids. The class inherits <b>GDinterface</b>, which in turn inherits <a href="matlab:doc('muidataset')">muiDataSet</a> to provide an extensive set of methods to handle datasets of various types (eg from models or imported files).</li><li><b>GD_ImportData</b>: class inherits <a href="matlab:doc('fgdinterface')">FGDinterface</a> abstract class (see above) to load xyz data from a file.</li></ul></div><h2 id="6">Grid Functions</h2><p>Functions used to manipulate cartesian grids can be found in the <i>muiAppGridFcns</i> folder and include the following:</p><div><ul><li><b>gd_ax_dir</b> - check direction of grid axes and reverse if descending, OR find grid orientation using ishead and direction of x-axis, OR check a grid axis direction by prompting user.</li><li><b>gd_basin_hypsometry</b> - compute area and volume hypsometry from gridded elevation data.</li><li><b>gd_basin_indices</b> - get the indices of the grid x-axis that fall within the basin or channel, when the mouth is offset from the grid origin. (NB: assumes basin/channel is aligned iwth the x-axis). Also returns the index of mouth position on the x-axis.</li><li><b>gd_basin_properties</b> - use the basin hypsometry from gd_basin_hypsometry to compute several along-channel/x-axis morphological properties.</li><li><b>gd_colormap</b> - check if Mapping toolbox is installed to use land/sea colormap, or call <i>cmap_selection</i> (see <a href="matlab:doc('psfunctions')">Plotting and statistical functions</a> in the <a href="matlab:doc('muitoolbox')">muitoolbox</a>) if not available.</li><li><b>gd_digitisepoints</b> - creates figure to interactively digitise points on a grid and add elevations if required.</li><li><b>gd_dimensions</b> - get the grid dimsnions for a grid struct (as used in GDinterface).</li><li><b>gd_grid_line</b> - create a grid from scattered data points input as xyz tuples.</li><li><b>gd_gross_properties</b> - compute the gross properties of a gridded bathymetry.</li><li><b>gd_plan_form</b> - compute planform variation along the x-axis at specified planar levels.</li><li><b>gd_plotgrid</b> - create pcolor plot of gridded surface.</li><li><b>gd_plotsections</b> - display grid and allow user to interactively define start and end points of a section line to be plotted in a figure.</li><li><b>gd_property_plots</b> - plots displayed on Proprety tab or stand-alone figure in Apps that use GDinterface, such as ChannelForm and ModelSkill.</li><li><b>gd_section_properties</b> - compute the width, cross-sectional area and prism along channel.</li><li><b>gd_selectpoints</b> - accept figure to interactively select one or more points on a grid.</li><li><b>gd_setpoint</b> - interactively select a point on a plot and return the point coordinates. Includes an option to enter an additional value at the selected point (e.g. for elevation).</li><li><b>gd_startendpoints</b> - accept figure to interactively select start and end points on a grid.</li><li><b>gd_subdomain</b> - accept figure to interactively select a subdomain of a grid.</li><li><b>gd_property_plots</b> - plots displayed on Proprety tab in ChannelForm model and on a figure in ModelSkill.</li><li><b>gd_xy2sn</b> - map grid from cartesian to curvilinear coordinates with option to return the elevations on the source cartesian grid, or as a curvilinear grid.</li><li><b>gd_sn2xy</b> - map grid from curvilinear to cartesian coordinates.</li><li><b>getconvergencelength</b> - least squares fit using fminsearch to % find the convergence length of a channel from a distance-width xy data set.</li><li><b>getsubgrid</b> - extract a subdomain from a grid and return the extracted grid and the source grid indices of the bounding rectangle.</li><li><b>a_star</b> - implements the A* search algorithm to find the shortest path given constraints (inaccessible cells) and a cost function (e.g. water depths). Author: Alex Ranaldi, 2022, <a href="https://github.com/alexranaldi/A_STAR">https://github.com/alexranaldi/A_STAR</a></li><li><b>InterX</b> - intersection of two curves. MATLAB Central File Exchange, Author: NS, 2010, <a href="https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections">https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections</a>.</li><li><b>xy2sn</b> - Bart Vermeulen,2022, Cartesian to Curvilinear   coordinate forward and backward transformation.   <a href="https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation">https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation</a></li><li><b>sn2xy</b> - as above.</li></ul></div><p>Further details can be found in <a href="matlab:doc('grid_class_fcns')">Grid classes and functions</a></p><h2 id="9">See Also</h2><p>The EstuaryDB <a href="matlab:ms_open_manual">manual</a>, which provides further details of setup and configuration of the model.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+  </style></head><body><div class="content"><h1>EstuaryDB Classes and Functions</h1><!--introduction--><p>The EstuaryDB App is built using the <a href="matlab:doc('muitoolbox')">muitoolbox</a> and a number of model specific classes.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">EstuaryDB classes</a></li><li><a href="#2">EstuaryDB functions</a></li><li><a href="#4">EstuaryDB format files</a></li><li><a href="#5">Grid Classes</a></li><li><a href="#7">Grid Functions</a></li><li><a href="#14">See Also</a></li></ul></div><h2 id="1">EstuaryDB classes</h2><div><ul><li><b>EstuaryDB</b> - defines the behaviour of the main UI.</li><li><b>EDB_Parameters</b> - manages input of model parameters</li><li><b>EDB_Probe</b> - handles additional analysis of the data</li><li><b>EDB_ProbeUI</b> - user interface for additional analysis of the data</li></ul></div><h2 id="2">EstuaryDB functions</h2><p>Functions to analyse the gross properties (volume, area, width, etc) of inlets or channels</p><div><ul><li><b>edb_derived_props</b> - derive additional properties and add them to the gross properties table.</li><li><b>edb_regression_analysis</b> - estimate the exponential convergence rate.</li><li><b>edb_regression_plot</b> - generate a regression plot for Width , CSA, and Hydraulic depth along-channel properties.</li><li><b>edb_surfacearea_table</b> - compile the surface area hyspometry dataset</li><li><b>edb_s_hypsometry</b> - compute the surface area hypsometry data</li><li><b>edb_user_plots</b> - suite of functions to plot the data</li><li><b>edb_user_tools</b> - suite of functions to analyse the data</li><li><b>edb_width_table</b> -  compile the width hyspometry dataset</li><li><b>edb_w_hypsometry</b> - compute the width hypsometry data</li><li><b>geyer_mccready_plot</b> - generate a plot to compare the fluvial/tidal properties of estuaries and hence the degree of mixing.</li></ul></div><h2 id="4">EstuaryDB format files</h2><div><ul><li><b>edb_bathy_format</b> - defines format for import of xyz bathymetry data.</li><li><b>edb_image_format</b> - defines format for import of images (eg tiff or jpg).</li><li><b>edb_s_hyps_format</b> - defines format for import of surface area hypsometry data ([z,S]).</li><li><b>edb_w_hyps_format</b> - defines format for import of along-channel width hypsometry data ([x,z,W]).</li></ul></div><h2 id="5">Grid Classes</h2><p>Classes used to manipulate cartesian grids can be found in the <i>muiAppGridFcns</i> folder and include the following:</p><div><ul><li><b>GD_GridProps</b>: class inherits <a href="matlab:doc('muipropertyui')">muiPropertyUI</a> abstract class, providing an interface to define the extent and intervals of a cartesian grid.</li><li><b>GDinterface</b>: an abstract class to support classes that need additional functionality to handle grids. The class inherits <b>GDinterface</b>, which in turn inherits <a href="matlab:doc('muidataset')">muiDataSet</a> to provide an extensive set of methods to handle datasets of various types (eg from models or imported files).</li><li><b>GD_ImportData</b>: class inherits <a href="matlab:doc('gdinterface')">GDinterface</a> abstract class (see above) to load xyz data from a file.</li></ul></div><h2 id="7">Grid Functions</h2><p>Functions used to manipulate cartesian grids can be found in the <i>muiAppGridFcns</i> folder and include the following:</p><div><ul><li><b>gd_ax_dir</b> - check direction of grid axes and reverse if descending, OR find grid orientation using ishead and direction of x-axis, OR check a grid axis direction by prompting user.</li><li><b>gd_centreline.m</b> - create a centreline of a channel using function <i>a_star</i> to trace the shortest path between start and end points whilst finding the deepest points (i.e. a thalweg).</li><li><b>gd_colormap</b> - check if Mapping toolbox is installed to use land/sea colormap, or call <i>cmap_selection</i> if not available (see <a href="matlab:doc('psfunctions')">Plotting and statistical functions</a> in the <a href="matlab:doc('muitoolbox')">muitoolbox</a>).</li><li><b>gd_convergencelength</b> - least squares fit using fminsearch to % find the convergence length of a channel from a distance-width xy data set.</li><li><b>gd_digitisepoints</b> - creates figure to interactively digitise points on a grid and add elevations if required.</li><li><b>gd_dimensions</b> - get the grid dimsnions for a grid struct (as used in GDinterface).</li><li><b>gd_getpoint.m</b> - interactively select a point on a plot and return the point coordinates.</li><li><b>gd_grid_line</b> - create a grid from scattered data points input as xyz tuples.</li><li><b>gd_plotgrid</b> - create pcolor plot of gridded surface.</li><li><b>gd_plotsections</b> - display grid and allow user to interactively define start and end points of a section line to be plotted in a figure.</li><li><b>gd_pnt2vec.m</b> - convert an array of structs with x,y (and z) fields to a [Nx2] or [Nx3] array of points, or a single stuct with vectors for the x, y (and z) fields.</li><li><b>gd_readshapefile.m</b> - read the x and y coordinates from a shape file. Lines are concatenated and separated by NaNs in single x and y vectors. Suitable for reading boundaries or sections into a single array.</li><li><b>gd_selectpoints</b> - accept figure to interactively create a specified number of x,y points on a grid.</li><li><b>gd_setpoint</b> - interactively select a single point on a plot and return the point coordinates. Includes an option to enter an additional value at the selected point (e.g. for elevation).</li><li><b>gd_setpoints.m</b> - interactively create a set of points on a plot and return the point coordinates. Includes an option to enter an additional value at the selected points (e.g. elevation).</li><li><b>gd_startendpoints</b> - accept figure to interactively select start and end points on a grid.</li><li><b>gd_subdomain</b> - accept figure to interactively select a subdomain of a grid.</li><li><b>gd_subgrid</b> - extract a subdomain from a grid and return the extracted grid and the source grid indices of the bounding rectangle.</li><li><b>gd_xy2sn</b> - map grid from cartesian to curvilinear coordinates with option to return the elevations on the source cartesian grid, or as a curvilinear grid.</li><li><b>gd_sn2xy</b> - map grid from curvilinear to cartesian coordinates.</li></ul></div><p><b>Additional utility functions</b></p><div><ul><li><b>gd_lineongrid_plot</b> - plots a defined line onto a countour or surface plot of a grid (e.g a   channel centre-line).</li><li><b>gd_user_function</b> - function for user to define bespoke use of grids and grid tools.</li></ul></div><p><b>Functions from Matlab&#8482; Exchange Forum</b></p><div><ul><li><b>a_star</b> - implements the A* search algorithm to find the shortest path given constraints (inaccessible cells) and a cost function (e.g. water depths). Author: Alex Ranaldi, 2022, <a href="https://github.com/alexranaldi/A_STAR">https://github.com/alexranaldi/A_STAR</a></li><li><b>InterX</b> - intersection of two curves. MATLAB Central File Exchange, Author: NS, 2010, <a href="https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections">https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections</a>.</li><li><b>xy2sn</b> - Bart Vermeulen,2022, Cartesian to Curvilinear   coordinate forward and backward transformation.   <a href="https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation">https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation</a></li><li><b>sn2xy</b> - as above.</li></ul></div><p>Further details can be found in <a href="matlab:doc('grid_class_fcns')">Grid classes and functions</a></p><h2 id="14">See Also</h2><p>The EstuaryDB <a href="matlab:ms_open_manual">manual</a>, which provides further details of setup and configuration of the model.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% EstuaryDB Classes and Functions
 % The EstuaryDB App is built using the <matlab:doc('muitoolbox') muitoolbox>
 % and a number of model specific classes.
 
 %% EstuaryDB classes
-% * *EstuaryDB*: defines the behaviour of the main UI.
-% * *MS_RunParams*: UI to set pareameters used for the skill score
-% calculation.
+% * *EstuaryDB* - defines the behaviour of the main UI.
+% * *EDB_Parameters* - manages input of model parameters
+% * *EDB_Probe* - handles additional analysis of the data
+% * *EDB_ProbeUI* - user interface for additional analysis of the data
 
 %% EstuaryDB functions
-% Functions to analyse univariate timeseries, or gridded data, using a Taylor diagram, 
-% skill score and network analysis, along with toold to analyse the gross 
-% properties (volume, area, width, etc) of inlets or channels 
+% Functions to analyse the gross properties (volume, area, width, etc) of inlets or channels 
 %%
-% * *example/demo_format*
-% – used to set up import format and metadata description of timeseries variables. 
-% * *getTaylorPlot* 
-% - calls the taylor_plot function with either gridded or timeseries data.
-% * *getInletTools* 
-% - tools to extract and plot morphological properties of inlets and channels.
-% * *getUserTools* 
-% - user functions to do additional analysis on data loaded in EstuaryDB. 
-% * *ms_userfunction*
-% - user function called from Inlet Tools menu. Example code compares
-% different ways of computing basin tidal prism.
-% * *network_count*
-% - extract channels from a bathymetry and perform some network analysis.
+% * *edb_derived_props* - derive additional properties and add them to the
+% gross properties table.
+% * *edb_regression_analysis* - estimate the exponential convergence rate.
+% * *edb_regression_plot* - generate a regression plot for Width , CSA, and
+% Hydraulic depth along-channel properties.
+% * *edb_surfacearea_table* - compile the surface area hyspometry dataset
+% * *edb_s_hypsometry* - compute the surface area hypsometry data
+% * *edb_user_plots* - suite of functions to plot the data
+% * *edb_user_tools* - suite of functions to analyse the data
+% * *edb_width_table* -  compile the width hyspometry dataset
+% * *edb_w_hypsometry* - compute the width hypsometry data
+% * *geyer_mccready_plot* - generate a plot to compare the fluvial/tidal
+% properties of estuaries and hence the degree of mixing.
+
+
+%% EstuaryDB format files
+% * *edb_bathy_format* - defines format for import of xyz bathymetry data.
+% * *edb_image_format* - defines format for import of images (eg tiff or jpg).
+% * *edb_s_hyps_format* - defines format for import of surface area
+% hypsometry data ([z,S]).
+% * *edb_w_hyps_format* - defines format for import of along-channel width
+% hypsometry data ([x,z,W]).
 
 %% Grid Classes
 % Classes used to manipulate cartesian grids can be found in the
@@ -104,12 +112,12 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % * *GD_GridProps*: class inherits <matlab:doc('muipropertyui') muiPropertyUI> 
 % abstract class, providing an interface to define the extent and intervals
 % of a cartesian grid. 
-% * *FGDinterface*: an abstract class to support classes that need additional
+% * *GDinterface*: an abstract class to support classes that need additional
 % functionality to handle grids. The class inherits *GDinterface*, which
 % in turn inherits <matlab:doc('muidataset') muiDataSet> 
 % to provide an extensive set of methods to handle datasets
 % of various types (eg from models or imported files). 
-% * *GD_ImportData*: class inherits <matlab:doc('fgdinterface') FGDinterface> abstract class (see above)
+% * *GD_ImportData*: class inherits <matlab:doc('gdinterface') GDinterface> abstract class (see above)
 % to load xyz data from a file.
 
 %% Grid Functions
@@ -120,65 +128,76 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % - check direction of grid axes and reverse if descending, OR
 % find grid orientation using ishead and direction of x-axis, OR
 % check a grid axis direction by prompting user.
-% * *gd_basin_hypsometry*
-% - compute area and volume hypsometry from gridded elevation data.
-% * *gd_basin_indices*
-% - get the indices of the grid x-axis that fall within the basin or channel,
-% when the mouth is offset from the grid origin. (NB: assumes basin/channel
-% is aligned iwth the x-axis). Also returns the index of mouth position on 
-% the x-axis.
-% * *gd_basin_properties*
-% - use the basin hypsometry from gd_basin_hypsometry to compute several 
-% along-channel/x-axis morphological properties.
+% * *gd_centreline.m*
+% - create a centreline of a channel using function _a_star_ to trace the
+% shortest path between start and end points whilst finding the deepest
+% points (i.e. a thalweg).
 % * *gd_colormap*
 % - check if Mapping toolbox is installed to use land/sea colormap, or call
-% _cmap_selection_ (see <matlab:doc('psfunctions') Plotting and statistical functions> 
-% in the <matlab:doc('muitoolbox') muitoolbox>) if not available.
+% _cmap_selection_ if not available (see <matlab:doc('psfunctions') Plotting and statistical functions> 
+% in the <matlab:doc('muitoolbox') muitoolbox>).
+% * *gd_convergencelength* 
+% - least squares fit using fminsearch to % find the convergence length of 
+% a channel from a distance-width xy data set.
 % * *gd_digitisepoints*
 % - creates figure to interactively digitise points on a grid and add
 % elevations if required.
 % * *gd_dimensions*
 % - get the grid dimsnions for a grid struct (as used in GDinterface).
+% * *gd_getpoint.m*
+% - interactively select a point on a plot and return the point
+% coordinates.
 % * *gd_grid_line*
 % - create a grid from scattered data points input as xyz tuples.
-% * *gd_gross_properties*
-% - compute the gross properties of a gridded bathymetry.
-% * *gd_plan_form* 
-% - compute planform variation along the x-axis at specified planar levels.
 % * *gd_plotgrid*
 % - create pcolor plot of gridded surface.
 % * *gd_plotsections*
 % - display grid and allow user to interactively define start and
 % end points of a section line to be plotted in a figure.
-% * *gd_property_plots*
-% - plots displayed on Proprety tab or stand-alone figure in Apps that use 
-% GDinterface, such as ChannelForm and ModelSkill.
-% * *gd_section_properties*
-% - compute the width, cross-sectional area and prism along channel.
+% * *gd_pnt2vec.m*
+% - convert an array of structs with x,y (and z) fields to a [Nx2] or [Nx3] 
+% array of points, or a single stuct with vectors for the x, y (and z)
+% fields.
+% * *gd_readshapefile.m*
+% - read the x and y coordinates from a shape file. Lines are concatenated
+% and separated by NaNs in single x and y vectors. Suitable for reading
+% boundaries or sections into a single array.
 % * *gd_selectpoints*
-% - accept figure to interactively select one or more points on a grid.
+% - accept figure to interactively create a specified number of x,y points
+% on a grid.
 % * *gd_setpoint*
-% - interactively select a point on a plot and return the point
+% - interactively select a single point on a plot and return the point
 % coordinates. Includes an option to enter an additional value at the
 % selected point (e.g. for elevation).
+% * *gd_setpoints.m*
+% - interactively create a set of points on a plot and return the point
+% coordinates. Includes an option to enter an additional value at the
+% selected points (e.g. elevation).
 % * *gd_startendpoints*
 % - accept figure to interactively select start and end points on a grid.
 % * *gd_subdomain*
 % - accept figure to interactively select a subdomain of a grid.
-% * *gd_property_plots* 
-% - plots displayed on Proprety tab in ChannelForm model and on a figure 
-% in ModelSkill.
+% * *gd_subgrid*
+% - extract a subdomain from a grid and return the extracted
+% grid and the source grid indices of the bounding rectangle.
 % * *gd_xy2sn*
 % - map grid from cartesian to curvilinear coordinates with option to return 
 % the elevations on the source cartesian grid, or as a curvilinear grid.
 % * *gd_sn2xy*
 % - map grid from curvilinear to cartesian coordinates.
-% * *getconvergencelength* 
-% - least squares fit using fminsearch to % find the convergence length of 
-% a channel from a distance-width xy data set.
-% * *getsubgrid*
-% - extract a subdomain from a grid and return the extracted grid and the 
-% source grid indices of the bounding rectangle.
+
+%% 
+% *Additional utility functions*
+%%
+% * *gd_lineongrid_plot*
+% - plots a defined line onto a countour or surface plot of a grid (e.g a
+%   channel centre-line).
+% * *gd_user_function*
+% - function for user to define bespoke use of grids and grid tools.
+
+%%
+% *Functions from Matlab(TM) Exchange Forum*
+%%
 % * *a_star*
 % - implements the A* search algorithm to find the shortest path given
 % constraints (inaccessible cells) and a cost function (e.g. water depths).

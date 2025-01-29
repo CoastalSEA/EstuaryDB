@@ -150,8 +150,13 @@ function ok = getPlot(obj,src,dsetname)
     ax = gd_ax_dir(ax,grid.x,grid.y);    
     gd_colormap([min(grid.z,[],'all'),max(grid.z,[],'all')])
     cb = colorbar;
-    lims = clim;
-    clim([lims(1),20])
+    try
+        lims = clim;
+        clim([lims(1),20])
+    catch
+        lims = caxis;
+        caxis([lims(1),20])
+    end
     cb.Label.String = 'Elevation (mAD)';
     xlabel('Length (m)'); 
     ylabel('Width (m)');    

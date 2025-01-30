@@ -12,4 +12,4 @@ app/view_help.m
 app/remapppath.m
 app/setapppath.m
 *.asv
-dir.txt
+*.txt

@@ -104,11 +104,15 @@ classdef EstuaryDB < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
-                                  'Add Table from Bathymetry','Grids','Sections',...
+                                  'Add Table from Bathymetry','Grid Parameters',...
+                                  'Grid Tools','Sections',...
                                   'Input Parameters','Model Constants'};                                                                         
-            menu.Setup(1).Callback = [repmat({'gcbo;'},[1,5]),repmat({@obj.setupMenuOptions},[1,2])];
+            menu.Setup(1).Callback = [repmat({'gcbo;'},[1,3]),...
+                                     {@obj.gridMenuOptions},...
+                                     repmat({'gcbo;'},[1,2]),...
+                                     repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','off','on','off','on','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','off','on','off','off','on','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
@@ -127,25 +131,23 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(6).List = {'Surface area','Width','Properties'};
             menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
-            menu.Setup(7).List = {'Grid Tools','Grid Parameters'};
-            menu.Setup(7).Callback = [{'gcbo;'},{@obj.loadGridOptions}];
-
-            menu.Setup(8).List = {'Translate Grid','Rotate Grid',...
+            menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
                                   'Combine Grids','Add Surface',...
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
                                   'Plot Sections','Digitise Line',...
                                   'Export xyz Grid','User Function'};                                                                          
-            menu.Setup(8).Callback = repmat({@obj.gridMenuOptions},[1,14]);
-            menu.Setup(8).Separator = [repmat({'off'},[1,6]),...
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,14]);
+            menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
                              {'on','off','on','off','off','on','on','on'}];%separator preceeds item
 
-            menu.Setup(9).List = {'Bounding polygon','Section Tools'};
-            menu.Setup(9).Callback = [{@obj.loadSectionOptions},{'gcbo;'}];
-
-            menu.Setup(10).List = {'Load','Add','Edit','Delete'};
-            menu.Setup(10).Callback = repmat({@obj.loadSectionOptions},[1,4]);
+            menu.Setup(8).List = {'Boundary',...
+                                  'Channel network',...
+                                  'Section lines',...
+                                  'Sections'};                            
+            menu.Setup(8).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            menu.Setup(8).Separator = repmat({'off'},[1,4]);  
             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -284,28 +286,25 @@ classdef EstuaryDB < muiModelUI
             DrawMap(obj);
         end
 %%
-        function loadSectionOptions(obj,src,~)
+        function sectionMenuOptions(obj,src,~)
             %callback functions to import or create sections
-            classname = 'EDBimport';
-            switch src.Text
-                case 'Load'
-                    fname = sprintf('%s.loadData',classname);
-                    callStaticFunction(obj,classname,fname); 
-                case 'Add'
-                    useCase(obj.Cases,'single',{classname},'addData');
-                case 'Edit'
-                    useCase(obj.Cases,'single',{classname},'deleteGrid');
-                case 'Delete'
-                    GD_GridProps.setInput(obj);  
-            end
+            classname = {'EDBimport'};
+            %EDBimport inherits GDinterface, which includes the grids
+            %needed for GD_Sections methods
+            GD_Sections.sectionMenuOptions(obj,src,classname)
             DrawMap(obj);
         end  
 %%
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options
             gridclasses = {'EDBimport'};
-            %CF_FromModel inherits GDinterface, which includes the grid tools
-            GDinterface.gridMenuOptions(obj,src,gridclasses);
+            switch src.Text
+                case 'Grid Parameters'
+                    GD_GridProps.setInput(obj);
+                otherwise
+                    %EDBimport inherits GDinterface, which includes the grid tools
+                    GDinterface.gridMenuOptions(obj,src,gridclasses);
+            end
             DrawMap(obj);
         end    
 

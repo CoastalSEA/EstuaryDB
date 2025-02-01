@@ -145,10 +145,20 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(8).List = {'Boundary',...
                                   'Channel network',...
                                   'Section lines',...
-                                  'Sections'};                            
-            menu.Setup(8).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
-            menu.Setup(8).Separator = repmat({'off'},[1,4]);  
-            
+                                  'Sections',...
+                                  'View Sections'};                            
+            menu.Setup(8).Callback = [repmat({'gcbo;'},[1,3]),repmat({@obj.sectionMenuOptions},[1,2])];
+            menu.Setup(8).Separator = repmat({'off'},[1,5]);  
+
+            menu.Setup(9).List = {'Generate','Load','Edit'};
+            menu.Setup(9).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
+
+            menu.Setup(10).List = {'Generate','Load','Edit'};
+            menu.Setup(10).Callback = repmat({@obj.sectionMenuOptions},[1,3]);         
+
+            menu.Setup(11).List = {'Generate','Load','Edit'};
+            menu.Setup(11).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
+
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
             menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,3]);
@@ -289,9 +299,17 @@ classdef EstuaryDB < muiModelUI
         function sectionMenuOptions(obj,src,~)
             %callback functions to import or create sections
             classname = {'EDBimport'};
-            %EDBimport inherits GDinterface, which includes the grids
-            %needed for GD_Sections methods
-            GD_Sections.sectionMenuOptions(obj,src,classname)
+            if strcmp(src.Text,'Generate')
+                %EDBimport inherits GDinterface, which includes the grids
+                %needed for GD_Sections methods
+                GD_Sections.sectionMenuOptions(obj,src.Parent,classname);
+            elseif any(strcmp({'Sections','View Sections'},src.Text))
+                GD_Sections.sectionMenuOptions(obj,src,classname);
+            elseif strcmp(src.Text,'Load')
+                GD_Sections.loadLines(obj,src.Parent,classname);
+            elseif strcmp(src.Text,'Edit')
+                GD_Sections.editLines(obj,src.Parent,classname);
+            end
             DrawMap(obj);
         end  
 %%

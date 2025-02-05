@@ -39,6 +39,8 @@ function obj = edb_width_table(obj)
         else
             datasetname = 'Width';
         end
+    else
+        datasetname = 'Width';
     end
     grid = getGrid(obj);  %bathymetry data
 

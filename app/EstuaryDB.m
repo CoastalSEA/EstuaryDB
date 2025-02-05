@@ -136,11 +136,11 @@ classdef EstuaryDB < muiModelUI
                                   'Combine Grids','Add Surface',...
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
-                                  'Plot Sections','Digitise Line',...
+                                  'Plot Sections','Grid Image','Digitise Line',...
                                   'Export xyz Grid','User Function'};                                                                          
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,14]);
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,15]);
             menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
-                             {'on','off','on','off','off','on','on','on'}];%separator preceeds item
+                             {'on','off','on','off','off','off','on','on','on'}];%separator preceeds item
 
             menu.Setup(8).List = {'Boundary',...
                                   'Channel network',...
@@ -150,14 +150,14 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(8).Callback = [repmat({'gcbo;'},[1,3]),repmat({@obj.sectionMenuOptions},[1,2])];
             menu.Setup(8).Separator = repmat({'off'},[1,5]);  
 
-            menu.Setup(9).List = {'Generate','Load','Edit'};
-            menu.Setup(9).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
+            menu.Setup(9).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(9).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
 
-            menu.Setup(10).List = {'Generate','Load','Edit'};
-            menu.Setup(10).Callback = repmat({@obj.sectionMenuOptions},[1,3]);         
+            menu.Setup(10).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(10).Callback = repmat({@obj.sectionMenuOptions},[1,4]);         
 
-            menu.Setup(11).List = {'Generate','Load','Edit'};
-            menu.Setup(11).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
+            menu.Setup(11).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(11).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
 
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -307,8 +307,8 @@ classdef EstuaryDB < muiModelUI
                 GD_Sections.sectionMenuOptions(obj,src,classname);
             elseif strcmp(src.Text,'Load')
                 GD_Sections.loadLines(obj,src.Parent,classname);
-            elseif strcmp(src.Text,'Edit')
-                GD_Sections.editLines(obj,src.Parent,classname);
+            elseif strcmp(src.Text,'Edit') || strcmp(src.Text,'Digitise')
+                GD_Sections.editLines(obj,src,classname);
             end
             DrawMap(obj);
         end  

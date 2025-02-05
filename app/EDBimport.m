@@ -4,9 +4,7 @@ classdef EDBimport < GDinterface
 % NAME
 %   EDBimport.m
 % PURPOSE
-%   Class to import a spreadsheet table, ascii data or Matlab table, adding 
-%   the results to dstable and a record in a dscatlogue (as a property 
-%   of muiCatalogue)
+%   Class to import a 
 % USAGE
 %   obj = EDBimport.loadData(muicat)
 % NOTES
@@ -16,6 +14,8 @@ classdef EDBimport < GDinterface
 %   are defined in a formatfile. Each estuary is held as a location "case" 
 %   as used for profiles in CoastalTools. Multiple tables can be added
 %   to a location for vector data, bathymetry, images, etc.
+
+
 % SEE ALSO
 %   uses dstable and dscatalogue and inherits muiDataSet 
 %
@@ -25,6 +25,7 @@ classdef EDBimport < GDinterface
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
+        Sections
     end
 
     properties (Transient)
@@ -57,7 +58,7 @@ classdef EDBimport < GDinterface
         function obj = loadData(muicat)
             %load user data set from one or more files
             % mobj - handle to modelui instance 
-            listxt = {'Surface area','Width','Bathymetry','Image'};
+            listxt = {'Surface area','Width','Bathymetry','Image','GeoImage'};
             selection = listdlg('PromptString','Select data type to import:',...
                 'ListString',listxt,'ListSize',[140,100],'SelectionMode','single');
             if isempty(selection), return; end
@@ -71,6 +72,8 @@ classdef EDBimport < GDinterface
                     formatfile = 'edb_bathy_format';
                 case 4 %image
                     formatfile = 'edb_image_format';
+                case 5 %geoimage
+                    formatfile = 'gd_image_format';
             end
 
             obj = EDBimport(formatfile);   
@@ -170,21 +173,26 @@ classdef EDBimport < GDinterface
 
                 warndlg('Gross properties not yet implemented')     
         end
+
+%%
+
     end
 %%
     methods   
         function fmt = get.formatypes(obj) %#ok<MANU> 
             %create look-up table for file formats from dataset names
-            dsetnames = {'SurfaceArea','Width','Grid','Image'};
-            files = {'edb_s_hyps_format';'edb_w_hyps_format';'edb_bathy_format';'edb_image_format'};
+            dsetnames = {'SurfaceArea','Width','Grid','Image','GeoImage'};
+            files = {'edb_s_hyps_format';'edb_w_hyps_format';...
+                     'edb_bathy_format';'edb_image_format';...
+                     'gd_geoimage_format'};
             fmt = table(files,'RowNames',dsetnames);
         end
 
 %%
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
-            calltxt = {'Surface area','Width','Grid','Image','Gross properties'};
-            dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties'};            
+            calltxt = {'Surface area','Width','Grid','Image','Gross properties','GeoImage'};
+            dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties';'GeoImage'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
 
@@ -198,7 +206,7 @@ classdef EDBimport < GDinterface
                 warndlg(sprintf('There is only one dataset in this Case\nTo delete the Case use: Project > Cases > Delete Case'))
                 return
             else
-                promptxt = 'Select whihc datasets to delete:';
+                promptxt = 'Select which datasets to delete:';
                 datasets = getDataSetName(obj,promptxt,'multiple'); %prompts user to select dataset if more than one
                 if ischar(datasets), datasets = {datasets}; end
                 %get user to confirm selection
@@ -221,6 +229,9 @@ classdef EDBimport < GDinterface
             datasetname = getDataSetName(obj);
             if isempty(datasetname), return; end
 
+            if strcmp(datasetname,'Sections')
+                viewSections(obj.Sections,obj,src);
+            end
             %format file to call depends on the data type. dynamically
             %update the DataFormat to the user dataset selection
             try

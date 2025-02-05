@@ -36,6 +36,8 @@ function obj = edb_surfacearea_table(obj)
         else
             datasetname = 'SurfaceArea';
         end
+    else
+        datasetname = 'SurfaceArea';
     end
     grid = getGrid(obj);  %bathymetry data
 
@@ -78,7 +80,6 @@ function obj = edb_surfacearea_table(obj)
         %ax.Parent.Parent.Position(3) = 2*ax.Parent.Parent.Position(3); %double width of figure
         subplot(1,3,[1,2],ax);
         hyps_plot(hyps,subplot(1,3,3))
-
         ok = 0;
         while ok<1
             waitfor(h_but,'Tag')
@@ -87,7 +88,7 @@ function obj = edb_surfacearea_table(obj)
             elseif strcmp(h_but.Tag,'Quit') 
                 obj = []; ok = 1; delete(h_but.Parent)  %tidy-up
             else   %user accepted
-                ok = 1;                                 %keep figure
+                ok = 1;  delete(h_but);   %keep figure but delete buttons
             end        
         end
     end    

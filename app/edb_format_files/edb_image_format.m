@@ -113,7 +113,7 @@ function ok = getPlot(obj,src,dsetname)
     if isim(1) %isim(1) is color and isim(2) is greyscale
         img = dst.image;
         imshow(img{1});        
-        title(dst.Description);
+         title(sprintf('%s(%s)',dst.Description,dsetname));
         ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
         ok = 1;
     else

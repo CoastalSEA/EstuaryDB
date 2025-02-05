@@ -73,7 +73,7 @@ function newdst = getData(obj,filename,metatxt)
     if isempty(data), return; end                
     data{3} = setDataRange(data{3});
     grid = formatGridData(data);          %assign data to struct for x,y,z 
-    if isempty(grid), return; end         %user deleted orientGrid UI
+    if isempty(grid), return; end         %z not determined in formatGridData
     [grid,rotate] = orientGrid(obj,grid); %option to flip or rotate grid
     if isempty(grid), return; end         %user deleted orientGrid UI
 
@@ -122,7 +122,7 @@ function zdata = setDataRange(zdata)
     %display z range of data and allow user to set new bounds
     minz = num2str(min(zdata));
     maxz = num2str(max(zdata));
-    defaults = {minz,maxz};
+    defaults = {maxz,minz};
     promptxt = {'Maximum z value','Minimum z value'};
     answer = inputdlg(promptxt,'Data range',1,defaults);
     if isempty(answer), return; end %user cancelled, limits unchanged
@@ -143,24 +143,25 @@ function ok = getPlot(obj,src,dsetname)
     ax = tabfigureplot(obj,src,tabcb,false);
     %get data and variable id
     dst = obj.Data.(dsetname);
-    grid = getGrid(obj,1);
+    grid = getGrid(obj,1,[],dsetname);
 
     %plot form as a contour plot
     contourf(grid.x,grid.y,grid.z');
-    ax = gd_ax_dir(ax,grid.x,grid.y);    
+    %ax = gd_ax_dir(ax,grid.x,grid.y);    
     gd_colormap([min(grid.z,[],'all'),max(grid.z,[],'all')])
+    axis equal tight
     cb = colorbar;
     try
         lims = clim;
         clim([lims(1),20])
     catch
-        lims = caxis;
-        caxis([lims(1),20])
+        lims = caxis; %#ok<CAXIS> 
+        caxis([lims(1),20]) %#ok<CAXIS> 
     end
     cb.Label.String = 'Elevation (mAD)';
-    xlabel('Length (m)'); 
-    ylabel('Width (m)');    
-    title(dst.Description);
+    xlabel('Eastings (m)'); 
+    ylabel('Northings (m)');    
+    title(sprintf('%s(%s)',dst.Description,dsetname));
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end
 

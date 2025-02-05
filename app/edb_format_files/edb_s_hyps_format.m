@@ -133,7 +133,7 @@ function ok = getPlot(obj,src,dsetname)
     hold off
     xlabel(sprintf('%s and %s',dst.VariableLabels{1},'Volume (m^3)'));
     ylabel(dst.DimensionLabels{1});
-    title(dst.Description)
+     title(sprintf('%s(%s)',dst.Description,dsetname));
     legend('Location','southeast')
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end

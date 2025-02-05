@@ -129,7 +129,7 @@ function ok = getPlot(obj,src,dsetname)
     hc.Label.String = dst.VariableLabels{1};
     xlabel(dst.DimensionLabels{1})
     ylabel(dst.DimensionLabels{2});
-    title(dst.Description)
+    title(sprintf('%s(%s)',dst.Description,dsetname));
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end
 

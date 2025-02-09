@@ -112,7 +112,67 @@ function grid = formatGridData(data)
             %grid.z = flipud(Z);
         catch
             warndlg('Unable to resolve grid from data')
+            grid = []; return;
+        end
+    end
+    grid = checkGrid(grid);
+end
+
+%%
+function grid = checkGrid(grid)
+    %In EstuaryDB images are used as alternative to grids as the backdrop
+    %grids with unveven grid spacing can cause problems, see:
+    %https://uk.mathworks.com/matlabcentral/answers/2173624-plot-an-image-with-axes-that-match-the-source-surface-plot
+    %to prevent this reformat the grid if required
+    dx = diff(grid.x);
+    if ~all(diff(dx)==0)
+       figure; plot(dx);
+       xlabel('diff(x)')
+       ylabel('x-increment')
+       title('Increments along x-axis are not constant')
+    end
+    %
+    dy = diff(grid.y);
+    if ~all(diff(dy)==0)
+       figure; plot(dy);
+       xlabel('diff(y)')
+       ylabel('y-increment')
+       title('Increments along y-axis are not constant')
+    end
+    %
+    answer = questdlg('Regrid at constant increments?','Bathymetry','Yes','No','Yes');
+    if strcmp(answer,'Yes')
+        defaults = {num2str(mode(dx)), num2str(mode(dy))};
+        promptxt = {'x-interval','y-interval'};
+        inp = inputdlg(promptxt,'Bathymetry',1,defaults);
+        if isempty(inp)
+            warndlg('Regridding cancelled'); 
             grid = [];
+        else
+            dx = str2double(inp{1});
+            xmnmx = minmax(grid.x);  %assume extent of grid is correct
+            xq = xmnmx(1):dx:xmnmx(2);
+            dy = str2double(inp{2});
+            ymnmx = minmax(grid.y);            
+            yq = ymnmx(1):dy:ymnmx(2);
+
+            [X,Y] = meshgrid(grid.x,grid.y);
+            [Xq,Yq] = meshgrid(xq,yq);
+            Zq = griddata(X,Y,grid.z',Xq,Yq);
+            %check plots---------------------------------------------------        
+            figure
+            subplot(1,2,1)
+            pcolor(X,Y,grid.z');
+            shading interp
+            title('Source data')
+            subplot(1,2,2)
+            pcolor(Xq,Yq,Zq);
+            shading interp 
+            title('Re-gridded data')
+            %--------------------------------------------------------------
+            grid.x = Xq(1,:); 
+            grid.y =Yq(:,1); 
+            grid.z = Zq';
         end
     end
 end
@@ -151,13 +211,6 @@ function ok = getPlot(obj,src,dsetname)
     gd_colormap([min(grid.z,[],'all'),max(grid.z,[],'all')])
     axis equal tight
     cb = colorbar;
-    try
-        lims = clim;
-        clim([lims(1),20])
-    catch
-        lims = caxis; %#ok<CAXIS> 
-        caxis([lims(1),20]) %#ok<CAXIS> 
-    end
     cb.Label.String = 'Elevation (mAD)';
     xlabel('Eastings (m)'); 
     ylabel('Northings (m)');    

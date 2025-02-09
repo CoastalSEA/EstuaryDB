@@ -81,7 +81,7 @@ classdef EDBimport < GDinterface
             classname = metaclass(obj).Name; 
             
             [fname,path,nfiles] = getfiles('MultiSelect',obj.FileSpec{1},...
-                'FileType',obj.FileSpec{2},'PromptText','Select file(s):');
+                'FileType',obj.FileSpec{2},'PromptText','Select data file(s):');
             if isnumeric(fname) && fname==0
                 return;            %user cancelled
             elseif ~iscell(fname)
@@ -212,7 +212,7 @@ classdef EDBimport < GDinterface
                 %get user to confirm selection
                 for i=1:length(datasets)    
                     checktxt = sprintf('Deleting the following dataset: %s',datasets{i});
-                    answer = questdlg(checktxt,'Delete','Continue','Skip','Skip');
+                    answer = questdlg(checktxt,'Delete','Delete','Skip','Skip');
                     if strcmp(answer,'Skip'), continue; end
                     dst = rmfield(dst,datasets{i});    %delete selected dstable
                 end

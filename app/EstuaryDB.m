@@ -104,15 +104,17 @@ classdef EstuaryDB < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Import Table Data','Import Spatial Data',...
-                                  'Add Table from Bathymetry','Grid Parameters',...
+                                  'Add Table from Bathymetry',...
+                                  'Add Properties','Grid Parameters',...
                                   'Grid Tools','Sections',...
                                   'Input Parameters','Model Constants'};                                                                         
-            menu.Setup(1).Callback = [repmat({'gcbo;'},[1,3]),...
+            menu.Setup(1).Callback = [repmat({'gcbo;'},[1,4]),...
                                      {@obj.gridMenuOptions},...
                                      repmat({'gcbo;'},[1,2]),...
                                      repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = {'off','off','off','on','off','off','on','on'}; %separator preceeds item
+            menu.Setup(1).Separator = {'off','off','off','off','on',...
+                                                    'off','off','on','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
             % loadMenuOptions to be match)
@@ -128,36 +130,39 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(5).List = {'Load or Add dataset','Delete dataset'};
             menu.Setup(5).Callback = repmat({@obj.loadMenuOptions},[1,2]);
 
-            menu.Setup(6).List = {'Surface area','Width','Properties'};
-            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
+            menu.Setup(6).List = {'Surface area','Width'};
+            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,2]);
 
-            menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
+            menu.Setup(7).List = {'Tidal Levels','River Discharge','Gross Properties'};
+            menu.Setup(7).Callback = repmat({@obj.loadMenuOptions},[1,3]);         
+
+            menu.Setup(8).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
                                   'Combine Grids','Add Surface',...
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
                                   'Plot Sections','Grid Image','Digitise Line',...
                                   'Export xyz Grid','User Function'};                                                                          
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,15]);
-            menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
+            menu.Setup(8).Callback = repmat({@obj.gridMenuOptions},[1,15]);
+            menu.Setup(8).Separator = [repmat({'off'},[1,6]),...
                              {'on','off','on','off','off','off','on','on','on'}];%separator preceeds item
 
-            menu.Setup(8).List = {'Boundary',...
+            menu.Setup(9).List = {'Boundary',...
                                   'Channel network',...
                                   'Section lines',...
                                   'Sections',...
                                   'View Sections'};                            
-            menu.Setup(8).Callback = [repmat({'gcbo;'},[1,3]),repmat({@obj.sectionMenuOptions},[1,2])];
-            menu.Setup(8).Separator = repmat({'off'},[1,5]);  
-
-            menu.Setup(9).List = {'Generate','Load','Edit','Digitise'};
-            menu.Setup(9).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            menu.Setup(9).Callback = [repmat({'gcbo;'},[1,3]),repmat({@obj.sectionMenuOptions},[1,2])];
+            menu.Setup(9).Separator = repmat({'off'},[1,5]);  
 
             menu.Setup(10).List = {'Generate','Load','Edit','Digitise'};
-            menu.Setup(10).Callback = repmat({@obj.sectionMenuOptions},[1,4]);         
+            menu.Setup(10).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
 
             menu.Setup(11).List = {'Generate','Load','Edit','Digitise'};
-            menu.Setup(11).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            menu.Setup(11).Callback = repmat({@obj.sectionMenuOptions},[1,4]);         
+
+            menu.Setup(12).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(12).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
 
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -224,12 +229,15 @@ classdef EstuaryDB < muiModelUI
                     tabStats(lobj,src);
                 case 'Table'
                     classname = metaclass(cobj).Name;
-                    tabTable(cobj,src); 
-%                     if strcmp(classname,'EDBimport')
-% 
-%                     else
-%                         tabTable(cobj,src);   
-%                     end
+                    if strcmp(classname,'EDBimport')
+                         if isempty(cobj.HydroProps)
+                            tabTable(cobj,src);  
+                         else
+                            tabTablesection(cobj,src);
+                         end
+                    else
+                        tabTable(cobj,src);   
+                    end
             end
         end      
 %% ------------------------------------------------------------------------
@@ -285,13 +293,15 @@ classdef EstuaryDB < muiModelUI
                 case 'Load or Add dataset'
                     EDBimport.loadData(obj.Cases);
                 case 'Delete dataset'
-                    useCase(obj.Cases,'single',{classname},'delDataset'); 
+                    useCase(obj.Cases,'single',{classname},'delDataset');
+                case {'Tidal Levels','River Discharge'}
+                    EDBimport.loadHydroData(obj.Cases,src.Text);
                 case 'Surface area'
                     EDBimport.loadTable(obj.Cases,src.Text);
                 case 'Width'
                     EDBimport.loadTable(obj.Cases,src.Text);
-                case 'Properties'
-                    EDBimport.loadProperties(obj.Cases);
+                case 'Gross Properties'
+                    EDBimport.loadTable(obj.Cases,src.Text);
             end
             DrawMap(obj);
         end

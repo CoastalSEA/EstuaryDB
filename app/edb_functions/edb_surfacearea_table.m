@@ -4,8 +4,7 @@ function obj = edb_surfacearea_table(obj)
 % NAME
 %   edb_surfacearea_table.m
 % PURPOSE
-%   read a set of files for bathymetry, bounding shape files and tidal data 
-%   to compute volume and surface area hypsometry
+%   use grid, bounding shape files to compute surface area hypsometry
 % USAGE
 %   obj = edb_surfacearea_table(obj);
 % INPUTS
@@ -22,23 +21,13 @@ function obj = edb_surfacearea_table(obj)
 % CoastalSEA (c) Jan 2025
 %--------------------------------------------------------------------------
 %
-    datasetnames = fieldnames(obj.Data);
-    %check whether existing table is to be overwritten or a new table created
-    isdset = any(ismatch(datasetnames,'SurfaceArea'));
-    if isdset
-        answer = questdlg('Overwrite existing or Add new table?','EDB table',...
-                          'Overwrite','Add','Quit','Add');
-        if strcmp(answer,'Quit')
-            obj = []; return;
-        elseif strcmp(answer,'Add')
-            nrec = sum(contains(datasetnames,'SurfaceArea'))+1;
-            datasetname = sprintf('SurfaceArea%d',nrec);
-        else
-            datasetname = 'SurfaceArea';
-        end
-    else
-        datasetname = 'SurfaceArea';
+    if ~isfield(obj.Data,'Grid') || isempty(obj.Data.Grid)
+        warndlg('No Grid. Use Setup>Import Spatial Data to load a grid'); 
+        obj = []; return; 
     end
+
+    %check whether existing table is to be overwritten or a new table created
+    datasetname = setEDBdataset(obj,'SurfaceArea');
     grid = getGrid(obj);  %bathymetry data
 
     %get the user to define the upper limit to use for the hypsomety

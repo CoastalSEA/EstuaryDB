@@ -14,8 +14,6 @@ classdef EDBimport < GDinterface
 %   are defined in a formatfile. Each estuary is held as a location "case" 
 %   as used for profiles in CoastalTools. Multiple tables can be added
 %   to a location for vector data, bathymetry, images, etc.
-
-
 % SEE ALSO
 %   uses dstable and dscatalogue and inherits muiDataSet 
 %
@@ -25,7 +23,11 @@ classdef EDBimport < GDinterface
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
-        Sections
+        Sections   %GD_Section instance with properties for Boundary, 
+                   %ChannelLine, ChannelProps, SectionLines and CrossSections
+        HydroProps %struct for TidalLevels and RiverDischarges
+        MorphProps %table for morphological gross properties derived from
+                   %surface area or width hypsometry (row for each)
     end
 
     properties (Transient)
@@ -140,21 +142,23 @@ classdef EDBimport < GDinterface
 %%
         function loadTable(muicat,newdataset)
             %use bathymetry to create a SurfaceArea or Width table
-            ok = 0;
-            while ok<1
-                promptxt = 'Select case with bathymetry:';
-                [cobj,classrec] = selectCaseObj(muicat,{'data'},{'EDBimport'},promptxt);
-                if isempty(cobj), return; end
-                dsetnames = fieldnames(cobj.Data);
-                if any(contains(dsetnames,'Grid')), ok = 1; end
+            if strcmp(newdataset,'Gross Properties')
+                promptxt = 'Select case with surface area or width hypsometry';
+            else
+                promptxt = 'Select case with bathymetry';
             end
-
+            [cobj,classrec] = selectCaseObj(muicat,{'data'},{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
             dset2add = cobj.datasetnames{newdataset,1}{1};            
             %create new table and add to case object
             if strcmp(dset2add,'SurfaceArea')
                 cobj = edb_surfacearea_table(cobj);
             elseif strcmp(dset2add,'Width')
                 cobj = edb_width_table(cobj);
+            elseif strcmp(dset2add,'Properties')
+                %output derived from SurfaceArea and Width Data sets
+                %and saved as MorphProps property (NOT a cobj.Data dataset)
+                cobj = edb_props_table(cobj);
             else
                 errdlg('Should not be here'); return;
             end
@@ -166,12 +170,73 @@ classdef EDBimport < GDinterface
         end
 
 %%
-        function loadProperties(muicat)
-            %add gross properties dataset from bathymetry or exising
-            %hypsometry dataset
-            dset2add = 'Properties';       
+        function loadHydroData(muicat,srctxt)
+            %load tidal levels or river discharges
+            promptxt = sprintf('Select Cases to add %s:',srctxt);
+            %prompt to select cases and return the case record number
+            [caserec,ok] = selectRecord(muicat,'CaseClass', {'EDBimport'},...
+                           'PromptText',promptxt,...
+                           'SelectionMode','multiple','ListSize', [300,200]);             
+            if ~ok, return; end
+            nrec = length(caserec);
 
-                warndlg('Gross properties not yet implemented')     
+            if strcmp(srctxt,'Tidal Levels')
+                promptxt = 'Select Water Levels Excel Spreadsheet';
+                propname = 'TidalLevels';
+            else
+                promptxt = 'Select River Discharges Excel Spreadsheet';
+                propname = 'RiverDischarges';
+            end
+            [fname,path,nfiles] = getfiles('FileType','*.xlsx','PromptText',promptxt);
+            if nfiles<1, return; end
+        
+            %load data from an Excel spreadsheet
+            datatable = readspreadsheet([path,fname],false); %return a table
+
+            [fname,path,nfiles] = getfiles('FileType','*.xlsx',...
+                                      'PromptText','Select DSP Excel file');                            
+            if nfiles<1, return; end
+
+            %load data from an Excel spreadsheet
+            cell_ids = {'A1';'A2';''};
+            vartable = readspreadsheet([path,fname],false,cell_ids); %return a table
+            dspvars = table2struct(vartable);
+            dsp = EDBimport.loadDSproperties(dspvars);
+            dsp = dsproperties(dsp,'test');
+            if ~isempty(dsp.errmsg), return; end
+            
+            for i=1:nrec
+                [cobj,classrec] = getCase(muicat,caserec(i));
+                casedesc = muicat.Catalogue.CaseDescription(cobj.CaseIndex);
+                estnames = datatable.Properties.RowNames;
+                idr = strcmp(estnames,casedesc);
+                dst = dstable(datatable(idr,:),'RowNames',estnames(idr),'DSproperties',dsp);
+                dst.Source = fname;
+                dst.MetaData = srctxt;
+                cobj.HydroProps.(propname) = dst;
+                %write new table to Case instance
+                updateCase(muicat,cobj,classrec,false);
+            end
+            getdialog(sprintf('Updated %s for %d cases',srctxt,nrec))
+        end
+
+%%
+        function dsp = loadDSproperties(dspvars)
+            %define a dsproperties struct and add the metadata
+            dsp = struct('Variables',[],'Row',[],'Dimensions',[]); 
+            dsp.Variables = dspvars;
+            dsp.Row = struct(...
+                'Name',{'Location'},...
+                'Description',{'Estuary'},...
+                'Unit',{'-'},...
+                'Label',{'Estuary'},...
+                'Format',{''});       
+            dsp.Dimensions = struct(...    
+                'Name',{''},...
+                'Description',{''},...
+                'Unit',{''},...
+                'Label',{''},...
+                'Format',{''});   
         end
 
 %%
@@ -191,7 +256,7 @@ classdef EDBimport < GDinterface
 %%
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
-            calltxt = {'Surface area','Width','Grid','Image','Gross properties','GeoImage'};
+            calltxt = {'Surface area','Width','Grid','Image','Gross Properties','GeoImage'};
             dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties';'GeoImage'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
@@ -255,12 +320,91 @@ classdef EDBimport < GDinterface
             ht = findobj(src,'-not','Type','uitab'); %clear any existing content
             delete(ht)
             datasetname = getDataSetName(obj);
+            if isempty(datasetname), return; end
             dst = obj.Data.(datasetname);
-
-            %generate table
-            table_figure(dst,src)
+            
+            %check that data is not too large to display
+            if numel(dst.DataTable{1,1})<2e5
+                %generate table
+                table_figure(dst,src);
+            else
+                warndlg('Dataset too large to display as a table')
+            end            
         end
 
+%%
+        function tabTablesection(obj,src)
+            %select between HydroData and other data sets
+            answer = questdlg('Select data type','ViewData','Data',...
+                              'Properties','Data');
+
+            ht = findobj(src,'-not','Type','uitab'); %clear any existing content
+            delete(ht)
+
+            if strcmp(answer,'Data')
+                tabTable(obj,src);
+            else
+                answer = questdlg('Select data type','ViewData',...
+                              'Tides','Discharge','Morphology','Tides');
+                if strcmp(answer,'Tides') && isfield(obj.HydroProps,'TidalLevels')
+                    dst = obj.HydroProps.TidalLevels;                         
+                elseif strcmp(answer,'Discharge') && isfield(obj.HydroProps,'RiverDischarges')
+                    dst = obj.HydroProps.RiverDischarges;  
+                elseif strcmp(answer,'Morphology') && ~isempty(obj.MorphProps)
+                    dst = obj.MorphProps;
+                else
+                    getdialog('No data',[],1); return
+                end
+                desc = sprintf('Source:%s\nMeta-data: %s',dst.Source,dst.MetaData);  
+                titletxt = dst.Description;
+                ht = tablefigure(src,desc,dst);
+                ht.Units = 'normalized';
+                uicontrol('Parent',ht,'Style','text',...
+                       'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
+                       'String',['Case: ',titletxt],'FontSize',10,...
+                       'HorizontalAlignment','center','Tag','titletxt');
+            end
+        end
+
+%%
+        function datasetname = setEDBdataset(obj,type)
+            %set the name of a dataset to be added to a Case
+            dsetnames = fieldnames(obj.Data);
+            %check whether existing table is to be overwritten or a new table created
+            isdset = any(ismatch(dsetnames,type));
+            if isdset
+                answer = questdlg('Overwrite existing or Add new table?','EDB table',...
+                                  'Overwrite','Add','Quit','Add');
+                if strcmp(answer,'Quit')
+                    datasetname = []; return;
+                elseif strcmp(answer,'Add')
+                    nrec = sum(contains(dsetnames,type))+1;
+                    datasetname = sprintf('%s%d',type,nrec);
+                else
+                    datasetname = type;
+                end
+            else
+                datasetname = type;
+            end            
+        end
+
+%%
+        function datasetname = getEDBdataset(obj,type)
+            %get the name of a dataset to be retrieved from a Case
+            if nargin<2
+                type = [];
+            end
+            dsetnames = fieldnames(obj.Data);
+            if ~isempty(type)
+                idx = contains(dsetnames,type);
+                dsetnames = dsetnames(idx);
+            end
+            %select a specific dataset
+           selection = listdlg('PromptString','Select dataset:',...
+                'ListString',dsetnames,'ListSize',[140,100],'SelectionMode','single');
+            
+            datasetname = dsetnames{selection};
+        end
 %%
         function [dst,idv,props] =selectVariable(obj,datasetname,subset)
             %select variable to use for plot/analysis
@@ -286,6 +430,6 @@ classdef EDBimport < GDinterface
             props.case = dst.Description;
             props.dset = datasetname;
             props.desc = vardesc{idv};
-        end        
+        end  
     end
 end

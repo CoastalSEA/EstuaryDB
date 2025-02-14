@@ -1,17 +1,14 @@
-function hyps = edb_w_hypsometry(grid,uplimit,histint,isplot)
-
-
-%% might be better to use gd_basin_hypsometry to return W(x,z) - depends on how we define sections
+function hyps = edb_w_hypsometry(obj,uplimit,histint,isplot)
 %
 %-------function help------------------------------------------------------
 % NAME
 %   edb_w_hypsometry.m
 % PURPOSE
-%   compute area hypsometry from grid data
+%   compute width hypsometry from grid data
 % USAGE
 %   hyps = edb_w_hypsometry(grid,uplimit)
 % INPUTS
-%   grid - struct of x,y,z values that define grid 
+%   obj - handle to class instance for EDBimport 
 %   uplimit - upper limit for determining surface areas
 %   histint - vertical interval for histogram
 %   isplot - generate plot of surface area and volume (optional)
@@ -31,22 +28,27 @@ function hyps = edb_w_hypsometry(grid,uplimit,histint,isplot)
 %--------------------------------------------------------------------------
 %    
     if nargin<4, isplot = false; end
-    delx = abs(grid.x(2)-grid.x(1));
-    dely = abs(grid.y(2)-grid.y(1));
-    % range for histogram data - general
-    lowlimit = floor(min(min(grid.z)));   
-    zedge = lowlimit:histint:uplimit;
-    zedge(zedge>(uplimit+histint)) = [];
-    % calculate histogram and format output
-    zed  = reshape(grid.z,numel(grid.z),1);
-    zhist = histcounts(zed,zedge); %bin counts for each interval defined by zedge
-    zhist = zhist*delx*dely;     %scale occurences by grid cell area
-    zsurf = cumsum(zhist);
-    zvol = zsurf*histint;        %volume of each slice
-    zvol = cumsum(zvol);         %cumulative volume below each elevation
-    zcentre = movsum(zedge,[0,1])/2;
-    zcentre(end) = [];
-    hyps  = {zcentre',zhist',zsurf'}; 
+
+    slines = obj.Sections.XSections;
+    cumlen = obj.Sections.ChannelProps.ChannelLengths;
+
+    idN = find(isnan(slines.x));
+%     delx = abs(grid.x(2)-grid.x(1));
+%     dely = abs(grid.y(2)-grid.y(1));
+%     % range for histogram data - general
+%     lowlimit = floor(min(min(grid.z)));   
+%     zedge = lowlimit:histint:uplimit;
+%     zedge(zedge>(uplimit+histint)) = [];
+%     % calculate histogram and format output
+%     zed  = reshape(grid.z,numel(grid.z),1);
+%     zhist = histcounts(zed,zedge); %bin counts for each interval defined by zedge
+%     zhist = zhist*delx*dely;     %scale occurences by grid cell area
+%     zsurf = cumsum(zhist);
+%     zvol = zsurf*histint;        %volume of each slice
+%     zvol = cumsum(zvol);         %cumulative volume below each elevation
+%     zcentre = movsum(zedge,[0,1])/2;
+%     zcentre(end) = [];
+%     hyps  = {zcentre',zhist',zsurf'}; 
     
     if isplot
         hyps_plot(hyps)

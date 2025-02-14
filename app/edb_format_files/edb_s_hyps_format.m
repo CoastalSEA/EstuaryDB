@@ -5,7 +5,8 @@ function output = edb_s_hyps_format(funcall,varargin)
 %   edb_s_hyps_format.m
 % PURPOSE
 %   Functions to define metadata, read and load data from file for:
-%   hypsometry estuary data (z,S)
+%   surface area hypsometry data S(z), where z is the water elevation, 
+%   positive above datum (mAD)
 % USAGE
 %   output = edb_s_hyps_format(funcall,varargin)
 % INPUTS
@@ -121,22 +122,24 @@ function ok = getPlot(obj,src,dsetname)
     tabcb  = @(src,evdat)tabPlot(obj,src);
     ax = tabfigureplot(obj,src,tabcb,false,'x-axis'); %false for no rotate button 
     %get data and variable id
-    dst = obj.Data.(dsetname);
-    S = dst.Sa;
-    Z = dst.Dimensions.Z;
-    delZ = abs(Z(2)-Z(1));
-    V = cumsum(S)*delZ;      %hypsometry volume
+    dst = obj.Data.(dsetname);    
+    [var,Z] = edb_derived_hypsprops(dst,dsetname); %hypsometry volume
     %create props to define labels for each variable to be plotted
-    plot(ax,S,Z,'DisplayName',dst.VariableDescriptions{1},'ButtonDownFcn',@godisplay);
+    plot(ax,var.S,Z,'DisplayName',dst.VariableDescriptions{1},'ButtonDownFcn',@godisplay);
     hold on
-    plot(ax,V,Z,'DisplayName','Volume (derived)','ButtonDownFcn',@godisplay);
+    plot(ax,var.V,Z,'DisplayName','Volume (derived)','ButtonDownFcn',@godisplay);
     hold off
     xlabel(sprintf('%s and %s',dst.VariableLabels{1},'Volume (m^3)'));
     ylabel(dst.DimensionLabels{1});
      title(sprintf('%s(%s)',dst.Description,dsetname));
     legend('Location','southeast')
+    if isfield(obj.HydroProps,'TidalLevels')
+        edb_plot_tidelevels(ax,obj.HydroProps.TidalLevels);
+    end
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end
+
+%%
 
 %%
 %--------------------------------------------------------------------------

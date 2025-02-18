@@ -4,8 +4,8 @@ function [var,Z,X] = edb_derived_hypsprops(dst,dsetname)
 % NAME
 %   edb_derived_hypsprops.m
 % PURPOSE
-%   Use hypsooetry of surface area or width to get the vertically
-%   integrated hypsoometry of volume or cross-sectional area
+%   Use hypsometry of surface area or width to get the vertically
+%   integrated hypsometry of volume or cross-sectional area
 % USAGE
 %   [var,Z,X] = edb_derived_hypsprops(dst,dsetname);
 % INPUTS
@@ -14,9 +14,9 @@ function [var,Z,X] = edb_derived_hypsprops(dst,dsetname)
 % OUTPUTS
 %   var - struct with defined and derived hypsometry properties (eg S and V) 
 %   Z - elevation relative to datum (mAD)
-%   X - distance along the channel (m) - used for width/CSA only
+%   X - distance along the channel (m) - used for width/CSA ONLY
 % NOTES
-%   the thederived property, Var, depends on the dataset selected. If 
+%   the derived property, Var, depends on the dataset selected. If 
 %   dsetname is 'SurfaceArea, Var = volume (m3), whereas if dsetname 
 %   is Width, Var = Cross-sectional area (m2)
 % SEE ALSO
@@ -33,12 +33,12 @@ function [var,Z,X] = edb_derived_hypsprops(dst,dsetname)
         delZ = abs(Z(2)-Z(1));
         var.V = cumsum(var.S)*delZ;      %hypsometry volume
     elseif contains(dsetname,'Width')
-        var.W = dst.W;
+        var.W = squeeze(dst.W);
         Z = dst.Dimensions.Z;
-        X = dst.Dimension.X;
+        X = dst.Dimensions.X;
         delZ = abs(Z(2)-Z(1));
         for i =1:length(X)
-            var.A = cumsum(var.W(i,:))*delZ;  %hypsometry cross-sectiional area
+            var.A(i,:) = cumsum(var.W(i,:))*delZ;  %hypsometry cross-sectiional area
         end
     else
         warndlg('Unknown data type in ''edb_derived_hypsprops''')

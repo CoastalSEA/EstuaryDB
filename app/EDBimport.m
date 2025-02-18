@@ -152,19 +152,19 @@ classdef EDBimport < GDinterface
             dset2add = cobj.datasetnames{newdataset,1}{1};            
             %create new table and add to case object
             if strcmp(dset2add,'SurfaceArea')
-                cobj = edb_surfacearea_table(cobj);
+                [cobj,ok] = edb_surfacearea_table(cobj);
             elseif strcmp(dset2add,'Width')
-                cobj = edb_width_table(cobj);
+                [cobj,ok] = edb_width_table(cobj);
             elseif strcmp(dset2add,'Properties')
                 %output derived from SurfaceArea and Width Data sets
                 %and saved as MorphProps property (NOT a cobj.Data dataset)
-                cobj = edb_props_table(cobj);
+                [cobj,ok] = edb_props_table(cobj);
             else
                 errdlg('Should not be here'); return;
             end
 
             %write new table to Case record
-            if ~isempty(cobj)
+            if ok>0
                updateCase(muicat,cobj,classrec,true);
             end
         end
@@ -402,8 +402,11 @@ classdef EDBimport < GDinterface
             %select a specific dataset
            selection = listdlg('PromptString','Select dataset:',...
                 'ListString',dsetnames,'ListSize',[140,100],'SelectionMode','single');
-            
-            datasetname = dsetnames{selection};
+           if isempty(selection)
+               datasetname = [];
+           else            
+               datasetname = dsetnames{selection};
+           end
         end
 %%
         function [dst,idv,props] =selectVariable(obj,datasetname,subset)

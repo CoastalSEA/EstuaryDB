@@ -9,7 +9,7 @@ function ax = edb_plot_tidelevels(ax,tlevels)
 %   ax = edb_plot_tidelevels(ax,tlevels);
 % INPUTS
 %   ax - handle to plot axes
-%   tlevels - table with the tidal levels to be used
+%   tlevels - dstable with the tidal levels to be used
 % OUTPUTS
 %   ax - handle to plot axes 
 % NOTES
@@ -51,9 +51,10 @@ end
 %%
 function [z,ztxt] = setlevels(tlevels,idx)
     %set 3 levels to plot
-    varnames = tlevels.Properties.VariableNames;
+    varnames = tlevels.VariableNames;
     z = zeros(1,3);
     ztxt = cell(1,3);
+    tlevels = activatedynamicprops(tlevels, varnames(idx));
     for i=1:3
         z(i) = tlevels.(varnames{idx(i)});
         ztxt{i} = varnames{idx(i)};

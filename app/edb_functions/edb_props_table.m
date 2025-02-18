@@ -1,4 +1,4 @@
-function obj = edb_props_table(obj)
+function [obj,isok] = edb_props_table(obj)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -12,6 +12,7 @@ function obj = edb_props_table(obj)
 %   obj - handle to class instance for EDBimport
 % OUTPUT
 %   obj - handle to updated class instance for EDBimport
+%   isok - logical true if output added, false if user cancelled
 % NOTES
 %   gross morphological properties include volume, surface area (and when
 %   using widths, CSA at the mouth).
@@ -23,11 +24,11 @@ function obj = edb_props_table(obj)
 %--------------------------------------------------------------------------
 %
     datasetname = getEDBdataset(obj,{'Width','SurfaceArea'});
-    if isempty(datasetname), return; end
+    if isempty(datasetname), isok = 0; return; end
     dst = obj.Data.(datasetname);
-    [var,Z] = edb_derived_hypsprops(dst,datasetname);
-    mnmx = cellstr(num2str(minmax(Z)'));
-    dz = num2str(abs(Z(2)-Z(1)));
+    [var,z,x] = edb_derived_hypsprops(dst,datasetname);
+    mnmx = cellstr(num2str(minmax(z)'));
+    dz = num2str(abs(z(2)-z(1)));
 
     %see if tidal data is available
     if isfield(obj.HydroProps,'TidalLevels')
@@ -49,14 +50,15 @@ function obj = edb_props_table(obj)
     wl = getWaterLevels(defaultvals);
 
     if contains(datasetname,'SurfaceArea')
-        grossprops = grossProperties(var.S,var.V,Z,wl);
-        propnames = fieldnames(grossprops);
-
-        gdsp = setDSproperties();      
+        grossprops = grossProperties(var.S,var.V,z,wl);   
     else
-        grossprops = grossProperties(var.W,var.A,Z,wl);
-        gdsp = setDSproperties();
+        delx = abs(x(2)-x(1));
+        S = sum(var.W,1)*delx;
+        V = sum(var.A,1)*delx;
+        grossprops = grossProperties(S,V,z,wl);
     end
+    propnames = fieldnames(grossprops);
+    gdsp = setDSproperties();
     grossprops.Source = {datasetname};
     grossprops.Range = {answer};
     %assign output to table
@@ -64,14 +66,15 @@ function obj = edb_props_table(obj)
     grossprops = orderfields(grossprops,C);
     grossprops = struct2table(grossprops);  
     gdst = dstable(grossprops,'RowNames',1,'DSproperties',gdsp);
-%     gdst.Source = sprintf('%s hypsometry',datasetname);
-%     gdst.MetaData = sprintf('Gross properties computed using %s water levels',answer);  
+    gdst.Source = 'Hypsometry data for case defined by source column';
+    gdst.MetaData = 'Gross properties computed using tidal range as defined in table';  
     gdst.Description = dst.Description;
     if ~isempty(obj.MorphProps)        %table exits
         gdst.RowNames = height(obj.MorphProps)+1;
         gdst = vertcat(obj.MorphProps,gdst);
     end
     obj.MorphProps = gdst;
+    isok = 1;
 end
 
 %%

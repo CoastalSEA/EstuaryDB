@@ -1,4 +1,4 @@
-function obj = edb_surfacearea_table(obj)
+function [obj,isok] = edb_surfacearea_table(obj)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -11,6 +11,7 @@ function obj = edb_surfacearea_table(obj)
 %   obj - handle to class instance for EDBimport
 % OUTPUT
 %   obj - handle to updated class instance for EDBimport
+%   isok - logical true if output added, false if user cancelled
 % NOTES
 %   compute histogram of surface area from a grid and save to a dstable
 % SEE ALSO
@@ -23,7 +24,7 @@ function obj = edb_surfacearea_table(obj)
 %
     if ~isfield(obj.Data,'Grid') || isempty(obj.Data.Grid)
         warndlg('No Grid. Use Setup>Import Spatial Data to load a grid'); 
-        obj = []; return; 
+        isok = 0; return; 
     end
 
     %check whether existing table is to be overwritten or a new table created
@@ -65,6 +66,7 @@ function obj = edb_surfacearea_table(obj)
     dst.Source = sprintf('Calculated using %s bathymetry',estuaryname);
     dst.MetaData = metatxt;
     obj.Data.(datasetname) = dst;
+    isok = 1;
     if isplot
         %ax.Parent.Parent.Position(3) = 2*ax.Parent.Parent.Position(3); %double width of figure
         subplot(1,3,[1,2],ax);

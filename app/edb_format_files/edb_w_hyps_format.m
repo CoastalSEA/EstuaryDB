@@ -119,15 +119,21 @@ function ok = getPlot(obj,src,dsetname)
     ax = tabfigureplot(obj,src,tabcb,false);
     %get data and variable id
     dst = obj.Data.(dsetname);
-    W = squeeze(dst.W);
-    x = dst.Dimensions.X;
-    z = dst.Dimensions.Z;
+    [var,z,x] = edb_derived_hypsprops(dst,'Width');
+    answer = questdlg('Width or CSA','Q-Plot','Width','CSA','Width');
+    if strcmp(answer,'CSA')
+        Var = var.A;
+        zlabel = 'Cross-sectional area (m^2)';
+    else
+        Var = var.W;
+        zlabel = dst.VariableLabels{1};
+    end
     %create props to define labels for each variable to be plotted
     [X,Z] = meshgrid(x,z);
-    contourf(ax,X,Z,W')
+    contourf(ax,X,Z,Var')
     colormap('parula')
     hc = colorbar;
-    hc.Label.String = dst.VariableLabels{1};
+    hc.Label.String = zlabel;
     xlabel(dst.DimensionLabels{1})
     ylabel(dst.DimensionLabels{2});
     title(sprintf('%s(%s)',dst.Description,dsetname));

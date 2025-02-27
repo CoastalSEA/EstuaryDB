@@ -32,12 +32,16 @@ function [obj,isok] = edb_width_table(obj)
 
     %get the user to define the upper limit to use for the hypsomety
     slines = obj.Sections.XSections;
+    if isempty(slines)
+        warndlg('Cross-sections have not been defined')
+        return
+    end
+
     uplimit = {num2str(max(slines.y)),'0.1'};
     inp = inputdlg({'Upper limit for hypsometry (mAD):','Vertical interval (m)'},...        
                                                     'EDBhyps',1,uplimit);
     uplimit = str2double(inp{1});
     histint = str2double(inp{2});    
-
 
     %compute the hypsometry
     [Est,Rch] = edb_w_hypsometry(obj,uplimit,histint,true); %logical true generates plot

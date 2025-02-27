@@ -22,9 +22,10 @@ function [obj,isok] = edb_surfacearea_table(obj)
 % CoastalSEA (c) Jan 2025
 %--------------------------------------------------------------------------
 %
+    isok = 0; 
     if ~isfield(obj.Data,'Grid') || isempty(obj.Data.Grid)
         warndlg('No Grid. Use Setup>Import Spatial Data to load a grid'); 
-        isok = 0; return; 
+        return; 
     end
 
     %check whether existing table is to be overwritten or a new table created
@@ -32,41 +33,57 @@ function [obj,isok] = edb_surfacearea_table(obj)
     grid = getGrid(obj);  %bathymetry data
 
     %get the user to define the upper limit to use for the hypsomety
-    uplimit = {num2str(max(grid.z,[],'all')),'0.1','1'};
+    defaults = {num2str(max(grid.z,[],'all')),'0.1','1','1'};
     inp = inputdlg({'Upper limit for hypsometry (mAD):',...
-                    'Vertical interval (m)','Check plots (1/0-not recommended)'},...        
-                                                    'EDBhyps',1,uplimit);
+                'Vertical interval (m)',...
+                'Check plots (1/0-not recommended)'},'EDBhyps',1,defaults);                                                       
+    if isempty(inp), return; end               %user cancelled
     uplimit = str2double(inp{1});
     histint = str2double(inp{2});
     isplot  = logical(str2double(inp{3}));     %logical true generates plot
 
-    %see if bounding polgon is to be applied from a shape file
-    estuaryname = obj.Data.Grid.Description;
-    promptxt = 'Select Shapefile if required:';
-    [sname,spath,nfile] = getfiles('PromptText',promptxt,'MultiSelect','off',...
-                                                     'FileType','*.shp;');
-    if nfile>0  
-        %load a shape file and apply bounding polygon
-        [grid,ax,h_but] = applyBoundary(grid,spath,sname,isplot);
-        if isempty(grid), obj = []; return; end                 %failed to load shape file
-        metatxt = sprintf('Use bathymetry to upper limit of %.2f within polygon defined by %s',uplimit,sname);
+    if isempty(obj.WaterBody)
+        answer = 'Load';        
     else
-        metatxt = sprintf('Use bathymetry to upper limit of %.2f without bounding polygon',uplimit);
-        if isplot
-            [ax,h_but] = checkplot(grid,[]);
+        answer = questdlg('A water-body boundary exists. Use Saved version, or Load from file?',...
+                                  'SurfaceArea','Saved','Load','Saved');
+    end
+
+    if strcmp(answer,'Load')
+        %see if bounding polgon is to be applied from a shape file        
+        promptxt = 'Select Shapefile if required:';
+        [sname,spath,nfile] = getfiles('PromptText',promptxt,...
+                                  'MultiSelect','off','FileType','*.shp;');
+        if nfile>0
+            %load a shape file and apply bounding polygon
+            obj.WaterBody = gd_readshapefile(spath,sname);
+            [grid,ax,h_but] = applyBoundary(grid,obj.WaterBody,isplot);
+            if isempty(grid), obj = []; return; end                 %failed to load shape file
+            metatxt = sprintf('Use bathymetry to upper limit of %.2f within polygon defined by %s',uplimit,sname);
+        else
+            metatxt = sprintf('Use bathymetry to upper limit of %.2f without bounding polygon',uplimit);
+            if isplot
+                [ax,h_but] = checkplot(grid,[]);
+            end
         end
+    else
+        %use saved boundary created using PL_Boundary
+        [grid,ax,h_but] = applyBoundary(grid,obj.WaterBody,isplot);
+        metatxt = sprintf('Use bathymetry to upper limit of %.2f within saved polygon',uplimit);
     end
 
     %compute the hypsometry
     hyps = edb_s_hypsometry(grid,uplimit,histint,false);  %false - plot as subplot to grid plot if isplot=true
     %write results to a dstable and update class instance
+    estuaryname = obj.Data.Grid.Description;
     dst = dstable(hyps(:,3)','RowNames',{estuaryname},'DSproperties',setDSproperties);
     dst.Dimensions.Z = hyps(:,1);
     dst.Description = estuaryname;
     dst.Source = sprintf('Calculated using %s bathymetry',estuaryname);
     dst.MetaData = metatxt;
     obj.Data.(datasetname) = dst;
-    isok = 1;
+    isok = 1;      %user may choose not to check the results in a plot
+
     if isplot
         %ax.Parent.Parent.Position(3) = 2*ax.Parent.Parent.Position(3); %double width of figure
         subplot(1,3,[1,2],ax);
@@ -74,21 +91,21 @@ function [obj,isok] = edb_surfacearea_table(obj)
         ok = 0;
         while ok<1
             waitfor(h_but,'Tag')
-            if ~ishandle(h_but) %this handles the user deleting figure window 
-                obj = []; ok = 1;             
-            elseif strcmp(h_but.Tag,'Quit') 
-                obj = []; ok = 1; delete(h_but.Parent)  %tidy-up
+            if ~ishandle(h_but)     %this handles the user deleting figure window 
+                obj = []; isok = 0; %and rejects results
+            elseif strcmp(h_but.Tag,'Reject') 
+                obj = []; isok = 0; delete(h_but.Parent)  %tidy-up
             else   %user accepted
-                ok = 1;  delete(h_but);   %keep figure but delete buttons
-            end        
+                delete(h_but);     %keep figure but delete buttons
+            end   
+            ok = 1; 
         end
     end    
 end
-%%
-function [grid,ax,h_but] = applyBoundary(grid,path,filename,isplot)
-    %load a shape file and apply bounding polygon 
-    shp = gd_readshapefile(path,filename);
 
+%%
+function [grid,ax,h_but] = applyBoundary(grid,shp,isplot)
+    %use a shape file or boundary and apply bounding polygon    
     [xq,yq] = meshgrid(grid.x,grid.y);
     %insidepoly is faster but only works reliably with shape files 
     %loaded using shaperead which requires mapping toolbox
@@ -108,13 +125,14 @@ function [grid,ax,h_but] = applyBoundary(grid,path,filename,isplot)
         [ax,h_but] = checkplot(grid,shp);
     end
 end
+
 %%
 function [ax,h_but] = checkplot(grid,shp)
     %plot to check sampling within polygon boundary
     figtitle = sprintf('Accept results');
     figtxt = 'To save the results press Accept';
     tag = 'PlotFig'; %used for collective deletes of a group
-    butnames = {'Accept','Quit'};
+    butnames = {'Accept','Reject'};
     position = [0.2,0.4,0.4,0.4];
     [h_plt,h_but] = acceptfigure(figtitle,figtxt,tag,butnames,position);
     ax = axes(h_plt);
@@ -129,6 +147,7 @@ function [ax,h_but] = checkplot(grid,shp)
         hold off
     end    
 end
+
 %%
 function hyps_plot(hyps,ax)
     %genereate plot of the surface area and volume as a function of z                                       
@@ -139,6 +158,7 @@ function hyps_plot(hyps,ax)
     ylabel('Elevation (mAD)')
     legend('Location','southeast')
 end
+
 %%
 function dsp = setDSproperties()
     %define the variables and metadata properties for the dataset

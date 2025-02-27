@@ -51,7 +51,7 @@ function obj = getFormat(obj,formatfile)
     %return the file import format settings
     obj.DataFormats = {'muiUserData',formatfile,'data'};
     obj.idFormat = 1;
-    obj.FileSpec = {'on','*.txt; *.csv; *.mat;'};
+    obj.FileSpec = {'on','*.txt; *.csv; *.tif; *.tiff; *.mat;'};
 end
 %%
 %--------------------------------------------------------------------------
@@ -59,21 +59,35 @@ end
 %--------------------------------------------------------------------------
 function newdst = getData(obj,filename,metatxt) 
     %read and load a data set from a file
-%     dsp = setDSproperties;                  %set metadata
-    %load table and clean data to required format
     [~,estname,ext] = fileparts(filename);
 
     if strcmp(ext,'.mat')
-        promptxt = {'X grid-spacing','Y grid-spacing'};
-        gridints = inputdlg(promptxt,'Input',1,{'2','2'});
-        data = readmatfile(filename{1,1},gridints);
+        %read a mat file containing a grid object stored in a dstable 
+        %eg as when a Grid is saved using Project>Save Dataset
+        % promptxt = {'X grid-spacing','Y grid-spacing'};
+        % gridints = inputdlg(promptxt,'Input',1,{'2','2'});
+        data =load(filename,"-mat"); 
+        if isempty(data) || ~isstruct(data) || ~isfield(data,'dst')
+            warndlg(sprintf('Incorrect dat type in %s',filename))
+            newdst = []; return
+        else
+            newdst.Grid = data.dst;  %dst is asssmued to hold a Grid dataset
+            return
+        end
+    elseif any(strcmp(ext,{'.tif','.tiff'}))
+        %read a tiff file with geo-coordinates
+        [grid,props] = readtiff(filename);
+        grid.z = setDataRange(grid.z');
     else
+        %read an x,y,z ascii text file
         data = readinputfile(filename,1,'%f %f %f');  %header defines file read format
-    end
-    if isempty(data), return; end                
-    data{3} = setDataRange(data{3});
-    grid = formatGridData(data);          %assign data to struct for x,y,z 
+        if isempty(data), return; end     
+        data{3} = setDataRange(data{3});
+        grid = formatGridData(data);          %assign data to struct for x,y,z 
+        props = getGridProps(grid);
+    end   
     if isempty(grid), return; end         %z not determined in formatGridData
+
     [grid,rotate] = orientGrid(obj,grid); %option to flip or rotate grid
     if isempty(grid), return; end         %user deleted orientGrid UI
 
@@ -87,6 +101,7 @@ function newdst = getData(obj,filename,metatxt)
     obj = setGrid(obj,{newgrid},dims,meta);
 
     dst = obj.Data.Grid;
+    dst.UserData.props = props;
     dst.Description = estname;
     newdst.Grid = dst;  %Grid is the dataset name for this format
 end
@@ -180,9 +195,11 @@ end
 %%
 function zdata = setDataRange(zdata)
     %display z range of data and allow user to set new bounds
-    minz = num2str(min(zdata));
-    maxz = num2str(max(zdata));
-    defaults = {maxz,minz};
+    minz = min(zdata,[],'all');
+    maxz = max(zdata,[],'all');
+    if maxz>1000,  maxz = 999; end
+    if minz<-1000, minz = -999; end
+    defaults = cellstr(num2str([maxz;minz]));
     promptxt = {'Maximum z value','Minimum z value'};
     answer = inputdlg(promptxt,'Data range',1,defaults);
     if isempty(answer), return; end %user cancelled, limits unchanged
@@ -190,6 +207,53 @@ function zdata = setDataRange(zdata)
     minz = str2double(answer{2});    
     zdata(zdata<minz) = NaN;
     zdata(zdata>maxz) = NaN;
+end
+
+%%
+function props = getGridProps(grid)
+    %get the grid properties from the imported data
+    dd.x = abs(grid.x(2)-grid.x(1));               %dx
+    dd.y = abs(grid.x(2)-grid.x(1)); 
+    % if dd.y>0; dd.y=-dd.y; end                             %dy (should be negative for use below)
+    origin.x = grid.x(1);             %origin left
+    origin.y = grid.y(1);             %origin top
+    NDval = NaN;      %no data value   
+
+    sze.x=size(grid.x);
+    sze.y=size(grid.y);
+    %output struct for properties of grid
+    props = struct('dd',dd,'origin',origin,'NDval',NDval,'size',sze);
+end
+
+%%
+function [data,props] = readtiff(filename)
+    %read data from a tiff file
+    data.z = imread(filename,1);
+    info = imfinfo(filename);
+
+    dd.x = info.ModelPixelScaleTag(1);              %dx
+    dd.y = info.ModelPixelScaleTag(2); 
+    dy = dd.y;
+    if dy>0; dy=-dy; end    %dy (should be negative for use below)
+    origin.x = info.ModelTiepointTag(4);            %origin left
+    origin.y = info.ModelTiepointTag(5);            %origin top
+    NDval=single(str2double(info.GDAL_NODATA));     %no data value
+
+    meta=[dd.x,0,0,dy,origin.x,origin.y]; %info as if read from a *.tfw file
+    
+    %%% For top left of each pixel
+    % data.x=meta(5):meta(1):meta(5)+(meta(1)*(size(Z,2)-1));
+    % data.y=meta(6):meta(4):meta(6)+(meta(4)*(size(Z,1)-1));
+    
+    %%% For centre of each pixel
+    data.x = meta(5)+(meta(1)/2):meta(1):meta(5)+(meta(1)/2)+...
+                                              (meta(1)*(size(data.z,2)-1));
+    data.y = meta(6)+(meta(4)/2):meta(4):meta(6)+(meta(4)/2)+...
+                                              (meta(4)*(size(data.z,1)-1));
+    sze.x=size(data.x);
+    sze.y=size(data.y);
+    %output struct for properties of grid
+    props = struct('dd',dd,'origin',origin,'NDval',NDval,'size',sze);
 end
 
 %%

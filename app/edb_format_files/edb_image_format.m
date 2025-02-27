@@ -112,9 +112,12 @@ function ok = getPlot(obj,src,dsetname)
     isim = isimage(dst.DataTable{1,1});
     if isim(1) %isim(1) is color and isim(2) is greyscale
         img = dst.image;
-        imshow(img{1});        
-         title(sprintf('%s(%s)',dst.Description,dsetname));
-        ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
+        him = imshow(img{1});        
+        title(sprintf('%s(%s)',dst.Description,dsetname));
+        % Draw a rectangle around the image
+        hold on; % Keep the image displayed while adding the rectangle
+        addBox(img)
+        hold off;
         ok = 1;
     else
         ok = 0;  %no plot implemented in getPlot
@@ -133,4 +136,12 @@ function output = dataQC(obj)                    %#ok<INUSD>
     output = [];    %if no QC implemented in dataQC
 end
 
-
+%%
+function addBox(img)
+    %add enclosing box to image
+    s = size(img{1});
+    rectangle('position',[1 1 s(2) s(1)],'EdgeColor', 'k','linewidth',0.5);                                  
+    % Expand the axis limits to show full frame
+    xlim(xlim()+[-.001,.001]*s(2)) % add 1% to the x axis limits
+    ylim(ylim()+[-.001,.001]*s(1)) % add 1% to the y axis limits
+end

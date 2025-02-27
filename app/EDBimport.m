@@ -23,6 +23,7 @@ classdef EDBimport < GDinterface
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
+        WaterBody  %shape file or xy struct polygon
         Sections   %GD_Section instance with properties for Boundary, 
                    %ChannelLine, ChannelProps, SectionLines and CrossSections
         HydroProps %struct for TidalLevels and RiverDischarges
@@ -75,7 +76,7 @@ classdef EDBimport < GDinterface
                 case 4 %image
                     formatfile = 'edb_image_format';
                 case 5 %geoimage
-                    formatfile = 'gd_image_format';
+                    formatfile = 'gd_geoimage_format';
             end
 
             obj = EDBimport(formatfile);   
@@ -149,22 +150,23 @@ classdef EDBimport < GDinterface
             end
             [cobj,classrec] = selectCaseObj(muicat,{'data'},{'EDBimport'},promptxt);
             if isempty(cobj), return; end
+
             dset2add = cobj.datasetnames{newdataset,1}{1};            
             %create new table and add to case object
             if strcmp(dset2add,'SurfaceArea')
-                [cobj,ok] = edb_surfacearea_table(cobj);
+                [cobj,isok] = edb_surfacearea_table(cobj);
             elseif strcmp(dset2add,'Width')
-                [cobj,ok] = edb_width_table(cobj);
+                [cobj,isok] = edb_width_table(cobj);
             elseif strcmp(dset2add,'Properties')
                 %output derived from SurfaceArea and Width Data sets
                 %and saved as MorphProps property (NOT a cobj.Data dataset)
-                [cobj,ok] = edb_props_table(cobj);
+                [cobj,isok] = edb_props_table(cobj);
             else
                 errdlg('Should not be here'); return;
             end
 
             %write new table to Case record
-            if ok>0
+            if isok
                updateCase(muicat,cobj,classrec,true);
             end
         end
@@ -205,19 +207,105 @@ classdef EDBimport < GDinterface
             dsp = dsproperties(dsp,'test');
             if ~isempty(dsp.errmsg), return; end
             
+            count = 0;
             for i=1:nrec
                 [cobj,classrec] = getCase(muicat,caserec(i));
                 casedesc = muicat.Catalogue.CaseDescription(cobj.CaseIndex);
                 estnames = datatable.Properties.RowNames;
                 idr = strcmp(estnames,casedesc);
+                if all(~idr), continue; end
+                count = count+1;
                 dst = dstable(datatable(idr,:),'RowNames',estnames(idr),'DSproperties',dsp);
                 dst.Source = fname;
                 dst.MetaData = srctxt;
+                dst.Description = casedesc;
                 cobj.HydroProps.(propname) = dst;
                 %write new table to Case instance
                 updateCase(muicat,cobj,classrec,false);
             end
-            getdialog(sprintf('Updated %s for %d cases',srctxt,nrec))
+            getdialog(sprintf('Updated %s for %d cases',srctxt,count))
+        end
+
+%%
+        function editTable(muicat,srctxt)
+            %edit Estuary Properties Tables (Tides, Discharge, or Gross Properties)
+            promptxt = sprintf('Select Cases to delete rows from  %s table:',srctxt);
+            %prompt to select cases and return the case record number
+            [cobj,~] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+
+            switch srctxt
+                case 'Tidal Levels'
+                    if isempty(cobj.HydroProps) || ...
+                            ~isfield(cobj.HydroProps,'TidalLevels') || ...
+                                    isempty(cobj.HydroProps.TidalLevels)
+                        getdialog('No tidal level data to edit');
+                    elseif ~isempty(cobj.HydroProps.TidalLevels)
+                        dst = cobj.HydroProps.TidalLevels; 
+                        cobj.HydroProps.TidalLevels = displayTable(dst);
+                    end
+                case 'River Discharge'
+                    if  isempty(cobj.HydroProps)|| ...
+                            ~isfield(cobj.HydroProps,'RiverDischarges') ||...
+                                 isempty(cobj.HydroProps.RiverDischarges)
+                        getdialog('No river discharge data to edit');
+                    elseif ~isempty(cobj.HydroProps.RiverDischarges)
+                        dst = cobj.HydroProps.RiverDischarges; 
+                        cobj.HydroProps.RiverDischarges = displayTable(dst);
+                    end
+                case 'Gross Properties'
+                    if isempty(cobj.MorphProps)
+                        getdialog('No morphological properties data to edit');
+                    else
+                        dst = cobj.MorphProps; 
+                        cobj.MorphProps = displayTable(dst);
+                    end
+            end  
+
+            % Nested function----------------------------------------------
+            function output = displayTable(dst)
+                figtitle = {'Edit table',sprintf('Case: %s',dst.Description)};
+                paneltxt = 'Use button to add rows and columns. Use left mouse click to edit cells. Use right mouse click to delete rows or columns';
+                butdef.Text = {'Add','Save','Cancel'};
+                output = tablefigureUI(figtitle,paneltxt,dst,true,butdef);
+                if isempty(output), output = dst; end
+            end
+            %--------------------------------------------------------------
+        end
+
+%%
+        function deleteTable(muicat,srctxt)
+            %delete an Estuary Properties Table (Tides, Discharge, or Gross Properties)
+            promptxt = sprintf('Select Cases to delete rows from  %s table:',srctxt);
+            %prompt to select cases and return the case record number
+            [cobj,~,catrec] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+            
+            desc = [];
+            switch srctxt
+                case 'Tidal Levels'
+                    if ~isempty(cobj.HydroProps.TidalLevels)
+                        desc = cobj.HydroProps.TidalLevels.Description;
+                        cobj.HydroProps.TidalLevels = [];                        
+                    end
+                case 'River Discharge'
+                    if ~isempty(cobj.HydroProps.RiverDischarges)
+                        desc = cobj.HydroProps.RiverDischarges.Description;
+                        cobj.HydroProps.RiverDischarges = [];
+                    end
+                case 'Gross Properties'
+                    if ~isempty(cobj.MorphProps)
+                        desc = cobj.MorphProps.Description;
+                        cobj.MorphProps = [];
+                    end
+            end 
+            %notify user of any changes
+            if isempty(desc)
+                desc =catrec.CaseDescription;
+                getdialog(sprintf('No %s data to delete for %s',srctxt,desc))
+            else
+                getdialog(sprintf('Deleted %s for %s',srctxt,desc))
+            end
         end
 
 %%
@@ -238,11 +326,10 @@ classdef EDBimport < GDinterface
                 'Label',{''},...
                 'Format',{''});   
         end
-
-%%
-
     end
-%%
+%--------------------------------------------------------------------------
+% Class get functions and superclass required functions
+%--------------------------------------------------------------------------
     methods   
         function fmt = get.formatypes(obj) %#ok<MANU> 
             %create look-up table for file formats from dataset names
@@ -259,32 +346,6 @@ classdef EDBimport < GDinterface
             calltxt = {'Surface area','Width','Grid','Image','Gross Properties','GeoImage'};
             dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties';'GeoImage'};            
             dsname = table(dsetnames,'RowNames',calltxt);
-        end
-
-%%
-        function delDataset(obj,classrec,~,muicat)
-            %delete a dataset
-            dst = obj.Data;
-            N = length(fieldnames(dst));
-            if N==1
-                %catch if only one dataset as need to delete Case
-                warndlg(sprintf('There is only one dataset in this Case\nTo delete the Case use: Project > Cases > Delete Case'))
-                return
-            else
-                promptxt = 'Select which datasets to delete:';
-                datasets = getDataSetName(obj,promptxt,'multiple'); %prompts user to select dataset if more than one
-                if ischar(datasets), datasets = {datasets}; end
-                %get user to confirm selection
-                for i=1:length(datasets)    
-                    checktxt = sprintf('Deleting the following dataset: %s',datasets{i});
-                    answer = questdlg(checktxt,'Delete','Delete','Skip','Skip');
-                    if strcmp(answer,'Skip'), continue; end
-                    dst = rmfield(dst,datasets{i});    %delete selected dstable
-                end
-            end
-
-            obj.Data = dst;
-            updateCase(muicat,obj,classrec);
         end
 
 %%
@@ -326,12 +387,12 @@ classdef EDBimport < GDinterface
             %check that data is not too large to display
             if numel(dst.DataTable{1,1})<2e5
                 %generate table
-                table_figure(dst,src);
+                table_figure(dst,src);      %funtion in dstable
             else
                 warndlg('Dataset too large to display as a table')
             end            
         end
-
+        
 %%
         function tabTablesection(obj,src)
             %select between HydroData and other data sets
@@ -364,6 +425,32 @@ classdef EDBimport < GDinterface
                        'String',['Case: ',titletxt],'FontSize',10,...
                        'HorizontalAlignment','center','Tag','titletxt');
             end
+        end
+
+%%
+        function delDataset(obj,classrec,~,muicat)
+            %delete a dataset
+            dst = obj.Data;
+            fnames = fieldnames(dst);
+            if isscalar(fnames)
+                %catch if only one dataset as need to delete Case
+                warndlg(sprintf('There is only one dataset in this Case\nTo delete the Case use: Project > Cases > Delete Case'))
+                return
+            else
+                promptxt = 'Select which datasets to delete:';
+                datasets = getDataSetName(obj,promptxt,'multiple'); %prompts user to select dataset if more than one
+                if ischar(datasets), datasets = {datasets}; end
+                %get user to confirm selection
+                for i=1:length(datasets)    
+                    checktxt = sprintf('Deleting the following dataset: %s',datasets{i});
+                    answer = questdlg(checktxt,'Delete','Delete','Skip','Skip');
+                    if strcmp(answer,'Skip'), continue; end
+                    dst = rmfield(dst,datasets{i});    %delete selected dstable
+                end
+            end
+
+            obj.Data = dst;
+            updateCase(muicat,obj,classrec);
         end
 
 %%
@@ -408,8 +495,9 @@ classdef EDBimport < GDinterface
                datasetname = dsetnames{selection};
            end
         end
+
 %%
-        function [dst,idv,props] =selectVariable(obj,datasetname,subset)
+        function [dst,idv,props] = selectVariable(obj,datasetname,subset)
             %select variable to use for plot/analysis
             % subset - sub-selection of variables (optional)
             % dst - dstable for selected data set

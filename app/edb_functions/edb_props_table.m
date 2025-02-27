@@ -45,6 +45,7 @@ function [obj,isok] = edb_props_table(obj)
         tides = cellstr(num2str(tides'));
         defaultvals = [tides(:)',mnmx(:)',{dz}];
     else
+        answer = 'User';
         defaultvals = [{'1'},{'0'},{'-1'},mnmx(:)',{dz}];
     end
     wl = getWaterLevels(defaultvals);

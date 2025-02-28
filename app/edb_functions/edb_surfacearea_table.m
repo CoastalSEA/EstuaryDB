@@ -109,15 +109,13 @@ function [grid,ax,h_but] = applyBoundary(grid,shp,isplot)
     [xq,yq] = meshgrid(grid.x,grid.y);
     %insidepoly is faster but only works reliably with shape files 
     %loaded using shaperead which requires mapping toolbox
+    hwb = progressbar([],'Computing centre-line');
     if isfile(which('insidepoly.m'))
         [inpoints,onpoints] = insidepoly(xq,yq,shp.x,shp.y);
-    elseif istoolbox
-        [inpoints,onpoints] = inpolygon(xq,yq,shp.x,shp.y);
     else
-        grid = [];
-        errordlg('No function available to find points in polygon\nCheck M-Map or inspolygon is installed'); 
-        return;
+        [inpoints,onpoints] = inpolygon(xq,yq,shp.x,shp.y);
     end
+    progressbar(hwb);
 
     inpoints = logical(inpoints+onpoints);
     grid.z(~inpoints') = NaN;

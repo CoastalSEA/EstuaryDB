@@ -396,34 +396,36 @@ classdef EDBimport < GDinterface
 %%
         function tabTablesection(obj,src)
             %select between HydroData and other data sets
-            answer = questdlg('Select data type','ViewData','Data',...
-                              'Properties','Data');
-
             ht = findobj(src,'-not','Type','uitab'); %clear any existing content
             delete(ht)
-
-            if strcmp(answer,'Data')
+            dst = [];
+            if strcmp(src.Tag,'Dataset')
                 tabTable(obj,src);
             else
-                answer = questdlg('Select data type','ViewData',...
-                              'Tides','Discharge','Morphology','Tides');
-                if strcmp(answer,'Tides') && isfield(obj.HydroProps,'TidalLevels')
-                    dst = obj.HydroProps.TidalLevels;                         
-                elseif strcmp(answer,'Discharge') && isfield(obj.HydroProps,'RiverDischarges')
-                    dst = obj.HydroProps.RiverDischarges;  
-                elseif strcmp(answer,'Morphology') && ~isempty(obj.MorphProps)
-                    dst = obj.MorphProps;
-                else
-                    getdialog('No data',[],1); return
+                switch src.Tag
+                    case 'Tides'
+                        if isfield(obj.HydroProps,'TidalLevels')
+                            dst = obj.HydroProps.TidalLevels;
+                        end
+                    case 'Rivers'
+                        if isfield(obj.HydroProps,'RiverDischarges')
+                            dst = obj.HydroProps.RiverDischarges;
+                        end
+                    case 'Morphology'
+                        if ~isempty(obj.MorphProps)
+                            dst = obj.MorphProps;
+                        end 
                 end
-                desc = sprintf('Source:%s\nMeta-data: %s',dst.Source,dst.MetaData);  
+                if isempty(dst), getdialog('No data',[],1); return; end
+
+                desc = sprintf('Source:%s\nMeta-data: %s',dst.Source,dst.MetaData);
                 titletxt = dst.Description;
                 ht = tablefigure(src,desc,dst);
                 ht.Units = 'normalized';
                 uicontrol('Parent',ht,'Style','text',...
-                       'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
-                       'String',['Case: ',titletxt],'FontSize',10,...
-                       'HorizontalAlignment','center','Tag','titletxt');
+                    'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
+                    'String',['Case: ',titletxt],'FontSize',10,...
+                    'HorizontalAlignment','center','Tag','titletxt');
             end
         end
 

@@ -1,0 +1,280 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>PLinterface</title>
+<meta name="generator" content="MATLAB 24.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-03-01">
+<meta name="DC.source" content="plinterface.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h1>PLinterface</h1>
+<!--introduction-->
+<p>Abstract class with properties and methods to manipulate point and line datasets. The class inherits the handle class.</p>
+<!--/introduction-->
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#1">Description</a>
+</li>
+<li>
+<a href="#2">PLinterface properties</a>
+</li>
+<li>
+<a href="#6">PLinterface methods</a>
+</li>
+<li>
+<a href="#26">See Also</a>
+</li>
+</ul>
+</div>
+<h2 id="1">Description</h2>
+<p>
+<b>PLinterface</b> is used as a superclass to provide data handling functionality for classes that interactively manipulate points and lines. Classes that inherit <b>PLinterface</b> define menus as a subset of the options defined in the <i>setFigure</i> function, or overload this function if a more customised set of actions is required. Any class using the interface must define the Abstract properties for outPoints, outLines and isXYZ.</p>
+<h2 id="2">PLinterface properties</h2>
+<p>The properties in the abstract class include the following:</p>
+<div>
+<ul>
+<li>
+<b>Figure</b> - handle to class figure</li>
+<li>
+<b>Axes</b> - handle to class axes</li>
+<li>
+<b>Points</b> - current set of points</li>
+<li>
+<b>pLines</b> - current set of lines</li>
+<li>
+<b>NaNpnts</b> - x,y,(z) NaN points used to terminate lines</li>
+</ul>
+</div>
+<p>Abstract properties to to be defined by subclasses:</p>
+<div>
+<ul>
+<li>
+<b>outPoints</b> - saved points for output</li>
+<li>
+<b>outLines</b> - saved lines for output</li>
+<li>
+<b>isXYZ</b> - logical flag, true if points are lines are to include z values</li>
+</ul>
+</div>
+<h2 id="6">PLinterface methods</h2>
+<p>The methods in the abstract class include the following:</p>
+<p>Methods to add, delete and update grids:</p>
+<p>
+<b>setFigure</b> - initialise a figure and panel for PL classes</p>
+<pre class="language-matlab">obj = setFigure(obj,figtitle,tag,position);
+</pre>
+<p>Static methods:</p>
+<p>
+<b>checkDirection</b> - check direction of new points relative to existing line and flip if necessary so that all points are in the same directio</p>
+<pre class="language-matlab">newpnts = obj.checkDirection(endpnt,newpnts,isstart);
+</pre>
+<p>where obj is an instance of any class that inherits from PLinterface, <i>endpnt</i> is the end point of a line, <i>newpnts</i> are the points to be added to the line and <i>isstart</i> is true if the end point is the first point in the line being extended.</p>
+<p>
+<b>isPointNearLine</b> - calculate the distance from the point to points on line and also return sorted indices and distances to all Points</p>
+<pre class="language-matlab">[isNear,idP,distances] = obj.isPointNearLine(points,point,tol);
+</pre>
+<p>where obj is an instance of any class that inherits from PLinterface, <i>points</i> defines the line, <i>point</i> the point to be tested and <i>tol</i> the tolerance to be allowed in checking proximity. Returns <i>isNear</i> if the point is within tolerance along with <i>idP</i> and <i>distances</i> ranking the indices and distances of all <i>points</i> from <i>point</i>.</p>
+<p>
+<b>lineLength</b> - find length of line between 2 points</p>
+<pre>  distance = obj.lineLength(pnt1,pnt2);</pre>
+<p>where obj is an instance of any class that inherits from PLinterface, <i>pnt1</i> and <i>pnt2</i> define 2 points and the function returns the <i>distance</i> between then.</p>
+<p>
+<b>setInterval</b> - prompt user to set point spacing interval for the contour sampling along a line.</p>
+<pre class="language-matlab">cint = obj.setInterval();
+</pre>
+<p>
+<b>setLevel</b> - prompt user to set the level for the contour to be extracted and returns the level.</p>
+<pre class="language-matlab">zlevel = obj.setLevel();
+</pre>
+<p>
+<b>setSmoothinInputs</b> - prompt user for the smoothing input parameters to define the method, window size, degree and mimimum number of points to smooth.</p>
+<pre class="language-matlab">inp = obj.setSmoothingInputs();
+</pre>
+<h2 id="26">See Also</h2>
+<p>Some classes that use <b>PLinterface</b> and related functions are detailed in the help for <a href="matlab:doc('grid_point_line')">Points and Lines</a>. These work in conjuction with the <a href="matlab:doc('gdinterface')">GDinterface</a> and functions detailed in the help for <a href="matlab:doc('grid_class_fcns')">Grid classes and functions</a>.</p>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2024b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+%% PLinterface
+% Abstract class with properties and methods to manipulate point and line 
+% datasets. The class inherits the handle class.
+%% Description
+% *PLinterface* is used as a superclass to provide data handling 
+% functionality for classes that interactively manipulate points and lines.
+% Classes that inherit *PLinterface* define menus as a subset of the options 
+% defined in the _setFigure_ function, or overload this
+% function if a more customised set of actions is required.
+% Any class using the interface must define the Abstract properties for
+% outPoints, outLines and isXYZ.
+
+%% PLinterface properties
+% The properties in the abstract class include the following:
+%%
+% * *Figure* - handle to class figure
+% * *Axes* - handle to class axes
+% * *Points* - current set of points
+% * *pLines* - current set of lines
+% * *NaNpnts* - x,y,(z) NaN points used to terminate lines
+
+%%
+% Abstract properties to to be defined by subclasses:
+%%
+% * *outPoints* - saved points for output
+% * *outLines* - saved lines for output
+% * *isXYZ* - logical flag, true if points are lines are to include z values
+
+%% PLinterface methods
+% The methods in the abstract class include the following:
+%%
+% Methods to add, delete and update grids:
+%%
+% *setFigure*
+% - initialise a figure and panel for PL classes
+%%
+%   obj = setFigure(obj,figtitle,tag,position);
+
+
+%%
+% Static methods:
+%%
+% *checkDirection*
+% - check direction of new points relative to existing line and flip if
+% necessary so that all points are in the same directio
+%%
+%   newpnts = obj.checkDirection(endpnt,newpnts,isstart);
+%%
+% where obj is an instance of any class that inherits from PLinterface, 
+% _endpnt_ is the end point of a line, _newpnts_ are the points to be
+% added to the line and _isstart_ is true if the end point is the first
+% point in the line being extended.
+
+%%
+% *isPointNearLine*
+% - calculate the distance from the point to points on line and
+% also return sorted indices and distances to all Points
+%%
+%   [isNear,idP,distances] = obj.isPointNearLine(points,point,tol);
+%%
+% where obj is an instance of any class that inherits from PLinterface,
+% _points_ defines the line, _point_  the point to be tested and _tol_ the
+% tolerance to be allowed in checking proximity. Returns _isNear_ if the
+% point is within tolerance along with _idP_ and _distances_ ranking the
+% indices and distances of all _points_ from _point_.
+
+%%
+% *lineLength*
+% - find length of line between 2 points
+%%
+%    distance = obj.lineLength(pnt1,pnt2);
+%%
+% where obj is an instance of any class that inherits from PLinterface,
+% _pnt1_ and _pnt2_ define 2 points and the function returns the _distance_
+% between then.
+
+%%
+% *setInterval*
+% - prompt user to set point spacing interval for the contour sampling
+% along a line.
+%%
+%   cint = obj.setInterval();
+
+%%
+% *setLevel*
+% - prompt user to set the level for the contour to be extracted and
+% returns the level.
+%%
+%   zlevel = obj.setLevel();
+
+%%
+% *setSmoothinInputs*
+% - prompt user for the smoothing input parameters to define the method, 
+% window size, degree and mimimum number of points to smooth.
+%%
+%   inp = obj.setSmoothingInputs();
+
+%% See Also
+% Some classes that use *PLinterface* and related functions are detailed in 
+% the help for <matlab:doc('grid_point_line') Points and Lines>. These work
+% in conjuction with the <matlab:doc('gdinterface') GDinterface> and 
+% functions detailed in the help for <matlab:doc('grid_class_fcns') Grid classes and functions>.
+
+##### SOURCE END #####
+-->
+</body>
+</html>

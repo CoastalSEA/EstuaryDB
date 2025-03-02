@@ -164,7 +164,8 @@ classdef EstuaryDB < muiModelUI
                                   'Sections',...
                                   'Channel Links',...                                  
                                   'View Sections'};                            
-            menu.Setup(N).Callback = [repmat({'gcbo;'},[1,3]),repmat({@obj.sectionMenuOptions},[1,3])];
+            menu.Setup(N).Callback = [repmat({'gcbo;'},[1,3]),...
+                         repmat({@obj.sectionMenuOptions},[1,2]),{'gcbo;'}];
             menu.Setup(N).Separator = repmat({'off'},[1,6]);  
             N = N+1;
             menu.Setup(N).List = {'Generate','Load','Edit','Digitise'};
@@ -175,6 +176,9 @@ classdef EstuaryDB < muiModelUI
             N = N+1;
             menu.Setup(N).List = {'Generate','Load','Edit','Digitise'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            N = N+1;
+            menu.Setup(N).List = {'Layout','Sections','Network'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
 
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -205,13 +209,16 @@ classdef EstuaryDB < muiModelUI
             %    subtabs.<tagname>(i,:) = {<subtab label>,<callback function>};
             %where <tagname> is the struct fieldname for the top level tab. 
             tabs.Data  = {'   Data  ',@obj.refresh};        
-            tabs.Models = {'  Models  ',@obj.refresh};           
+            tabs.Models = {'  Models  ',@obj.refresh};   
             tabs.Inputs = {'  Inputs  ',@obj.InputTabSummary};
-            tabs.Table = {'  Table  ',@obj.getTabData};
+            tabs.Table = {'  Table  ',''};
+            subtabs.Table(1,:)   = {'  Dataset  ',@obj.getTabData};
+            subtabs.Table(2,:)   = {' Tides ',@obj.getTabData};
+            subtabs.Table(3,:)   = {' Rivers ',@obj.getTabData};
+            subtabs.Table(4,:)   = {' Morphology ',@obj.getTabData};
+
             tabs.Plot   = {'  Q-Plot  ',@obj.getTabData};
-            %if subtabs are not required eg for Stats
             tabs.Stats = {'   Stats   ',@obj.setTabAction};
-            subtabs = [];
         end
        
 %%
@@ -239,7 +246,7 @@ classdef EstuaryDB < muiModelUI
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
                     tabStats(lobj,src);
-                case 'Table'
+                case {'Dataset','Tides','Rivers','Morphology'}
                     classname = metaclass(cobj).Name;
                     if strcmp(classname,'EDBimport')
                          if isempty(cobj.HydroProps) && isempty(cobj.MorphProps)
@@ -338,7 +345,9 @@ classdef EstuaryDB < muiModelUI
                 %EDBimport inherits GDinterface, which includes the grids
                 %needed for PL_Sections methods
                 PL_Sections.sectionMenuOptions(obj,src.Parent,classname);
-            elseif any(strcmp({'Sections','Channel Links','View Sections'},src.Text))
+            elseif any(strcmp({'Sections','Channel Links'},src.Text))
+                PL_Sections.sectionMenuOptions(obj,src,classname);
+            elseif any(strcmp({'Layout','Sections','Network'},src.Text))
                 PL_Sections.sectionMenuOptions(obj,src,classname);
             elseif strcmp(src.Text,'Load')
                 PL_Sections.loadLines(obj,src.Parent,classname);

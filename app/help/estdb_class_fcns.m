@@ -4,6 +4,7 @@
 
 %% EstuaryDB classes
 % * *EstuaryDB* - defines the behaviour of the main UI.
+% * *EDBimport* – import data and provide data specific methods for spatial data (vector and matrix)
 % * *EDB_Parameters* - manages input of model parameters
 % * *EDB_Probe* - handles additional analysis of the data
 % * *EDB_ProbeUI* - user interface for additional analysis of the data
@@ -18,16 +19,16 @@
 % gross properties table.
 % * *edb_plot_tidelevels* - add the high, mean and low water tide levels to
 % a plot.
-% * *edb_props_table.m* - use surface area hypsometry or width hypsometry to compute the gross
+% * *edb_props_table* - use surface area hypsometry or width hypsometry to compute the gross
 % properties of an inlet or estuary.
 % * *edb_regression_analysis* - estimate the exponential convergence rate.
 % * *edb_regression_plot* - generate a regression plot for Width , CSA, and
 % Hydraulic depth along-channel properties.
-% * *edb_surfacearea_table* - compile the surface area hyspometry dataset.
+% * *edb_surfacearea_table* - compile the surface area hypsometry dataset.
 % * *edb_s_hypsometry* - compute the surface area hypsometry data.
 % * *edb_user_plots* - suite of functions to plot the data.
 % * *edb_user_tools* - suite of functions to analyse the data.
-% * *edb_width_table* - compile the width hyspometry dataset.
+% * *edb_width_table* - compile the width hypsometry dataset.
 % * *edb_w_hypsometry* - compute the width hypsometry data.
 % * *geyer_mccready_plot* - generate a plot to compare the fluvial/tidal
 % properties of estuaries and hence the degree of mixing.

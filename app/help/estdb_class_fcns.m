@@ -40,6 +40,16 @@
 % * *edb_w_hyps_format* - defines format for import of along-channel width
 % hypsometry data ([x,z,W]).
 
+%% Additional functions
+% * *..\muiAppLib\muiAppEstuaryFcns* - library of functions for commonly used
+% methods such as sea level rise, simple tide simulation, etc.
+% *  *..\muiAppLib\muiAppGridFcns* - library of functions for a range of grid
+% manipulation methods.
+% * Matlab(TM) *Mapping toolbox* or *m_map1.4*
+% (https://www-old.eoas.ubc.ca/~rich/map.html) are used  to read shapefiles
+% * As a faster alternative to Matlab(TM) _inpolygon_, the _InsidePoly_
+% functions can be used (https://uk.mathworks.com/matlabcentral/fileexchange/27840-2d-polygon-interior-detection).
+
 %% Grid Classes
 % Classes used to manipulate cartesian grids can be found in the
 % _muiAppGridFcns_ folder and include the following:
@@ -208,5 +218,5 @@
 % 
 
 %% See Also 
-% The EstuaryDB <matlab:ms_open_manual manual>, which provides further details 
+% The EstuaryDB <matlab:estdb_open_manual manual>, which provides further details 
 % of setup and configuration of the model.

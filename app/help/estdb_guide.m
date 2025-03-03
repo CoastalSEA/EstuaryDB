@@ -3,4 +3,4 @@
 % information about the outputs of the model.
 %%
 % The <matlab:estdb_open_manual manual> provides further details of setup and 
-% configuration of the model.
+% configuration of the application.

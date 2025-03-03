@@ -1,5 +1,5 @@
 %% Tab options
-% The Tabs display various information such as a list of data sets available (Cases) , a summary of what is 
+% The Tabs display various information such as a list of data sets available (Cases), a summary of what is 
 % currently defined and rapid access to simple plots. Note: these only update when clicked on using a mouse 
 % and values cannot be edited from the Tabs.
 
@@ -7,7 +7,11 @@
 % * *Data*: lists the cases that have been run with a case id and description.
 % * *Models*: lists the cases for model runs or derived data sets.
 % * *Inputs*: summmary of the properties that have been defined.
-% * *Table*: user selects a variable from imported data or model output, and if tabular presents the table on the tab. The table cannot be edited.
+% * *Table*: tabulates a selected dataset (display only) and has the following sub-Tabs:
+% * _Dataset_: tabulates Case datasets that are scalar, vector or matrices.
+% * _Tides_: tabulates any tidal elevation data added for the specific estuary.
+% * _Rivers_: tabulates any river discharge data added for the specific estuary.
+% * _Morphology_: tabulates the gross properties for the estuary derived from either the surface area hypsometry or the width hypsometry and selected tidal range.
 % * *Q-Plot*: user selects a variable from imported data or model output, and creates a plot on the tab. The plot cannot be edited.
 % * *Stats*: view statistical output that are tabulr (not saved but viewable while Statistics UI remains open).
 

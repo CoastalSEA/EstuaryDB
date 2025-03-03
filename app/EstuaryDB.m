@@ -168,13 +168,13 @@ classdef EstuaryDB < muiModelUI
                          repmat({@obj.sectionMenuOptions},[1,2]),{'gcbo;'}];
             menu.Setup(N).Separator = repmat({'off'},[1,6]);  
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);         
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Digitise'};
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
             N = N+1;
             menu.Setup(N).List = {'Layout','Sections','Network'};
@@ -351,8 +351,11 @@ classdef EstuaryDB < muiModelUI
                 PL_Sections.sectionMenuOptions(obj,src,classname);
             elseif strcmp(src.Text,'Load')
                 PL_Sections.loadLines(obj,src.Parent,classname);
-            elseif strcmp(src.Text,'Edit') || strcmp(src.Text,'Digitise')
+            elseif strcmp(src.Text,'Edit')
                 PL_Sections.editLines(obj,src,classname);
+            elseif strcmp(src.Text,'Delete')
+                PL_Sections.deleteLines(obj,src,classname);
+
             end
             DrawMap(obj);
         end  

@@ -61,7 +61,7 @@ classdef EDBimport < GDinterface
         function obj = loadData(muicat)
             %load user data set from one or more files
             % mobj - handle to modelui instance 
-            listxt = {'Surface area','Width','Bathymetry','Image','GeoImage'};
+            listxt = {'Bathymetry','Surface area','Width','Image','GeoImage'};
             selection = listdlg('PromptString','Select data type to import:',...
                 'ListString',listxt,'ListSize',[140,100],'SelectionMode','single');
             if isempty(selection), return; end

@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>EstuaryDB</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-01-24"><meta name="DC.source" content="estuarydb.m"><style type="text/css">
+      --><title>EstuaryDB</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-03-03"><meta name="DC.source" content="estuarydb.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -67,15 +67,18 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>EstuaryDB</h1><!--introduction--><p>Combine estuary data from multiple sources for intercomparison and further anlysis</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Licence</a></li><li><a href="#2">Requirements</a></li><li><a href="#3">Background</a></li><li><a href="#4">EstuaryDB classes</a></li><li><a href="#5">EstuaryDB functions</a></li><li><a href="#6">EstuaryDB format files</a></li><li><a href="#7">Additional functions</a></li><li><a href="#8">Usage</a></li><li><a href="#9">Manual</a></li><li><a href="#10">See Also</a></li></ul></div><h2 id="1">Licence</h2><p>The code is provided as Open Source code (issued under a GNU General Public License).</p><h2 id="2">Requirements</h2><p>EstuaryDB is written in Matlab&#8482; and requires v2016b, or later. In addition, EstuaryDB requires both the <a href="matlab:doc('dstoolbox')">dstoolbox</a> and the <a href="matlab:doc('muitoolbox')">muitoolbox</a> and the estuary and grid libraries in the muiAppLib repository.</p><h2 id="3">Background</h2><p>EstuaryDB is used to load tables of estuary properties, derived hypsometry data for surface area (whole estuary), or width (along channel sections), or derive such data from a bathymetry grid. A range of tools are then available to plot, tabulate and analyse these datasets.</p><h2 id="4">EstuaryDB classes</h2><div><ul><li><b>EstuaryDB</b> - defines the behaviour of the main UI.</li><li><b>EDB_Parameters</b> - manages input of model parameters</li><li><b>EDB_Probe</b> - handles additional analysis of the data</li><li><b>EDB_ProbeUI</b> - user interface for additional analysis of the data</li></ul></div><h2 id="5">EstuaryDB functions</h2><div><ul><li><b>edb_derived_props</b> - derive additional properties and add them to the gross properties table.</li><li><b>edb_regression_analysis</b> - estimate the exponential convergence rate.</li><li><b>edb_regression_plot</b> - generate a regression plot for Width , CSA, and Hydraulic depth along-channel properties.</li><li><b>edb_surfacearea_table</b> - compile the surface area hyspometry dataset</li><li><b>edb_s_hypsometry</b> - compute the surface area hypsometry data</li><li><b>edb_user_plots</b> - suite of functions to plot the data</li><li><b>edb_user_tools</b> - suite of functions to analyse the data</li><li><b>edb_width_table</b> -  compile the width hyspometry dataset</li><li><b>edb_w_hypsometry</b> - compute the width hypsometry data</li><li><b>geyer_mccready_plot</b> - generate a plot to compare the fluvial/tidal properties of estuaries and hence the degree of mixing.</li></ul></div><h2 id="6">EstuaryDB format files</h2><div><ul><li><b>edb_bathy_format</b> - defines format for import of xyz bathymetry data.</li><li><b>edb_image_format</b> - defines format for import of images (eg tiff or jpg).</li><li><b>edb_s_hyps_format</b> - defines format for import of surface area hypsometry data ([z,S]).</li><li><b>edb_w_hyps_format</b> - defines format for import of along-channel width hypsometry data ([x,z,W]).</li></ul></div><h2 id="7">Additional functions</h2><div><ul><li><b>..\muiAppLib\muiAppEstuaryFcns</b> - library of functions for commonly used methods such as sea level rise, simple tide simulation, etc.</li><li><b>..\muiAppLib\muiAppGridFcns</b> - library of functions for a range of grid manipulation methods.</li><li>Matlab&#8482; <b>Mapping toolbox</b> or <b>m_map1.4</b> (<a href="https://www-old.eoas.ubc.ca/~rich/map.html">https://www-old.eoas.ubc.ca/~rich/map.html</a>) are used  to read shapefiles</li><li>As a faster alternative to Matlab&#8482; <i>inpolygon</i>, the <i>InsidePoly</i> functions can be used (<a href="https://uk.mathworks.com/matlabcentral/fileexchange/27840-2d-polygon-interior-detection">https://uk.mathworks.com/matlabcentral/fileexchange/27840-2d-polygon-interior-detection</a>).</li></ul></div><h2 id="8">Usage</h2><pre>Quick Guide to setting up a new analysis:</pre><pre>File&gt;New
-    To create a new project space.</pre><pre>Setup&gt;Import Table Data
-    Load one or more data sets from text file, Excel file or mat file.</pre><pre>Use 'Q-Plot' tab and 'Table' tab to view the imported data</pre><pre>File&gt;Save as
-    Save project to a *.mat file.</pre><pre>Completed cases are listed based on the user descriptions on the Data tab.</pre><pre>Analysis&gt;Plot Menu
+  </style></head><body><div class="content"><h1>EstuaryDB</h1><!--introduction--><p>Combine estuary data from multiple sources for intercomparison and further anlysis</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Licence</a></li><li><a href="#2">Requirements</a></li><li><a href="#3">Background</a></li><li><a href="#4">EstuaryDB classes and functions</a></li><li><a href="#5">Usage</a></li><li><a href="#6">Manual</a></li><li><a href="#7">See Also</a></li></ul></div><h2 id="1">Licence</h2><p>The code is provided as Open Source code (issued under a GNU General Public License).</p><h2 id="2">Requirements</h2><p>EstuaryDB is written in Matlab&#8482; and requires v2020b, or later. In addition, EstuaryDB requires both the <a href="matlab:doc('dstoolbox')">dstoolbox</a> and the <a href="matlab:doc('muitoolbox')">muitoolbox</a> and the estuary and grid libraries in the muiAppLib repository (all available at <a href="https://github.com/CoastalSEA/EstuaryDB">https://github.com/CoastalSEA/EstuaryDB</a>).</p><h2 id="3">Background</h2><p>EstuaryDB is used to load tables of estuary properties, derived hypsometry data for surface area (whole estuary), or width (along channel sections), or derive such data from a bathymetry grid. A range of tools are then available to plot, tabulate and analyse these datasets.</p><h2 id="4">EstuaryDB classes and functions</h2><p>The main classes and functions used in EstuaryDB are summarised <a href="matlab:doc('estdb_class_fcns')">here</a>, with further details given in the documenstion for grids, points and lines in the <a href="matlab:doc('grid_class_fcns')">Grid</a> and <a href="matlab:doc('points_lines_classes_functions')">Points and Lines</a> documentation, which use class  <a href="matlab:doc('gdinterface')">GDinterface</a> and  <a href="matlab:doc('plinterface')">PLintereface</a> interfaces respectively.</p><h2 id="5">Usage</h2><pre>Quick Guide to setting up a new analysis:</pre><pre>File&gt;New
+    To create a new project space.
+Setup&gt;Import Table Data
+    Load one or more data sets from text file, Excel file or mat file.
+File&gt;Save as
+    Save project to a *.mat file.</pre><pre>Use 'Q-Plot' tab and 'Table' tab to view the imported data</pre><pre>Completed cases are listed based on the user descriptions on the Data tab.</pre><pre>Analysis&gt;Plot Menu
     Select data and generate plots of results
-    Use Plot tab to generate customised analysis plot and see statistical output</pre><pre>Analysis&gt;Statistics
+    Use Plot tab to generate customised analysis plot and see statistical output
+Analysis&gt;Statistics
     Select data and various types of statistical analysis
     Use Stats tab to view statistical output (not saved but viewable while
-    Statistics UI remains open).</pre><h2 id="9">Manual</h2><p>The <a href="matlab:estdb_open_manual">manual</a> provides further details of setup and configuration of the model. The files for the example use case can be found in the example folder <a href="matlab:estdb_example_folder">here</a>.</p><h2 id="10">See Also</h2><p><a href="matlab:doc('muitoolbox')">muitoolbox</a>, <a href="matlab:doc('dstoolbox')">dstoolbox</a>.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+    Statistics UI remains open).</pre><h2 id="6">Manual</h2><p>The <a href="matlab:estdb_open_manual">manual</a> provides further details of setup and configuration of the model. The files for the example use case can be found in the example folder <a href="matlab:estdb_example_folder">here</a>.</p><h2 id="7">See Also</h2><p><a href="matlab:doc('muitoolbox')">muitoolbox</a>, <a href="matlab:doc('dstoolbox')">dstoolbox</a>.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% EstuaryDB
 % Combine estuary data from multiple sources for intercomparison and
@@ -86,10 +89,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % Public License).
 
 %% Requirements
-% EstuaryDB is written in Matlab(TM) and requires v2016b, or later. In addition, 
+% EstuaryDB is written in Matlab(TM) and requires v2020b, or later. In addition, 
 % EstuaryDB requires both the <matlab:doc('dstoolbox') dstoolbox> and the 
 % <matlab:doc('muitoolbox') muitoolbox> and the estuary and grid libraries
-% in the muiAppLib repository.
+% in the muiAppLib repository (all available at https://github.com/CoastalSEA/EstuaryDB).
 
 %% Background
 % EstuaryDB is used to load tables of estuary properties, derived
@@ -97,64 +100,31 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 % sections), or derive such data from a bathymetry grid. A range of tools
 % are then available to plot, tabulate and analyse these datasets.
 
-%% EstuaryDB classes
-% * *EstuaryDB* - defines the behaviour of the main UI.
-% * *EDB_Parameters* - manages input of model parameters
-% * *EDB_Probe* - handles additional analysis of the data
-% * *EDB_ProbeUI* - user interface for additional analysis of the data
+%% EstuaryDB classes and functions
+% The main classes and functions used in EstuaryDB are summarised 
+% <matlab:doc('estdb_class_fcns') here>, with further details given in the 
+% documenstion for grids, points and lines in the
+% <matlab:doc('grid_class_fcns') Grid> and <matlab:doc('points_lines_classes_functions') Points and Lines>
+% documentation, which use class  <matlab:doc('gdinterface') GDinterface> 
+% and  <matlab:doc('plinterface') PLintereface> interfaces respectively.
 
-%% EstuaryDB functions
-% * *edb_derived_props* - derive additional properties and add them to the
-% gross properties table.
-% * *edb_regression_analysis* - estimate the exponential convergence rate.
-% * *edb_regression_plot* - generate a regression plot for Width , CSA, and
-% Hydraulic depth along-channel properties.
-% * *edb_surfacearea_table* - compile the surface area hyspometry dataset
-% * *edb_s_hypsometry* - compute the surface area hypsometry data
-% * *edb_user_plots* - suite of functions to plot the data
-% * *edb_user_tools* - suite of functions to analyse the data
-% * *edb_width_table* -  compile the width hyspometry dataset
-% * *edb_w_hypsometry* - compute the width hypsometry data
-% * *geyer_mccready_plot* - generate a plot to compare the fluvial/tidal
-% properties of estuaries and hence the degree of mixing.
-
-%% EstuaryDB format files
-% * *edb_bathy_format* - defines format for import of xyz bathymetry data.
-% * *edb_image_format* - defines format for import of images (eg tiff or jpg).
-% * *edb_s_hyps_format* - defines format for import of surface area
-% hypsometry data ([z,S]).
-% * *edb_w_hyps_format* - defines format for import of along-channel width
-% hypsometry data ([x,z,W]).
-
-%% Additional functions
-% * *..\muiAppLib\muiAppEstuaryFcns* - library of functions for commonly used
-% methods such as sea level rise, simple tide simulation, etc.
-% *  *..\muiAppLib\muiAppGridFcns* - library of functions for a range of grid
-% manipulation methods.
-% * Matlab(TM) *Mapping toolbox* or *m_map1.4*
-% (https://www-old.eoas.ubc.ca/~rich/map.html) are used  to read shapefiles
-% * As a faster alternative to Matlab(TM) _inpolygon_, the _InsidePoly_
-% functions can be used (https://uk.mathworks.com/matlabcentral/fileexchange/27840-2d-polygon-interior-detection).
 %% Usage	
 %  Quick Guide to setting up a new analysis:
 % 
 %  File>New 
 %      To create a new project space.
-% 	
 %  Setup>Import Table Data
 %      Load one or more data sets from text file, Excel file or mat file.
-%  
-%  Use 'Q-Plot' tab and 'Table' tab to view the imported data
-% 	
 %  File>Save as
 %      Save project to a *.mat file.
+%
+%  Use 'Q-Plot' tab and 'Table' tab to view the imported data
 % 	
 %  Completed cases are listed based on the user descriptions on the Data tab.
 % 
 %  Analysis>Plot Menu
 %      Select data and generate plots of results
 %      Use Plot tab to generate customised analysis plot and see statistical output
-%
 %  Analysis>Statistics
 %      Select data and various types of statistical analysis
 %      Use Stats tab to view statistical output (not saved but viewable while 

@@ -67,12 +67,12 @@ classdef EDBimport < GDinterface
             if isempty(selection), return; end
 
             switch selection
-                case 1 %surface area
-                    formatfile = 'edb_s_hyps_format';
-                case 2 %width
-                    formatfile = 'edb_w_hyps_format';
-                case 3 %bathymetry
+                case 1 %bathymetry
                     formatfile = 'edb_bathy_format';
+                case 2 %surface area
+                    formatfile = 'edb_s_hyps_format';
+                case 3 %width
+                    formatfile = 'edb_w_hyps_format';                
                 case 4 %image
                     formatfile = 'edb_image_format';
                 case 5 %geoimage
@@ -333,9 +333,9 @@ classdef EDBimport < GDinterface
     methods   
         function fmt = get.formatypes(obj) %#ok<MANU> 
             %create look-up table for file formats from dataset names
-            dsetnames = {'SurfaceArea','Width','Grid','Image','GeoImage'};
-            files = {'edb_s_hyps_format';'edb_w_hyps_format';...
-                     'edb_bathy_format';'edb_image_format';...
+            dsetnames = {'Grid','SurfaceArea','Width','Image','GeoImage'};
+            files = {'edb_bathy_format';'edb_s_hyps_format';...
+                     'edb_w_hyps_format';'edb_image_format';...
                      'gd_geoimage_format'};
             fmt = table(files,'RowNames',dsetnames);
         end
@@ -343,8 +343,8 @@ classdef EDBimport < GDinterface
 %%
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
-            calltxt = {'Surface area','Width','Grid','Image','Gross Properties','GeoImage'};
-            dsetnames = {'SurfaceArea';'Width';'Grid';'Image';'Properties';'GeoImage'};            
+            calltxt = {'Grid','Surface area','Width','Image','Gross Properties','GeoImage'};
+            dsetnames = {'Grid';'SurfaceArea';'Width';'Image';'Properties';'GeoImage'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
 

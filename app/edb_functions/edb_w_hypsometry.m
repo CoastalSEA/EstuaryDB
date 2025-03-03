@@ -55,7 +55,14 @@ function [Estuary,Reach] = edb_w_hypsometry(obj,zmax,histint,isplot)
     %now combine reaches
     mnmx = minmax(x);
     %set up a chainage from mouth to most distant point
-    X =  mnmx(1):obj.Sections.ChannelProps.cint:mnmx(2);
+    if isfield(obj.Sections.ChannelProps,'cint')
+        cint = obj.Sections.ChannelProps.cint;
+    else
+        cint = PLinterface.setInterval();
+        obj.Sections.ChannelProps.cint = cint;
+    end
+    X =  mnmx(1):cint:mnmx(2);
+   
     W = zeros(length(X),length(Z));
     maxW = 0;
     for i=1:nreach

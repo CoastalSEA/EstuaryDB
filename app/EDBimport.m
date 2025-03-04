@@ -22,10 +22,10 @@ classdef EDBimport < GDinterface
 %--------------------------------------------------------------------------
 %    
     properties  
-        %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
-        WaterBody  %shape file or xy struct polygon
+        %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet        
         Sections   %GD_Section instance with properties for Boundary, 
                    %ChannelLine, ChannelProps, SectionLines and CrossSections
+        WaterBody  %shape file or xy struct polygon           
         HydroProps %struct for TidalLevels and RiverDischarges
         MorphProps %table for morphological gross properties derived from
                    %surface area or width hypsometry (row for each)
@@ -418,7 +418,7 @@ classdef EDBimport < GDinterface
                 end
                 if isempty(dst), getdialog('No data',[],1); return; end
 
-                desc = sprintf('Source:%s\nMeta-data: %s',dst.Source,dst.MetaData);
+                desc = sprintf('Source: %s\nMeta-data: %s',dst.Source,dst.MetaData);
                 titletxt = dst.Description;
                 ht = tablefigure(src,desc,dst);
                 ht.Units = 'normalized';

@@ -140,15 +140,20 @@ function grid = checkGrid(grid)
     %https://uk.mathworks.com/matlabcentral/answers/2173624-plot-an-image-with-axes-that-match-the-source-surface-plot
     %to prevent this reformat the grid if required
     dx = diff(grid.x);
-    if ~all(diff(dx)==0)
+    dy = diff(grid.y);
+    if all(diff(dx)==0) && all(diff(dy)==0)
+        return
+    elseif ~all(diff(dx)==0) && ~all(diff(dy)==0)   
+       figure; plot(dx,dy);
+       xlabel('diff(x)')
+       ylabel('diff(y)')
+       title('Increments along x and y-axes are not constant')
+    elseif ~all(diff(dx)==0)
        figure; plot(dx);
        xlabel('diff(x)')
        ylabel('x-increment')
        title('Increments along x-axis are not constant')
-    end
-    %
-    dy = diff(grid.y);
-    if ~all(diff(dy)==0)
+    elseif ~all(diff(dy)==0)
        figure; plot(dy);
        xlabel('diff(y)')
        ylabel('y-increment')

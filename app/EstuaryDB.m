@@ -111,8 +111,8 @@ classdef EstuaryDB < muiModelUI
                                   'Input Parameters','Model Constants'};                                                                         
             menu.Setup(N).Callback = [repmat({'gcbo;'},[1,4]),...
                                      {@obj.gridMenuOptions},...
-                                     repmat({'gcbo;'},[1,2]),...
-                                     repmat({@obj.setupMenuOptions},[1,3])];
+                                     repmat({'gcbo;'},[1,3]),...
+                                     repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
             menu.Setup(N).Separator = {'off','off','off','off','on',...
                                              'off','off','off','on','on'}; %separator preceeds item
@@ -179,6 +179,9 @@ classdef EstuaryDB < muiModelUI
             N = N+1;
             menu.Setup(N).List = {'Layout','Sections','Network'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
+            N = N+1;
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete','View'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);
 
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Models','Derive Output','User Tools'};
@@ -355,7 +358,8 @@ classdef EstuaryDB < muiModelUI
                 PL_Sections.editLines(obj,src,classname);
             elseif strcmp(src.Text,'Delete')
                 PL_Sections.deleteLines(obj,src,classname);
-
+            elseif strcmp(src.Text,'View')
+                PL_Sections.view_WBlines(obj,src,classname);
             end
             DrawMap(obj);
         end  

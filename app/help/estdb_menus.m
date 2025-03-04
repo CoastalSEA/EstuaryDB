@@ -62,7 +62,6 @@
 % deleted (NB: this only deletes Datasets and not the Case, which can be
 % deleted using Project>Cases>Delete Case).
 
-
 %% Setup > Add Hypsometry from Grid
 % Use a loaded bathymetry data set to construct surface area or
 % along-channel width hypsometry datasets. These options replicate the data

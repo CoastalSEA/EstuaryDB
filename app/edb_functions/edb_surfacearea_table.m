@@ -81,11 +81,8 @@ function [obj,isok] = edb_surfacearea_table(obj)
     dst.Description = estuaryname;
     dst.Source = sprintf('Calculated using %s bathymetry',estuaryname);
     dst.MetaData = metatxt;
-    obj.Data.(datasetname) = dst;
-    isok = 1;      %user may choose not to check the results in a plot
 
     if isplot
-        %ax.Parent.Parent.Position(3) = 2*ax.Parent.Parent.Position(3); %double width of figure
         subplot(1,3,[1,2],ax);
         hyps_plot(hyps,subplot(1,3,3))
         ok = 0;
@@ -96,10 +93,14 @@ function [obj,isok] = edb_surfacearea_table(obj)
             elseif strcmp(h_but.Tag,'Reject') 
                 obj = []; isok = 0; delete(h_but.Parent)  %tidy-up
             else   %user accepted
+                obj.Data.(datasetname) = dst;
                 delete(h_but);     %keep figure but delete buttons
             end   
             ok = 1; 
         end
+    else
+        obj.Data.(datasetname) = dst;
+        isok = 1;  
     end    
 end
 

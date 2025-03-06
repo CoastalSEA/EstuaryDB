@@ -59,8 +59,9 @@ end
 %--------------------------------------------------------------------------
 function newdst = getData(obj,filename,metatxt) 
     %read and load a data set from a file
-    [~,estname,ext] = fileparts(filename);
+    newdst = []; 
 
+    [~,estname,ext] = fileparts(filename);    
     if strcmp(ext,'.mat')
         %read a mat file containing a grid object stored in a dstable 
         %eg as when a Grid is saved using Project>Save Dataset
@@ -69,7 +70,7 @@ function newdst = getData(obj,filename,metatxt)
         data =load(filename,"-mat"); 
         if isempty(data) || ~isstruct(data) || ~isfield(data,'dst')
             warndlg(sprintf('Incorrect dat type in %s',filename))
-            newdst = []; return
+            return
         else
             newdst.Grid = data.dst;  %dst is asssmued to hold a Grid dataset
             return
@@ -275,8 +276,9 @@ function ok = getPlot(obj,src,dsetname)
     grid = getGrid(obj,1,[],dsetname);
 
     %plot form as a contour plot
-    contourf(grid.x,grid.y,grid.z');
-    %ax = gd_ax_dir(ax,grid.x,grid.y);    
+    surf(grid.x,grid.y,grid.z');     
+    view(0,90)
+    shading interp
     gd_colormap([min(grid.z,[],'all'),max(grid.z,[],'all')])
     axis equal tight
     cb = colorbar;

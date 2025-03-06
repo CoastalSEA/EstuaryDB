@@ -102,6 +102,8 @@
 % or minimum set of values;
 % * *Add Surface*: add horizontal surface to an extisting
 % grid;
+% * *Infill Surface*: spatial interpolation to infill
+% areas with no data;
 % * *To curvilinear*: map grid from cartesian to curvilinear coordinates; 
 % * *From curvilinear*: map grid from curvilinear to cartesian
 % coordinates;
@@ -129,11 +131,11 @@
 % to enable:
 %%
 % * *Generate* - use the built in tools to aid the creation of the lines.
-% This option can be used to modify existing linework, as well creating new
-% linework.
+% This option can be used to modify existing linework, or create new
+% linework. The Sections > Boundary tool also has an option to copy the Waterbody linework as an input. 
 % * *Load* - load a shapefile with the lines to be used.
-% * *Edit* - interactively digitise or edit lines.
-% * *Delete* - deletes the save lines for the selected Case.
+% * *Edit* - interactively digitise or edit the linework.
+% * *Delete* - deletes the saved lines for the selected Case.
 
 %%
 % The Point and Line tools have a menu that is accessed by right clicking
@@ -158,13 +160,16 @@
 % * Point > Add: add one or more points;
 % * Point > Edit: edit the position of any existing points;
 % * Point > Delete: delete existing points;
+%%
 % * Line > Add: add one or more lines (each line is terminated with a NaN
 % point);
+% * Line > Edit: edit the points in a line; 
 % * Line > Extend: add points to the end of a line;
 % * Line > Insert: insert points within a line;
 % * Line > Join: join two lines together;
 % * Line > Split: divide a line into two;
-% * Line > Delete: delete a line.
+% * Line > Delete > Points: delete one or more points in a line.
+% * Line > Delete > Lines: delete one or more lines.
 %%
 % For details of the conventions used for points and lines see the
 % <matlab:doc('points_lines_classes_functions') Point & Line>
@@ -263,6 +268,14 @@
 % tools allows a bounding polygon to be defined for use when computing the
 % surface area hypsometry (Setup > Add Hypsometry from Grid > Surface
 % area).
+%%
+% * *Generate* - use the built in tools to aid the creation of the lines.
+% This option can be used to modify existing linework, create new linework,
+% or copy the Sections > Boundary tool linework.
+% * *Load* - load a shapefile with the lines to be used.
+% * *Edit* - interactively digitise or edit the waterbody linework.
+% * *Delete* - deletes the saved lines for the selected Case.
+% * *View* - creates a plot of the boundary.
 
 %% Setup > Input Parameters
 % enter and edit the specified model parameters. The input parameters can be viewed on the Inputs tab.
@@ -274,8 +287,24 @@
 % * *Derive Output*: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.
 
 %% Analysis
-% * *Plots*: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists, 
+% * *Plots*: initialises the Plot UI to select variables and produce
+% various types of plot. The user selects the Case, Dataset and Variable to
+% used, along with the Plot type and any Scaling to be applied from a series of drop down lists.
 % * *Statistics*: initialiss the Statistics UI to select data and run a range of standard statistical methods.
+% * *Tabular Plots*: Bespoke plots for scalar tabular data.
+%
+% # plot a scatter diagram of two or three variables from any case (selected variables must be the same length);
+% # plot a bar chart of a variable with the bars coloured based on a selected classification variable (from the same dataset as the main variable);
+% # plot a range plot by selecting low-mean-high values of two properties (eg tidal ranges and river discharge);
+% # plot a Geyer-McCready plot (Figure 6 in 2014 paper) using the gross properties of the estuaries
+%
+% * *Hypsometry Plots*: Bespoke plots for the surface area and width
+% hypsometry data sets.
+%
+% # convergence plot has panels for along-channel variation of width, csa and depth and a fourth panel for an image of where the sections were taken (if available in the dataset).
+%
+% * *User Plots*: calls the edb_user_plots function, allowing additional
+% plots to be added as required.
 
 %% Help
 % * *Help*: access the online documentation for EstuaryDB.

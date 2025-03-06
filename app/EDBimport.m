@@ -210,7 +210,7 @@ classdef EDBimport < GDinterface
             count = 0;
             for i=1:nrec
                 [cobj,classrec] = getCase(muicat,caserec(i));
-                casedesc = muicat.Catalogue.CaseDescription(cobj.CaseIndex);
+                casedesc = muicat.Catalogue.CaseDescription(caserec(i));
                 estnames = datatable.Properties.RowNames;
                 idr = strcmp(estnames,casedesc);
                 if all(~idr), continue; end

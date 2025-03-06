@@ -149,14 +149,14 @@ classdef EstuaryDB < muiModelUI
             N = N+1;         
             menu.Setup(N).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
-                                  'Combine Grids','Add Surface',...
+                                  'Combine Grids','Add Surface','Infill Surface',...
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
                                   'Plot Sections','Grid Image','Digitise Line',...
                                   'Export xyz Grid','User Function'};                                                                          
-            menu.Setup(N).Callback = repmat({@obj.gridMenuOptions},[1,15]);
-            menu.Setup(N).Separator = [repmat({'off'},[1,6]),...
-                             {'on','off','on','off','off','off','on','on','on'}];%separator preceeds item
+            menu.Setup(N).Callback = repmat({@obj.gridMenuOptions},[1,16]);
+            menu.Setup(N).Separator = [repmat({'off'},[1,7]),...
+                       {'on','off','on','off','off','off','on','on','on'}];%separator preceeds item
             N = N+1;
             menu.Setup(N).List = {'Boundary',...
                                   'Channel Network',...                                  
@@ -189,9 +189,10 @@ classdef EstuaryDB < muiModelUI
             menu.Run(1).Separator = {'off','off','on'}; %separator preceeds item
 
             %% Plot menu --------------------------------------------------  
-            menu.Analysis(1).List = {'Plots','Statistics','User Plots'};
-            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,3]);
-            menu.Analysis(1).Separator = {'off','off','on'}; %separator preceeds item
+            menu.Analysis(1).List = {'Plots','Statistics','Tabular Plots',...
+                                     'Hypsometry Plots','User Plots'};
+            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,5]);
+            menu.Analysis(1).Separator = {'off','off','on','off','on'}; %separator preceeds item
             
             %% Help menu --------------------------------------------------
             menu.Help.List = {'Documentation','Manual'};
@@ -397,6 +398,10 @@ classdef EstuaryDB < muiModelUI
                     obj.mUI.PlotsUI = muiPlotsUI.getPlotsUI(obj);
                 case 'Statistics'
                     obj.mUI.StatsUI = muiStatsUI.getStatsUI(obj);
+                case 'Tabular Plots'
+                    edb_table_plots(obj);  
+                case 'Hypsometry Plots'
+                    edb_hypsometry_plots(obj);  
                 case 'User Plots'                            
                     edb_user_plots(obj);     
             end            

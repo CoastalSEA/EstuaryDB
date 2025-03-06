@@ -13,3 +13,4 @@ app/remapppath.m
 app/setapppath.m
 *.asv
 *.txt
+*.tmp

@@ -32,7 +32,7 @@
             <tocitem target="estdb_class_fcns.html">EstuaryDB classes and functions</tocitem>
             <tocitem target="grid_class_fcns.html">Grid classes and functions</tocitem>
             <tocitem target="gdinterface.html">GDinterface abstract class</tocitem>   
-             <tocitem target="points_lines_classes_functions.html">Points and Lines classes and functions</tocitem>
+            <tocitem target="points_lines_classes_functions.html">Points and Lines classes and functions</tocitem>
             <tocitem target="plinterface.html">PLinterface abstract class</tocitem>  
         </tocitem>
     </tocitem>    

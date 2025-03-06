@@ -3,7 +3,7 @@ function estdb_example_folder()
 appname = 'EstuaryDB';
 appinfo = matlab.apputil.getInstalledAppInfo;
 idx = find(strcmp({appinfo.name},appname));
-fpath = [appinfo(idx(1)).location,[filesep,'example']];
+fpath = [appinfo(idx(1)).location,[filesep,appname,filesep,'app',filesep,'example']];
 try
     winopen(fpath)
 catch

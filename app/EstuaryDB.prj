@@ -1,15 +1,19 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1591921103" file="D:\Matlab Code\MUImodels\muiApps\EstuaryDB\EstuaryDB.prj" location="D:\Matlab Code\MUImodels\muiApps\EstuaryDB" name="EstuaryDB" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="4234534210" file="D:\Matlab Code\muiModels\EstuaryDB\app\EstuaryDB.prj" location="D:\Matlab Code\muiModels\EstuaryDB\app" name="EstuaryDB" target="target.mlapps" target-name="Package App">
     <param.appname>EstuaryDB</param.appname>
     <param.authnamewatermark>Ian Townend</param.authnamewatermark>
     <param.email>I.Townend@soton.ac.uk</param.email>
     <param.company>University of Southampton</param.company>
-    <param.icon />
-    <param.icons />
-    <param.summary>App provides tools to combine estuary data from multiple sources for intercomparison and further anlysis</param.summary>
-    <param.description />
+    <param.icon>${PROJECT_ROOT}\EstuaryDB_resources\icon_24.png</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\EstuaryDB_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\EstuaryDB_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\EstuaryDB_resources\icon_16.png</file>
+    </param.icons>
+    <param.summary>EstuaryDB provides tools to combine estuary data from multiple sources for intercomparison and further anlysis</param.summary>
+    <param.description>Enables tables of estuary data (multi-estuary) to be loaded. In addition, estuary specific datasets that are vector or matrix can be loaded, such as along-channel data, bathymetry and images. Several be-spoke plotting functions are provided to examine the variation amongst estuaries, including cross-plots to examine variations about central values (e.g., HW, MT, LW). Estuary specific analysis of convergence and reach specific contributions to along-channel properties are also provided.</param.description>
     <param.screenshot />
-    <param.version>1.0</param.version>
+    <param.version>2.0</param.version>
     <param.products.name />
     <param.products.id />
     <param.products.version />
@@ -17,11 +21,7 @@
     <param.output>${PROJECT_ROOT}</param.output>
     <param.guid>b8b5e577-6eeb-4dc5-a43f-db71c161aa40</param.guid>
     <unset>
-      <param.icon />
-      <param.icons />
-      <param.description />
       <param.screenshot />
-      <param.version />
       <param.products.name />
       <param.products.id />
       <param.products.version />
@@ -32,18 +32,25 @@
       <file>${PROJECT_ROOT}\EstuaryDB.m</file>
     </fileset.main>
     <fileset.depfun>
-      <file>${PROJECT_ROOT}\EDBtools.m</file>
+      <file>${PROJECT_ROOT}\EDB_Probe.m</file>
+      <file>${PROJECT_ROOT}\EDB_ProbeUI.m</file>
+      <file>${PROJECT_ROOT}\EDBimport.m</file>
+      <file>${PROJECT_ROOT}\EDBparameters.m</file>
     </fileset.depfun>
     <fileset.resources>
       <file>${PROJECT_ROOT}\doc</file>
+      <file>${PROJECT_ROOT}\edb_format_files</file>
+      <file>${PROJECT_ROOT}\edb_functions</file>
       <file>${PROJECT_ROOT}\EstuaryDB_logo.jpg</file>
       <file>${PROJECT_ROOT}\example</file>
       <file>${PROJECT_ROOT}\help</file>
       <file>${PROJECT_ROOT}\info.xml</file>
+      <file>D:\Matlab Code\muiModels\muiAppLib\muiAppEstuaryFcns</file>
+      <file>D:\Matlab Code\muiModels\muiAppLib\muiAppGridFcns</file>
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
-      <file location="D:\Matlab Code\MUImodels\muiApps" name="EstuaryDB" optional="false">D:\Matlab Code\MUImodels\muiApps\EstuaryDB</file>
+      <file location="D:\Matlab Code\muiModels\EstuaryDB" name="app" optional="false">D:\Matlab Code\muiModels\EstuaryDB\app</file>
     </build-deliverables>
     <workflow />
     <matlab>

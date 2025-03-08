@@ -1,17 +1,18 @@
-function edb_regression_plot(obj,datasetname)                       
+function edb_regression_plot(obj,dst)                       
 %
 %-------function help------------------------------------------------------
 % NAME
 %   edb_regression_plot.m
 % PURPOSE
-%   user functions to do additional analysis on data loaded in EstuaryDB
+%   generate a plot of along-channel variation in width, csa and hydraulic
+%   depth
 % USAGE
-%   edb_regression_plot(obj)
+%   edb_regression_plot(dst)
 % INPUTS
-%   obj - selected case to use for plot
-%   datasetname - selected dataset name
+%   obj - instance of EDBimport class containing Width and tidal level data
+%   dst - dstable with the along channel variables at defined elevations
 % OUTPUT
-%   
+%   figure with four subplots of width,csa,depth and section layout
 % NOTES
 %    selected case must have variables that use the ZM SeaZone data set
 %    conventions, with variables named:
@@ -22,39 +23,44 @@ function edb_regression_plot(obj,datasetname)
 % Author: Ian Townend
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
-%
-    d = obj.Data.(datasetname);    
-    casedesc = d.Description;
+%   
+    casedesc = dst.Description;
     h_pan = panelFigure('Convergence plots',casedesc);    
     lab.x = 'Distance from mouth (km)';
     %lab.leg = {'Low water','Mean tide','High water'};
     lab.leg = {'LW','MT','HW'};
     res = table;
+    xCh = dst.Dimensions.X;
     
-    ax1 = subplot(2,2,2,'Parent',h_pan);
-    lab.y = 'Width (m)';
-    res = getsubplot(ax1,d.xCh,[d.wLW,d.wMT,d.wHW],lab,res);
-    %title(ax1,casedesc);
-    
-    ax2 = subplot(2,2,3,'Parent',h_pan);
-    lab.y = 'Cross-section area (m^2)';
-    res = getsubplot(ax2,d.xCh,[d.aLW,d.aMT,d.aHW],lab,res);
-    
-    ax3 = subplot(2,2,4,'Parent',h_pan);
-    lab.y = 'Hydraulic depth (m)';
-    res = getsubplot(ax3,d.xCh,[d.hLW,d.hMT,d.hHW],lab,res);
-       
-    if any(contains(fieldnames(obj.Data),'image','IgnoreCase',true))
+    if any(contains(fieldnames(obj.Data),'Grid','IgnoreCase',true)) ||...
+        any(contains(fieldnames(obj.Data),'GeoImage','IgnoreCase',true)) 
+        pobj = obj.Sections;
+        ax = viewPlanSections(pobj,obj,casedesc,h_pan);
+        subplot(2,2,1,ax);
+    elseif any(contains(fieldnames(obj.Data),'image','IgnoreCase',true))
         dsetnames = fieldnames(obj.Data);
         idn = contains(dsetnames,'image','IgnoreCase',true);
-        ax4 = subplot(2,2,1,'Parent',h_pan);
-        ax4.Position = [0.05,0.5,0.45,0.45];
+        ax1 = subplot(2,2,1,'Parent',h_pan);
+        ax1.Position = [0.05,0.5,0.45,0.45];
         estmap =  obj.Data.(dsetnames{idn}).DataTable{1,1};
-        image(ax4,estmap{1})
+        image(ax1,estmap{1})
         axis equal
         axis off
-        set(ax4,'XTickLabel','','YTickLabel','')
+        set(ax1,'XTickLabel','','YTickLabel','')
     end
+
+    ax2 = subplot(2,2,2,'Parent',h_pan);
+    lab.y = 'Width (m)';
+    res = getsubplot(ax2,xCh,[dst.wLW',dst.wMT',dst.wHW'],lab,res);
+    %title(ax1,casedesc);
+    
+    ax3 = subplot(2,2,3,'Parent',h_pan);
+    lab.y = 'Cross-section area (m^2)';
+    res = getsubplot(ax3,xCh,[dst.aLW',dst.aMT',dst.aHW'],lab,res);
+    
+    ax4 = subplot(2,2,4,'Parent',h_pan);
+    lab.y = 'Hydraulic depth (m)';
+    res = getsubplot(ax4,xCh,[dst.hLW',dst.hMT',dst.hHW'],lab,res);
     
     %add a summary line to res to ease creation of consolidated data set
     res = [res;{res{1,1}/1000,res{2,2},res{2,3},res{2,4},res{5,2},...

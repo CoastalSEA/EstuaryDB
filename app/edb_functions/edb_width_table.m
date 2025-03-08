@@ -53,11 +53,13 @@ function [obj,isok] = edb_width_table(obj)
     W = reshape(Est.W,1,size(Est.W,1),[]);
     for i=1:nreach
         Wr{i} = reshape(Rch(i).Wr,1,[],length(Est.Z));
+        Xr{i} = Rch(i).Xr;
     end
     dsp = setDSproperties(nreach); 
     dst = dstable(W,Wr{:},'RowNames',{estuaryname},'DSproperties',dsp);
     dst.Dimensions.X = Est.X;
     dst.Dimensions.Z = Est.Z;
+    dst.UserData.Xr = Xr;                   %store reach distances
     dst.Description = estuaryname;
     dst.Source = sprintf('Calculated using %s bathymetry',estuaryname);
     dst.MetaData = sprintf('Use sections to upper limit of %.2f with interval of %.2f',uplimit,histint);

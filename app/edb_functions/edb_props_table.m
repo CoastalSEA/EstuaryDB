@@ -31,24 +31,7 @@ function [obj,isok] = edb_props_table(obj)
     dz = num2str(abs(z(2)-z(1)));
 
     %see if tidal data is available
-    if isfield(obj.HydroProps,'TidalLevels')
-        tlevels = obj.HydroProps.TidalLevels.DataTable;
-        answer = questdlg('Select tidal range to use','Properties',...
-                          'Spring','Mean','Neap','Spring');
-        if strcmp(answer,'Spring')
-            tides = tlevels{1,[2,5,8]};           
-        elseif strcmp(answer,'Mean')
-            tides = tlevels{1,[3,5,7]};
-        else                %Neaps
-            tides = tlevels{1,[4,5,6]};
-        end  
-        tides = cellstr(num2str(tides'));
-        defaultvals = [tides(:)',mnmx(:)',{dz}];
-    else
-        answer = 'User';
-        defaultvals = [{'1'},{'0'},{'-1'},mnmx(:)',{dz}];
-    end
-    wl = getWaterLevels(defaultvals);
+    [wl,selection] = edb_waterlevels(obj,mnmx,dz);
 
     if contains(datasetname,'SurfaceArea')
         grossprops = grossProperties(var.S,var.V,z,wl);   
@@ -61,7 +44,7 @@ function [obj,isok] = edb_props_table(obj)
     propnames = fieldnames(grossprops);
     gdsp = setDSproperties();
     grossprops.Source = {datasetname};
-    grossprops.Range = {answer};
+    grossprops.Range = {selection};
     %assign output to table
     C = [{'Source'},{'Range'},propnames(:)'];
     grossprops = orderfields(grossprops,C);
@@ -109,26 +92,6 @@ end
 %     [r.W0,r.A0] = getCSAat_z0_X(grid,z0,x0); %width and csa at mouth
 %     r.PoA = r.Pr/r.A0;                %Prism to CSA ratio
     grossprops = r;                   %assign structure to output
-end
-
-%%
-function wl = getWaterLevels(defaultvals)
-    %prompt user for levels to used to compute volumes and areas at high
-    %and low water
-    prmptxt = {'High water level:','Mean tide level:','Low water level:',...
-                'Minimum level:','Maximum level:','Vertical interval:'};
-    dlgtitle = 'Water levels';
-    answer = inputdlg(prmptxt,dlgtitle,1,defaultvals);
-    if isempty(answer)
-        wl = [];  
-        return;
-    end
-    wl.HW = str2double(answer{1});
-    wl.MT = str2double(answer{2});
-    wl.LW = str2double(answer{3});
-    wl.mx = str2double(answer{4});
-    wl.mn = str2double(answer{5});
-    wl.int = str2double(answer{6});
 end
 
 %%

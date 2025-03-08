@@ -76,7 +76,7 @@ function [Estuary,Reach] = edb_w_hypsometry(obj,zmax,histint,isplot)
         end
     end
 
-    %write outputs for whol estuary and reaches
+    %write outputs for whole estuary and reaches
     Estuary = struct('W',W,'X',X,'Z',Z); 
     Reach = struct('Wr',Wr,'Xr',Xr);
 
@@ -113,12 +113,9 @@ function hyps_plot(ax,W,x,z,titletxt)
     %genereate plot of the width as a function of z
     %create props to define labels for each variable to be plotted
     [X,Z] = meshgrid(x,z);
-    %W(W>0) = log(W(W>0));
     contourf(ax,X,Z,W')
     colormap('parula')
     hc = colorbar;
-%     vals = hc.Ticks;
-%     hc.TickLabels = num2str(round(exp(vals),1));
     hc.Label.String = 'Width';
     xlabel('Distance to mouth (m)')
     ylabel('Elevation (mAD)')

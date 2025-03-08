@@ -24,7 +24,7 @@ function edb_regression_plot(obj,dst)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %   
-    casedesc = dst.Description;
+    casedesc = sprintf('%s using %s tidal range',dst.Description,dst.MetaData);
     h_pan = panelFigure('Convergence plots',casedesc);    
     lab.x = 'Distance from mouth (km)';
     %lab.leg = {'Low water','Mean tide','High water'};
@@ -35,7 +35,7 @@ function edb_regression_plot(obj,dst)
     if any(contains(fieldnames(obj.Data),'Grid','IgnoreCase',true)) ||...
         any(contains(fieldnames(obj.Data),'GeoImage','IgnoreCase',true)) 
         pobj = obj.Sections;
-        ax = viewPlanSections(pobj,obj,casedesc,h_pan);
+        ax = viewPlanSections(pobj,obj,'Layout of Sections',h_pan);
         subplot(2,2,1,ax);
     elseif any(contains(fieldnames(obj.Data),'image','IgnoreCase',true))
         dsetnames = fieldnames(obj.Data);

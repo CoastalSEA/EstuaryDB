@@ -54,8 +54,10 @@ function get_ConvergencePlot(mobj)
     if length(datasets)>1
         idd = listdlg('PromptString','Select table:','ListString',datasets,...
                             'SelectionMode','single','ListSize',[160,200]);
+        if isempty(idd), return; end
     end
     dst = edb_convergence_data(cobj,datasets{idd});
+    if isempty(dst), return; end
     edb_regression_plot(cobj,dst);
 end
 

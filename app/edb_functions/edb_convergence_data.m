@@ -24,13 +24,11 @@ function dst = edb_convergence_data(obj,dataset)
 %--------------------------------------------------------------------------
 %
     srcdst = obj.Data.(dataset); %dstable of along channel width hypsometry data
-%     z = srcdst.Dimensions.Z;
-%     x = srcdst.Dimensions.X;
-%     W = squeeze(srcdst.W);
-     [var,z,x] = edb_derived_hypsprops(srcdst,dataset);
+    [var,z,x] = edb_derived_hypsprops(srcdst,dataset);
     mnmx = cellstr(num2str(minmax(z)'));
     dz = num2str(abs(z(2)-z(1)));
-    [wl,selection] = edb_waterlevels(obj,mnmx,dz); %tidal level data    
+    [wl,selection] = edb_waterlevels(obj,mnmx,dz); %tidal level data   
+    if isempty(wl), dst = []; return; end
 
     %interpolate the width data for the selected elevations
     [X,Z] = meshgrid(x,z);
@@ -48,6 +46,8 @@ function dst = edb_convergence_data(obj,dataset)
     dst = dstable(var{:},'RowNames',{estuaryname},'DSproperties',dsp);
     dst.Dimensions.X = srcdst.Dimensions.X;
     dst.Description = estuaryname;
+    dst.MetaData = selection;
+    dst.Source = dataset;
 end
 %%
 %--------------------------------------------------------------------------

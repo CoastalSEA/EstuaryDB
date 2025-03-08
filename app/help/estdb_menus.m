@@ -8,7 +8,7 @@
 % * *Save as*: save a file with a new or different name.
 % * *Exit*: exit the program. The close window button has the same effect.
 
-%% Tools
+%% Clear
 % * *Refresh*: updates Cases tab.
 % * *Clear all > Project*: deletes the current project, including all Setup data and all Cases.
 % * *Clear all > Figures*: deletes all results plot figures (useful if a large number of plots have been produced).
@@ -62,19 +62,7 @@
 % deleted (NB: this only deletes Datasets and not the Case, which can be
 % deleted using Project>Cases>Delete Case).
 
-%% Setup > Add Hypsometry from Grid
-% Use a loaded bathymetry data set to construct surface area or
-% along-channel width hypsometry datasets. These options replicate the data
-% formats that can be imported using the *Import Spatial Data* options.
-%%
-% * *Surface area* - derive the surface area hypsometry from an imported
-% bathymetry (to save space import the grid, run the utility and then delete
-% the grid).
-% * *Width* - derive the along-channel width hypsometry from an imported
-% bathymetry (to save space import the grid, run the utility and then delete
-% the grid).
-
-%% Setup > Estuary Properties
+%% Setup > Hydraulic Properties
 % Property tables for tides and river discharge can be loaded, edited and
 % deleted using:
 %%
@@ -82,13 +70,6 @@
 % and neap tides.
 % * *River Discharege* - a table of river discharges that define, for
 % example, the annual and seasonal discharges into the estuary.
-%%
-% In addition, the large-scale, or gross, morphological properties can be added
-% as a table once, Tidal Levels and a Surface area or Width hypsometry have
-% been defined.
-%%
-% * *Gross Properties* - add a row of data to the morphological properties
-% table by selecting a hypsometry and a tidal data set to use.
 
 %% Setup > Grid Parameters
 % * *Grid Parameters*: dialogue to set dimensions of default grid.
@@ -114,7 +95,7 @@
 % * *Plot Sections*: interactively define sections and plot
 % them on a figure;
 % * *Grid Image*: save grid as an image struct with fields
-% 'XData','YData','CData','CMap','CLim';
+% 'XData','YData','CData','CMap','CLim' (includes option to resize large grids; > 1Mb);
 % * *Digitise Line*: interactively digitise a line (with
 % option to add z values) using selected grid as base map;
 % * *Export xyz Grid*: select a Case and export grid as xyz
@@ -282,9 +263,22 @@
 %% Setup > Model Constants
 % various constants are defined for use in models, such as the acceleration due to gravity, viscosity and density of sea water, and density of sediment. Generally, the default values are appropriate (9.81, 1.36e-6, 1025 , 2650 respectively) but these can be adjusted and saved with the project if required.
 
-%% Run
-% * *Run Model*: runs model, prompts for a Case description, which is added to the listing on the Cases tab.
+%% Tools
+% * *Hypsometry*: use a loaded bathymetry data set to construct surface area, or along-channel width hypsometry datasets. These options replicate the data formats that can be imported using the Import Spatial Data options.
+% * *Hypsometry > Surface area*: derive the surface area hypsometry from an imported bathymetry.
+% * *Hypsometry > Width*: derive the along-channel width hypsometry from an imported bathymetry.
+% * *Gross Properties*: the large-scale, or gross, morphological properties can be added
+% as a table once, Tidal Levels and a Surface area or Width hypsometry have
+% been defined. Add a row of data to the morphological properties
+% table by selecting a hypsometry and a tidal data set to use.
 % * *Derive Output*: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.
+% * *User Tools*: calls function ‘edb_user_tools.m’, which includes a function to:
+%
+% # create a figure tabulating a dataset (tabular data only);
+% # add additional properties to a table and  (tabular estuary properties data only);
+% # run and save the results of a convergence analysis (e.g. for along channel properties);
+% # the option for the user to add functions as required.
+
 
 %% Analysis
 % * *Plots*: initialises the Plot UI to select variables and produce

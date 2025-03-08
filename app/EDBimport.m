@@ -106,15 +106,21 @@ classdef EDBimport < GDinterface
                 if ok<1 || isempty(newdata), continue; end
                 dstname = fieldnames(newdata);
                 estname = newdata.(dstname{1}).Description;
-                idx = strcmp(muicat.Catalogue.CaseClass,classname);
-                existest = muicat.Catalogue.CaseDescription(idx);
+                idx = strcmp(muicat.Catalogue.CaseClass,classname);        %index for existing class records
+                existest = muicat.Catalogue.CaseDescription(idx);          %Case names
+                isnew = isempty(existest);                                 %no cases - must be new
+                if ~isnew                
+                    isnew =  all(~strcmp(existest,estname));               %does not exist in catalogue
+                    %check where user wants to save new data
+                    [isnew,estname] = estuaryName(dstname{1},estname,existest,isnew);
+                end
+                                    
                 %if the estuary does not exist save as new record                    
-                if isempty(existest) || ...
-                                    all(~strcmp(existest,estname))
+                if isnew
                     %add estuary as a new case record
                     %classobj,muicat,dataset,casetype,casedesc,SupressPrompts
                     dtype = obj.DataFormats{3};
-                    setDataSetRecord(obj,muicat,newdata,dtype,{estname},true); 
+                    setDataSetRecord(obj,muicat,newdata,dtype,{estname},false); %false-force prompt for case description
                     obj = EDBimport(obj.DataFormats{2}); %initialise next instance
                 else
                     %estuary exists - add data to existing record
@@ -131,7 +137,7 @@ classdef EDBimport < GDinterface
                     updateCase(muicat,localObj,classrec,false);
                 end  
                
-                clear existest newdata estname dstname
+                clear existest newdata estname dstname isnew
                 waitbar(jf/nfiles)
             end
             close(hw);
@@ -139,6 +145,43 @@ classdef EDBimport < GDinterface
             if nfiles>1
                 getdialog(sprintf('Data loaded in class: %s',classname)); 
             end
+            %nested functions----------------------------------------------
+            function [isnew,estname] = estuaryName(dstname,estname,existest,isnew)
+                %check whether any
+                prmptxt = sprintf('%s from %s\nLoad as a New case of Add to existing?',...
+                                                          dstname,estname);
+                answr = questdlg(prmptxt,'Load','New','Add','New');
+                if strcmp(answr,'New')
+                    isnew = true;
+                else
+                    if isnew
+                        %select case from existing cases
+                        idc = selectEstuaryCase(existest,dstname);
+                        if isempty(idc), return; end %returns isnew as true and estname unchanged
+                    else
+                        prmptxt = sprintf('Add to %s case',estname);
+                        answr = questdlg(prmptxt,'Load','Yes','No','Yes');
+                        if strcmp(answr,'Yes')
+                            idc = strcmp(existest,estname);
+                        else
+                            %select case from existing cases
+                            idc = selectEstuaryCase(existest,dstname);
+                            if isempty(idc), return; end %returns isnew as true and estname unchanged
+                        end
+                    end
+                    estname = existest{idc};
+                    isnew = false;
+                end
+            end
+            %--------------------------------------------------------------
+            function select = selectEstuaryCase(existest,dstname)
+                prmptxt = sprintf('Select the case to add %s',dstname);
+                select = listdlg('Name','Case Name','ListString',existest,...
+                                 'PromptString',prmptxt,'ListSize',[160,200],...
+                                 'OKstring','Select','CancelString','New Case',...
+                                 'SelectionMode','single'); 
+            end
+            %--------------------------------------------------------------
         end
 %%
         function loadTable(muicat,newdataset)
@@ -213,7 +256,13 @@ classdef EDBimport < GDinterface
                 casedesc = muicat.Catalogue.CaseDescription(caserec(i));
                 estnames = datatable.Properties.RowNames;
                 idr = strcmp(estnames,casedesc);
-                if all(~idr), continue; end
+                if all(~idr)
+                    promptxt = {'Case not found',sprintf('Select a %s station to use',srctxt)};
+                    idr = listdlg("PromptString",promptxt,...
+                                  "Name",'Import','SelectionMode','single',...
+                                  'ListSize',[180,120],'ListString',estnames);
+                    if isempty(idr), continue; end
+                end
                 count = count+1;
                 dst = dstable(datatable(idr,:),'RowNames',estnames(idr),'DSproperties',dsp);
                 dst.Source = fname;
@@ -420,8 +469,8 @@ classdef EDBimport < GDinterface
 
                 desc = sprintf('Source: %s\nMeta-data: %s',dst.Source,dst.MetaData);
                 titletxt = dst.Description;
-                ht = tablefigure(src,desc,dst);
-                ht.Units = 'normalized';
+                [ht,hp] = tablefigure(src,desc,dst); %ht-tab; hp-panel; htable-table
+                ht.Units = 'normalized'; hp.Units = 'normalized'; 
                 uicontrol('Parent',ht,'Style','text',...
                     'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
                     'String',['Case: ',titletxt],'FontSize',10,...
@@ -434,14 +483,21 @@ classdef EDBimport < GDinterface
             %delete a dataset
             dst = obj.Data;
             fnames = fieldnames(dst);
+            msgtxt = 'To delete the Case use: Project > Cases > Delete Case';
             if isscalar(fnames)
-                %catch if only one dataset as need to delete Case
-                warndlg(sprintf('There is only one dataset in this Case\nTo delete the Case use: Project > Cases > Delete Case'))
-                return
+                %if only one dataset, need to delete Case
+                msgtxt = sprintf('There is only one dataset in this Case\n%s',msgtxt);
+                warndlg(msgtxt); return
             else
                 promptxt = 'Select which datasets to delete:';
                 datasets = getDataSetName(obj,promptxt,'multiple'); %prompts user to select dataset if more than one
                 if ischar(datasets), datasets = {datasets}; end
+
+                if length(fnames)==length(datasets)
+                    %if all datasets selected, need to delete Case
+                     msgtxt = sprintf('Cannot delete all the datasets in a Case\n%s',msgtxt);
+                    warndlg(msgtxt); return
+                end
                 %get user to confirm selection
                 for i=1:length(datasets)    
                     checktxt = sprintf('Deleting the following dataset: %s',datasets{i});

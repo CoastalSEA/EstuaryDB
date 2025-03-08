@@ -110,7 +110,7 @@ function w = interpWidth(zi,zwl,dely)
 end
 %%
 function hyps_plot(ax,W,x,z,titletxt)
-    %genereate plot of the surface area and volume as a function of z
+    %genereate plot of the width as a function of z
     %create props to define labels for each variable to be plotted
     [X,Z] = meshgrid(x,z);
     %W(W>0) = log(W(W>0));

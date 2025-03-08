@@ -17,6 +17,7 @@
 %   https://www.mathworks.com/matlabcentral/fileexchange/7233-curvspace).
 % * *edb_derived_props* - derive additional properties and add them to the
 % gross properties table.
+% * *edb_hypsometry_plots* – plots of surface area and width hypsometry and channel convergence.
 % * *edb_plot_tidelevels* - add the high, mean and low water tide levels to
 % a plot.
 % * *edb_props_table* - use surface area hypsometry or width hypsometry to compute the gross
@@ -26,8 +27,13 @@
 % Hydraulic depth along-channel properties.
 % * *edb_surfacearea_table* - compile the surface area hypsometry dataset.
 % * *edb_s_hypsometry* - compute the surface area hypsometry data.
-% * *edb_user_plots* - suite of functions to plot the data.
-% * *edb_user_tools* - suite of functions to analyse the data.
+% * *edb_table_plots* – functions for scalar tabular data to plot a scatter diagram 
+% of two variables from any case (selected variables must be the same length) 
+% and a bar chart of a variable with the bars coloured based on a selected 
+% classification variable (from the same dataset as the main variable).
+% * *edb_user_plots* - provision for user to add own plotting options.
+% * *edb_user_tools* - create a figure tabulating a dataset and the option
+% for the user to add functions as required. 
 % * *edb_width_table* - compile the width hypsometry dataset.
 % * *edb_w_hypsometry* - compute the width hypsometry data.
 % * *geyer_mccready_plot* - generate a plot to compare the fluvial/tidal

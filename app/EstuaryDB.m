@@ -67,7 +67,7 @@ classdef EstuaryDB < muiModelUI
             %submenus in order following each brach to the lowest level 
             %before defining the next branch.         
                                                              
-            MenuLabels = {'File','Tools','Project','Setup','Run',...
+            MenuLabels = {'File','Clear','Project','Setup','Tools',...
                                                         'Analysis','Help'};
             menu = menuStruct(obj,MenuLabels);  %create empty menu struct
             %
@@ -76,14 +76,14 @@ classdef EstuaryDB < muiModelUI
             menu.File.List = {'New','Open','Save','Save as','Exit'};
             menu.File.Callback = repmat({@obj.fileMenuOptions},[1,5]);
             
-            %% Tools menu -------------------------------------------------
+            %% Clear menu -------------------------------------------------
             %list as per muiModelUI.toolsMenuOptions
-            menu.Tools(1).List = {'Refresh','Clear all'};
-            menu.Tools(1).Callback = {@obj.refresh, 'gcbo;'};  
+            menu.Clear(1).List = {'Refresh','Clear all'};
+            menu.Clear(1).Callback = {@obj.refresh, 'gcbo;'};  
             
             % submenu for 'Clear all'
-            menu.Tools(2).List = {'Model','Figures','Cases'};
-            menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,3]);
+            menu.Clear(2).List = {'Model','Figures','Cases'};
+            menu.Clear(2).Callback = repmat({@obj.toolsMenuOptions},[1,3]);
 
             %% Project menu -----------------------------------------------
             menu.Project(1).List = {'Project Info','Cases','Export/Import'};
@@ -105,16 +105,15 @@ classdef EstuaryDB < muiModelUI
             %% Setup menu -------------------------------------------------
             N = 1;
             menu.Setup(N).List = {'Import Table Data','Import Spatial Data',...
-                                  'Add Hypsometry from Grid',...
-                                  'Estuary Properties','Grid Parameters',...
+                                  'Hydraulic Properties','Grid Parameters',...
                                   'Grid Tools','Sections','Waterbody'...
                                   'Input Parameters','Model Constants'};                                                                         
-            menu.Setup(N).Callback = [repmat({'gcbo;'},[1,4]),...
+            menu.Setup(N).Callback = [repmat({'gcbo;'},[1,3]),...
                                      {@obj.gridMenuOptions},...
                                      repmat({'gcbo;'},[1,3]),...
                                      repmat({@obj.setupMenuOptions},[1,2])];
             %add separators to menu list (optional - default is off)
-            menu.Setup(N).Separator = {'off','off','off','off','on',...
+            menu.Setup(N).Separator = {'off','off','off','on',...
                                              'off','off','off','on','on'}; %separator preceeds item
             
             % submenu for Import Data (if these are changed need to edit
@@ -132,17 +131,11 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).List = {'Load or Add dataset','Delete dataset'};
             menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,2]);
             N = N+1;
-            menu.Setup(N).List = {'Surface area','Width'};
-            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,2]);
-            N = N+1;
-            menu.Setup(N).List = {'Tidal Levels','River Discharge','Gross Properties'};
-            menu.Setup(N).Callback = repmat({'gcbo;'},[1,3]);   
+            menu.Setup(N).List = {'Tidal Levels','River Discharge'};
+            menu.Setup(N).Callback = repmat({'gcbo;'},[1,2]);   
             N = N+1;
             menu.Setup(N).List = {'Add','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,23]);
-            N = N+1;
-            menu.Setup(N).List = {'Add','Edit','Delete'};
-            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
             N = N+1;
             menu.Setup(N).List = {'Add','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
@@ -183,10 +176,17 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).List = {'Generate','Load','Edit','Delete','View'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);
 
-            %% Run menu ---------------------------------------------------
-            menu.Run(1).List = {'Models','Derive Output','User Tools'};
-            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,3]);
-            menu.Run(1).Separator = {'off','off','on'}; %separator preceeds item
+            %% Tools menu ---------------------------------------------------
+            menu.Tools(1).List = {'Hypsometry','Gross Properties','Derive Output','User Tools'};
+            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,2]),...
+                                     repmat({@obj.toolsMenuOptions},[1,2])];
+            menu.Tools(1).Separator = {'off','off','off','on'}; %separator preceeds item
+
+            menu.Tools(2).List = {'Surface area','Width'};
+            menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,2]);
+
+            menu.Tools(3).List = {'Add','Edit','Delete'};
+            menu.Tools(3).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics','Tabular Plots',...
@@ -318,11 +318,7 @@ classdef EstuaryDB < muiModelUI
                 case 'Load or Add dataset'
                     EDBimport.loadData(obj.Cases);
                 case 'Delete dataset'
-                    useCase(obj.Cases,'single',{classname},'delDataset');                
-                case 'Surface area'
-                    EDBimport.loadTable(obj.Cases,src.Text);
-                case 'Width'
-                    EDBimport.loadTable(obj.Cases,src.Text);                
+                    useCase(obj.Cases,'single',{classname},'delDataset');                             
             end
             
             switch src.Text
@@ -378,12 +374,14 @@ classdef EstuaryDB < muiModelUI
             DrawMap(obj);
         end    
 
-        %% Run menu -------------------------------------------------------
-        function runMenuOptions(obj,src,~)
+        %% Tools menu -------------------------------------------------------
+        function toolsMenuOptions(obj,src,~)
             %callback functions to run model
             switch src.Text                   
                 case 'Models'
                     obj.mUI.ProbeUI = EDB_ProbeUI.getProbeUI(obj);
+                case {'Surface area','Width'}
+                    EDBimport.loadTable(obj.Cases,src.Text); 
                 case 'Derive Output'
                     obj.mUI.ManipUI = muiManipUI.getManipUI(obj);
                 case 'User Tools'

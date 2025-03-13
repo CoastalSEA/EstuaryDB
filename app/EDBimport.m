@@ -358,6 +358,11 @@ classdef EDBimport < GDinterface
         end
 
 %%
+        function combineTables(mobj)
+            getdialog('Not yet implemented')
+        end
+        
+%%
         function dsp = loadDSproperties(dspvars)
             %define a dsproperties struct and add the metadata
             dsp = struct('Variables',[],'Row',[],'Dimensions',[]); 

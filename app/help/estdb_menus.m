@@ -116,7 +116,11 @@
 % linework. The Sections > Boundary tool also has an option to copy the Waterbody linework as an input. 
 % * *Load* - load a shapefile with the lines to be used.
 % * *Edit* - interactively digitise or edit the linework.
-% * *Delete* - deletes the saved lines for the selected Case.
+% * *Delete* - delete the saved lines for the selected Case.
+% * *Export* - export the saved lines for the selected Case to an ASCII 
+% text file (.txt), a Matlab data file (.mat), or a shape file (.shp). 
+% Text files include a header with details of the source and line type. 
+% The same information is included in the saved metadata struct for the other file formats.
 
 %%
 % The Point and Line tools have a menu that is accessed by right clicking
@@ -256,6 +260,10 @@
 % * *Load* - load a shapefile with the lines to be used.
 % * *Edit* - interactively digitise or edit the waterbody linework.
 % * *Delete* - deletes the saved lines for the selected Case.
+% * *Export* - export the saved lines for the selected Case to an ASCII 
+% text file (.txt), a Matlab data file (.mat), or a shape file (.shp). 
+% Text files include a header with details of the source and line type. 
+% The same information is included in the saved metadata struct for the other file formats.
 % * *View* - creates a plot of the boundary.
 
 %% Setup > Input Parameters

@@ -161,26 +161,27 @@ classdef EstuaryDB < muiModelUI
                          repmat({@obj.sectionMenuOptions},[1,2]),{'gcbo;'}];
             menu.Setup(N).Separator = repmat({'off'},[1,6]);  
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
-            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete','Export'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
-            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);         
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete','Export'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);         
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Delete'};
-            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,4]);
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete','Export'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);
             N = N+1;
             menu.Setup(N).List = {'Layout','Sections','Network'};
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,3]);
             N = N+1;
-            menu.Setup(N).List = {'Generate','Load','Edit','Delete','View'};
-            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,5]);
+            menu.Setup(N).List = {'Generate','Load','Edit','Delete','Export','View'};
+            menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,6]);
 
             %% Tools menu ---------------------------------------------------
-            menu.Tools(1).List = {'Hypsometry','Gross Properties','Derive Output','User Tools'};
-            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,2]),...
+            menu.Tools(1).List = {'Hypsometry','Gross Properties',...
+                                 'Combine Tables','Derive Output','User Tools'};
+            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,3]),...
                                      repmat({@obj.toolsMenuOptions},[1,2])];
-            menu.Tools(1).Separator = {'off','off','off','on'}; %separator preceeds item
+            menu.Tools(1).Separator = {'off','off','off','on','on'}; %separator preceeds item
 
             menu.Tools(2).List = {'Surface area','Width'};
             menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,2]);
@@ -357,6 +358,8 @@ classdef EstuaryDB < muiModelUI
                 PL_Sections.deleteLines(obj,src,classname);
             elseif strcmp(src.Text,'View')
                 PL_Sections.view_WBlines(obj,src,classname);
+            elseif strcmp(src.Text,'Export')
+                PL_Sections.exportLines(obj,src,classname);
             end
             DrawMap(obj);
         end  
@@ -382,6 +385,8 @@ classdef EstuaryDB < muiModelUI
                     obj.mUI.ProbeUI = EDB_ProbeUI.getProbeUI(obj);
                 case {'Surface area','Width'}
                     EDBimport.loadTable(obj.Cases,src.Text); 
+                case 'Combine Tables'
+                    EDBimport.combineTables(mobj);
                 case 'Derive Output'
                     obj.mUI.ManipUI = muiManipUI.getManipUI(obj);
                 case 'User Tools'

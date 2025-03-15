@@ -437,11 +437,28 @@ classdef EDBimport < GDinterface
             datasetname = getDataSetName(obj);
             if isempty(datasetname), return; end
             dst = obj.Data.(datasetname);
+
+            if strcmp(datasetname,'Width')
+                varnames = dst.VariableDescriptions;
+                idx = listdlg('PromptString','Select a variable:',...
+                                  'SelectionMode','single','ListSize',[160,200],...
+                                  'Name','TableFigure','ListString',varnames);
+                if isempty(idx)
+                    return; 
+                elseif idx==1
+                    dst = getDSTable(dst,1,idx,{[],[]});
+                else
+                    %use indices to extract new dstable
+                    Xr = dst.UserData.Xr{idx-1};
+                    dst = getDSTable(dst,1,idx,{1:length(Xr),[]});
+                    dst.Dimensions.X = Xr;
+                end
+            end                                                                                                                    
             
             %check that data is not too large to display
             if numel(dst.DataTable{1,1})<2e5
                 %generate table
-                table_figure(dst,src);      %funtion in dstable
+                table_figure(dst,src,true); %funtion in dstable, true to format
             else
                 warndlg('Dataset too large to display as a table')
             end            
@@ -474,10 +491,11 @@ classdef EDBimport < GDinterface
 
                 desc = sprintf('Source: %s\nMeta-data: %s',dst.Source,dst.MetaData);
                 titletxt = dst.Description;
+                dst.UserData.isFormat = true;
                 [ht,hp] = tablefigure(src,desc,dst); %ht-tab; hp-panel; htable-table
                 ht.Units = 'normalized'; hp.Units = 'normalized'; 
                 uicontrol('Parent',ht,'Style','text',...
-                    'Units','normalized','Position',[0.1,0.95,0.8,0.05],...
+                    'Units','normalized','Position',[0.1,0.965,0.8,0.03],...
                     'String',['Case: ',titletxt],'FontSize',10,...
                     'HorizontalAlignment','center','Tag','titletxt');
             end

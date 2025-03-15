@@ -81,8 +81,10 @@ function [Estuary,Reach] = edb_w_hypsometry(obj,zmax,histint,isplot)
     Reach = struct('Wr',Wr,'Xr',Xr);
 
     if isplot
+       %this is similar code to the plotting in edb_hypsometry_plots
         hf = figure('Name','Hypsometry','Resize','on','Tag','PlotFig');
         ax = axes(hf);
+        W(W==0) = NaN;
         hyps_plot(ax,W,X,Z,'All reaches');
         axis tight
         xlimits = ax.XLim;
@@ -92,7 +94,8 @@ function [Estuary,Reach] = edb_w_hypsometry(obj,zmax,histint,isplot)
         for i=1:nreach
             si = subplot(nreach,1,i);
             titletxt = sprintf('Reach %d',i);
-            hyps_plot(si,Wr{i},Xr{i},Z,titletxt);
+            Wi = Wr{i}; Wi(Wi==0) = NaN;
+            hyps_plot(si,Wi,Xr{i},Z,titletxt);
             si.CLim(2) = ceil(maxW);
             si.XLim = xlimits;
             sgtitle('Reach contribution to widths')

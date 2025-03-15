@@ -63,7 +63,8 @@ end
 
 %%
 function  get_reachPlot(mobj,option)
-    %plot of width or CSA for system as whole and by reach
+    %plot of width or CSA for system as whole and by reach (this is similar
+    %code to the plotting in edb_w_hypsometry)
     cobj = selectCaseObj(mobj.Cases,[],{'EDBimport'},'Select Along-Channel dataset:');
     if isempty(cobj), return; end
     datasets = fields(cobj.Data);
@@ -75,7 +76,7 @@ function  get_reachPlot(mobj,option)
     end
     
     dst = cobj.Data.(datasets{idd});
-    Vall = squeeze(dst.W);
+    Vall = squeeze(dst.W);    
     Z = dst.Dimensions.Z;
     X = dst.Dimensions.X;   
 
@@ -107,6 +108,7 @@ function  get_reachPlot(mobj,option)
     hf = figure('Name','Hypsometry','Resize','on','Tag','PlotFig');
     ax = axes(hf);
     plottxt{2} = sprintf('%s for all reaches',vartxt);
+    Vall(Vall==0) = NaN;                      %mask zero values
     hyps_plot(ax,Vall,X,Z,plottxt,tlevels);
     axis tight
     xlimits = ax.XLim;
@@ -116,7 +118,9 @@ function  get_reachPlot(mobj,option)
     for i=1:nreach
         si = subplot(nreach,1,i);
         plottxt{2} = sprintf('%s for reach %d',vartxt,i);
-        hyps_plot(si,Vr{i},Xr{i},Z,plottxt,tlevels);
+        Var = Vr{i};
+        Var(Var==0) = NaN;                    %mask zero values
+        hyps_plot(si,Var,Xr{i},Z,plottxt,tlevels);
         si.CLim(2) = ceil(maxV);
         si.XLim = xlimits;
         sgtitle('Reach contribution to widths')

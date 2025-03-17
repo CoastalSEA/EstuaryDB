@@ -203,7 +203,7 @@ classdef EDBimport < GDinterface
             elseif strcmp(dset2add,'Properties')
                 %output derived from SurfaceArea and Width Data sets
                 %and saved as MorphProps property (NOT a cobj.Data dataset)
-                [cobj,isok] = edb_props_table(cobj);
+                [cobj,isok] = edb_grossprops_table(cobj);
             else
                 errdlg('Should not be here'); return;
             end
@@ -494,8 +494,10 @@ classdef EDBimport < GDinterface
                 dst.UserData.isFormat = true;
                 [ht,hp] = tablefigure(src,desc,dst); %ht-tab; hp-panel; htable-table
                 ht.Units = 'normalized'; hp.Units = 'normalized'; 
+                htxt = findobj(ht,'Tag','statictextbox');
+                htxt.Units = 'normalized';
                 uicontrol('Parent',ht,'Style','text',...
-                    'Units','normalized','Position',[0.1,0.965,0.8,0.03],...
+                    'Units','normalized','Position',[0.1,0.97,0.8,0.035],...
                     'String',['Case: ',titletxt],'FontSize',10,...
                     'HorizontalAlignment','center','Tag','titletxt');
             end

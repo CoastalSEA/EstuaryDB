@@ -94,7 +94,8 @@ function  get_reachPlot(mobj,option)
     else
         plottxt{1} = 'Width (m)'; vartxt = 'Width';
     end
-    maxV = max(Vall,[],'all');    
+    maxV = cellfun(@(x) max(x,[],'all'),Vr,'UniformOutput',false); 
+    maxV = max([maxV{:}]);
 
     %tidal levels
     if isfield(cobj.HydroProps,'TidalLevels')
@@ -107,7 +108,7 @@ function  get_reachPlot(mobj,option)
     %create plots
     hf = figure('Name','Hypsometry','Resize','on','Tag','PlotFig');
     ax = axes(hf);
-    plottxt{2} = sprintf('%s for all reaches',vartxt);
+    plottxt{2} = sprintf('%s hypsometry for %s',vartxt,dst.Description);
     Vall(Vall==0) = NaN;                      %mask zero values
     hyps_plot(ax,Vall,X,Z,plottxt,tlevels);
     axis tight
@@ -123,7 +124,7 @@ function  get_reachPlot(mobj,option)
         hyps_plot(si,Var,Xr{i},Z,plottxt,tlevels);
         si.CLim(2) = ceil(maxV);
         si.XLim = xlimits;
-        sgtitle('Reach contribution to widths')
+        sgtitle(sprintf('Reach contributions on %s',dst.Description))
     end
     hf = gcf;
     hf.Position = [0.40,0.28,0.31,0.65];

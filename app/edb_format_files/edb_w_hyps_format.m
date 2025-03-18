@@ -128,6 +128,7 @@ function ok = getPlot(obj,src,dsetname)
         Var = var.W;
         zlabel = dst.VariableLabels{1};
     end
+    Var(Var==0) = NaN;                      %mask zero values
     %create props to define labels for each variable to be plotted
     [X,Z] = meshgrid(x,z);
     contourf(ax,X,Z,Var')

@@ -254,11 +254,12 @@ classdef EstuaryDB < muiModelUI
                 case {'Dataset','Tides','Rivers','Morphology'}
                     classname = metaclass(cobj).Name;
                     if strcmp(classname,'EDBimport')
-                         if isempty(cobj.HydroProps) && isempty(cobj.MorphProps)
-                            tabTable(cobj,src);  
-                         else
-                            tabTablesection(cobj,src);
-                         end
+                        switch src.Tag
+                            case 'Dataset'
+                                tabTable(cobj,src);
+                            otherwise
+                                tabTablesection(cobj,src);  
+                        end
                     else
                         tabTable(cobj,src);   
                     end

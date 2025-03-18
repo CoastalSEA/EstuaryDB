@@ -59,7 +59,7 @@ function [obj,isok] = edb_surfacearea_table(obj)
             obj.WaterBody = gd_readshapefile(spath,sname);
             [grid,ax,h_but] = applyBoundary(grid,obj.WaterBody,isplot);
             if isempty(grid), obj = []; return; end                 %failed to load shape file
-            metatxt = sprintf('Use bathymetry to upper limit of %.2f within polygon defined by %s',uplimit,sname);
+            metatxt = sprintf('Use bathymetry to upper limit of %.2f within waterbody defined by %s',uplimit,sname);
         else
             metatxt = sprintf('Use bathymetry to upper limit of %.2f without bounding polygon',uplimit);
             if isplot
@@ -69,7 +69,7 @@ function [obj,isok] = edb_surfacearea_table(obj)
     else
         %use saved boundary created using PL_Boundary
         [grid,ax,h_but] = applyBoundary(grid,obj.WaterBody,isplot);
-        metatxt = sprintf('Use bathymetry to upper limit of %.2f within saved polygon',uplimit);
+        metatxt = sprintf('Use bathymetry to upper limit of %.2f within saved waterbody',uplimit);
     end
 
     %compute the hypsometry

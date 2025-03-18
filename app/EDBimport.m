@@ -127,14 +127,13 @@ classdef EDBimport < GDinterface
                     classrec = find(strcmp(existest,estname)); 
                     localObj = muicat.DataSets.(classname)(classrec);
                     if isfield(localObj.Data,dstname{1})
-                        answer = questdlg(sprintf('%s dataset already exists, Overwrite?',dstname{1}),...
-                                                   'Overwrite','Yes','No','Yes');
-                        if strcmp(answer,'No')
-                            obj = []; close(hw); return; 
+                        dst = newdata.(dstname{1});
+                        dstname = {setEDBdataset(localObj,dstname{1})};
+                        if ~isempty(dstname)
+                            localObj.Data.(dstname{1}) = dst; 
+                            updateCase(muicat,localObj,classrec,false);
                         end
                     end
-                    localObj.Data.(dstname{1}) = newdata.(dstname{1}); 
-                    updateCase(muicat,localObj,classrec,false);
                 end  
                
                 clear existest newdata estname dstname isnew
@@ -148,7 +147,7 @@ classdef EDBimport < GDinterface
             %nested functions----------------------------------------------
             function [isnew,estname] = estuaryName(dstname,estname,existest,isnew)
                 %check whether any
-                prmptxt = sprintf('%s from %s\nLoad as a New case of Add to existing?',...
+                prmptxt = sprintf('%s from %s\nLoad as a New case of Add to existing case?',...
                                                           dstname,estname);
                 answr = questdlg(prmptxt,'Load','New','Add','New');
                 if strcmp(answr,'New')
@@ -543,8 +542,8 @@ classdef EDBimport < GDinterface
             %check whether existing table is to be overwritten or a new table created
             isdset = any(ismatch(dsetnames,type));
             if isdset
-                answer = questdlg('Overwrite existing or Add new table?','EDB table',...
-                                  'Overwrite','Add','Quit','Add');
+                promptxt = sprintf('Overwrite existing %s or Add new %s table?',type,type);
+                answer = questdlg(promptxt,'EDB table','Overwrite','Add','Quit','Add');                                  
                 if strcmp(answer,'Quit')
                     datasetname = []; return;
                 elseif strcmp(answer,'Add')

@@ -123,9 +123,9 @@ function  get_reachPlot(mobj,option)
         Var(Var==0) = NaN;                    %mask zero values
         hyps_plot(si,Var,Xr{i},Z,plottxt,tlevels);
         si.CLim(2) = ceil(maxV);
-        si.XLim = xlimits;
-        sgtitle(sprintf('Reach contributions on %s',dst.Description))
+        si.XLim = xlimits;        
     end
+    sgtitle(sprintf('Reach contributions for %s',dst.Description))
     hf = gcf;
     hf.Position = [0.40,0.28,0.31,0.65];
 end

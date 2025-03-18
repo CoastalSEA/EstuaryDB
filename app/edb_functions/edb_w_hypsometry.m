@@ -97,9 +97,9 @@ function [Estuary,Reach] = edb_w_hypsometry(obj,zmax,histint,isplot)
             Wi = Wr{i}; Wi(Wi==0) = NaN;
             hyps_plot(si,Wi,Xr{i},Z,titletxt);
             si.CLim(2) = ceil(maxW);
-            si.XLim = xlimits;
-            sgtitle('Reach contribution to widths')
+            si.XLim = xlimits;            
         end
+        sgtitle('Reach contribution to widths')
         hf = gcf;
         hf.Position = [0.40,0.28,0.31,0.65];
     end

@@ -37,7 +37,11 @@ function ax = edb_plot_tidelevels(ax,tlevels)
 
     %add lines to plot
        glines = {'-.','--','-.'};
-       clr = {'k','b','k'};
+       if contains(class(ax.Children),'Line')
+           clr = {'k','b','k'};
+       else
+           clr = {'c','m','c'};
+       end
     hold on
 
     for i=1:3

@@ -62,14 +62,16 @@
 % deleted (NB: this only deletes Datasets and not the Case, which can be
 % deleted using Project>Cases>Delete Case).
 
-%% Setup > Hydraulic Properties
-% Property tables for tides and river discharge can be loaded, edited and
-% deleted using:
+%% Setup > Estuary Properties
+% Property tables for tides, river discharge and classification can be loaded, 
+% edited and deleted using:
 %%
 % * *Tidal Levels* - a table of the elevations that define, for example, spring
 % and neap tides.
 % * *River Discharege* - a table of river discharges that define, for
 % example, the annual and seasonal discharges into the estuary.
+% * *Classification* - a table of classifications that define, for example, 
+% the estuary type, tidal type and geomorphic type.
 
 %% Setup > Grid Parameters
 % * *Grid Parameters*: dialogue to set dimensions of default grid.

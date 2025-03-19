@@ -110,7 +110,7 @@ function [grid,ax,h_but] = applyBoundary(grid,shp,isplot)
     [xq,yq] = meshgrid(grid.x,grid.y);
     %insidepoly is faster but only works reliably with shape files 
     %loaded using shaperead which requires mapping toolbox
-    hwb = progressbar([],'Computing centre-line');
+    hwb = progressbar([],'Computing points within boundary');
     if isfile(which('insidepoly.m'))
         [inpoints,onpoints] = insidepoly(xq,yq,shp.x,shp.y);
     else

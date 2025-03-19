@@ -115,7 +115,7 @@ function gp = addMouthProps(var,gp,z,wl)
     gp.Wmt = interp1(z,W0,wl.MT);
     gp.Amt = interp1(z,A0,wl.MT);
     gp.PoA = gp.Pr/gp.Amt;
-    figure; plot(W0,z,A0,z);
+    % figure; plot(W0,z,A0,z);
 end
 
 %%

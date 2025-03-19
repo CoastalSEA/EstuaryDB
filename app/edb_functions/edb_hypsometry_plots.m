@@ -22,7 +22,7 @@ function edb_hypsometry_plots(mobj)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %
-listxt = {'Convergence plot','Reach Width plot','Reach CSA plot'};
+listxt = {'Convergence plot','Surface area','Reach Width plot','Reach CSA plot'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
@@ -35,6 +35,8 @@ listxt = {'Convergence plot','Reach Width plot','Reach CSA plot'};
                 get_ConvergencePlot(mobj); %calls edb_regression_plot
             case {'Reach Width plot','Reach CSA plot'}
                 get_reachPlot(mobj,listxt{selection});
+            case 'Surface area'
+                get_surfaceArea(mobj);
         end
     end
 end
@@ -98,9 +100,9 @@ function  get_reachPlot(mobj,option)
     maxV = max([maxV{:}]);
 
     %tidal levels
-    if isfield(cobj.HydroProps,'TidalLevels')
+    if isfield(cobj.EstuaryProps,'TidalLevels')
         %adds spring tide levels and mtl to a plot (y-axis must be elevations)
-        tlevels = cobj.HydroProps.TidalLevels; 
+        tlevels = cobj.EstuaryProps.TidalLevels; 
     else
         tlevels = [];
     end
@@ -153,13 +155,61 @@ end
 
 %%
 function A = getCSA(X,Z,W)
-        delZ = abs(Z(2)-Z(1));
-        A = zeros(size(W));
-        for i =1:length(X)
-            A(i,:) = cumsum(W(i,:))*delZ;  %hypsometry cross-sectiional area
-        end
+    %compute the cross-section area by integrating width hypsometry
+    delZ = abs(Z(2)-Z(1));
+    A = zeros(size(W));
+    for i =1:length(X)
+        A(i,:) = cumsum(W(i,:))*delZ;  %hypsometry cross-sectiional area
+    end
 end
 
+%%
+function get_surfaceArea(mobj)
+    %plot of bounding polygon and hypsomtery for surface area
+    cobj = selectCaseObj(mobj.Cases,[],{'EDBimport'},'Select Surface area dataset:');
+    if isempty(cobj), return; end
+    datasets = fields(cobj.Data);
+    datasets = datasets(contains(datasets,'Surface'));
+    if isempty(datasets), getdialog('No Surface area data'); return; end
+    idd = 1;
+    if length(datasets)>1
+        idd = listdlg('PromptString','Select table:','ListString',datasets,...
+                            'SelectionMode','single','ListSize',[160,200]);
+    end
+    dst = cobj.Data.(datasets{idd});
+    [var,Z] = edb_derived_hypsprops(dst,datasets{idd},'Sa'); %get S and V
+    shp = cobj.WaterBody;  %current saved waterbody polygon
+    %add spring tide levels and mtl to a plot (y-axis must be elevations)
+    tlevels = [];
+    if isfield(cobj.EstuaryProps,'TidalLevels')
+        
+        tlevels = cobj.EstuaryProps.TidalLevels;   
+    end
+    
+    %gereate figure with plot of waterbody and hypsometry alongside
+    hf = figure('Name','Hypsometry','Units','Normalized','Resize','on',...
+                'Position',[0.28 0.50 0.38 0.30],'Tag','PlotFig');
+    %plot bathymetry and bounding polygon
+    ax = PL_Sections.getGrid(cobj,hf);
+    hold on
+    plot(ax,shp.x,shp.y,'r')
+    hold off
+
+    %plot hypsometry and tidal levels (if available)
+    subplot(1,3,[1,2],ax);
+    s2 = subplot(1,3,3);
+    plot(s2,var.S,Z,'DisplayName','Surface area');
+    hold on
+    plot(s2,var.V,Z,'DisplayName','Volume');
+
+    if ~isempty(tlevels)
+        edb_plot_tidelevels(s2,tlevels);
+    end 
+    hold off
+    xlabel('Surface area & Volume');
+    legend('Location','southeast')
+    sgtitle(sprintf('Surface area hypsometry for %s',dst.Description))
+end
 %% additional functions here or external-----------------------------------
 
 %     %multiple selection returning 2 variables each with 3 selections for

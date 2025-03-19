@@ -133,8 +133,8 @@ function ok = getPlot(obj,src,dsetname)
     ylabel(dst.DimensionLabels{1});
      title(sprintf('%s(%s)',dst.Description,dsetname));
     legend('Location','southeast')
-    if isfield(obj.HydroProps,'TidalLevels')
-        edb_plot_tidelevels(ax,obj.HydroProps.TidalLevels);
+    if isfield(obj.EstuaryProps,'TidalLevels')
+        edb_plot_tidelevels(ax,obj.EstuaryProps.TidalLevels);
     end
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
 end

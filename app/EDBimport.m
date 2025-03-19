@@ -1,4 +1,4 @@
-classdef EDBimport < GDinterface                   
+classdef EDBimport < GD_ImportData                  
 %
 %-------class help---------------------------------------------------------
 % NAME
@@ -25,8 +25,9 @@ classdef EDBimport < GDinterface
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet        
         Sections   %GD_Section instance with properties for Boundary, 
                    %ChannelLine, ChannelProps, SectionLines and CrossSections
-        WaterBody  %shape file or xy struct polygon           
-        HydroProps %struct for TidalLevels and RiverDischarges
+        WaterBody  %shape file or xy struct polygon      
+        HydroProps
+        EstuaryProps %struct for TidalLevels, RiverDischarges and Classification
         MorphProps %table for morphological gross properties derived from
                    %surface area or width hypsometry (row for each)
     end
@@ -227,9 +228,12 @@ classdef EDBimport < GDinterface
             if strcmp(srctxt,'Tidal Levels')
                 promptxt = 'Select Water Levels Excel Spreadsheet';
                 propname = 'TidalLevels';
-            else
+            elseif strcmp(srctxt,'River Discharge')
                 promptxt = 'Select River Discharges Excel Spreadsheet';
                 propname = 'RiverDischarges';
+            else
+                promptxt = 'Select Classification Excel Spreadsheet';
+                propname = 'Classification';               
             end
             [fname,path,nfiles] = getfiles('FileType','*.xlsx','PromptText',promptxt);
             if nfiles<1, return; end
@@ -256,7 +260,8 @@ classdef EDBimport < GDinterface
                 estnames = datatable.Properties.RowNames;
                 idr = strcmp(estnames,casedesc);
                 if all(~idr)
-                    promptxt = {'Case not found',sprintf('Select a %s station to use',srctxt)};
+                    promptxt = {sprintf('Case %s not found',casedesc),...
+                              sprintf('Select a %s station to use',srctxt)};
                     idr = listdlg("PromptString",promptxt,...
                                   "Name",'Import','SelectionMode','single',...
                                   'ListSize',[180,120],'ListString',estnames);
@@ -267,7 +272,7 @@ classdef EDBimport < GDinterface
                 dst.Source = fname;
                 dst.MetaData = srctxt;
                 dst.Description = casedesc;
-                cobj.HydroProps.(propname) = dst;
+                cobj.EstuaryProps.(propname) = dst;
                 %write new table to Case instance
                 updateCase(muicat,cobj,classrec,false);
             end
@@ -284,22 +289,22 @@ classdef EDBimport < GDinterface
 
             switch srctxt
                 case 'Tidal Levels'
-                    if isempty(cobj.HydroProps) || ...
-                            ~isfield(cobj.HydroProps,'TidalLevels') || ...
-                                    isempty(cobj.HydroProps.TidalLevels)
+                    if isempty(cobj.EstuaryProps) || ...
+                            ~isfield(cobj.EstuaryProps,'TidalLevels') || ...
+                                    isempty(cobj.EstuaryProps.TidalLevels)
                         getdialog('No tidal level data to edit');
-                    elseif ~isempty(cobj.HydroProps.TidalLevels)
-                        dst = cobj.HydroProps.TidalLevels; 
-                        cobj.HydroProps.TidalLevels = displayTable(dst);
+                    elseif ~isempty(cobj.EstuaryProps.TidalLevels)
+                        dst = cobj.EstuaryProps.TidalLevels; 
+                        cobj.EstuaryProps.TidalLevels = displayTable(dst);
                     end
                 case 'River Discharge'
-                    if  isempty(cobj.HydroProps)|| ...
-                            ~isfield(cobj.HydroProps,'RiverDischarges') ||...
-                                 isempty(cobj.HydroProps.RiverDischarges)
+                    if  isempty(cobj.EstuaryProps)|| ...
+                            ~isfield(cobj.EstuaryProps,'RiverDischarges') ||...
+                                 isempty(cobj.EstuaryProps.RiverDischarges)
                         getdialog('No river discharge data to edit');
-                    elseif ~isempty(cobj.HydroProps.RiverDischarges)
-                        dst = cobj.HydroProps.RiverDischarges; 
-                        cobj.HydroProps.RiverDischarges = displayTable(dst);
+                    elseif ~isempty(cobj.EstuaryProps.RiverDischarges)
+                        dst = cobj.EstuaryProps.RiverDischarges; 
+                        cobj.EstuaryProps.RiverDischarges = displayTable(dst);
                     end
                 case 'Gross Properties'
                     if isempty(cobj.MorphProps)
@@ -332,14 +337,14 @@ classdef EDBimport < GDinterface
             desc = [];
             switch srctxt
                 case 'Tidal Levels'
-                    if ~isempty(cobj.HydroProps.TidalLevels)
-                        desc = cobj.HydroProps.TidalLevels.Description;
-                        cobj.HydroProps.TidalLevels = [];                        
+                    if ~isempty(cobj.EstuaryProps.TidalLevels)
+                        desc = cobj.EstuaryProps.TidalLevels.Description;
+                        cobj.EstuaryProps.TidalLevels = [];                        
                     end
                 case 'River Discharge'
-                    if ~isempty(cobj.HydroProps.RiverDischarges)
-                        desc = cobj.HydroProps.RiverDischarges.Description;
-                        cobj.HydroProps.RiverDischarges = [];
+                    if ~isempty(cobj.EstuaryProps.RiverDischarges)
+                        desc = cobj.EstuaryProps.RiverDischarges.Description;
+                        cobj.EstuaryProps.RiverDischarges = [];
                     end
                 case 'Gross Properties'
                     if ~isempty(cobj.MorphProps)
@@ -474,13 +479,17 @@ classdef EDBimport < GDinterface
             else
                 switch src.Tag
                     case 'Tides'
-                        if isfield(obj.HydroProps,'TidalLevels')
-                            dst = obj.HydroProps.TidalLevels;
+                        if isfield(obj.EstuaryProps,'TidalLevels')
+                            dst = obj.EstuaryProps.TidalLevels;
                         end
                     case 'Rivers'
-                        if isfield(obj.HydroProps,'RiverDischarges')
-                            dst = obj.HydroProps.RiverDischarges;
+                        if isfield(obj.EstuaryProps,'RiverDischarges')
+                            dst = obj.EstuaryProps.RiverDischarges;
                         end
+                    case 'Classification'
+                        if isfield(obj.EstuaryProps,'Classification')
+                            dst = obj.EstuaryProps.Classification;
+                        end                    
                     case 'Morphology'
                         if ~isempty(obj.MorphProps)
                             dst = obj.MorphProps;

@@ -23,8 +23,8 @@ function [wl,selection] = edb_waterlevels(obj,mnmx,dz)
 %
 
     %see if tidal data is available
-    if isfield(obj.HydroProps,'TidalLevels')
-        tlevels = obj.HydroProps.TidalLevels.DataTable;
+    if isfield(obj.EstuaryProps,'TidalLevels')
+        tlevels = obj.EstuaryProps.TidalLevels.DataTable;
         selection = questdlg('Select tidal range to use','Properties',...
                           'Spring','Mean','Neap','Spring');
         if strcmp(selection,'Spring')

@@ -105,7 +105,7 @@ classdef EstuaryDB < muiModelUI
             %% Setup menu -------------------------------------------------
             N = 1;
             menu.Setup(N).List = {'Import Table Data','Import Spatial Data',...
-                                  'Hydraulic Properties','Grid Parameters',...
+                                  'Estuary Properties','Grid Parameters',...
                                   'Grid Tools','Sections','Waterbody'...
                                   'Input Parameters','Model Constants'};                                                                         
             menu.Setup(N).Callback = [repmat({'gcbo;'},[1,3]),...
@@ -131,11 +131,14 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).List = {'Load or Add dataset','Delete dataset'};
             menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,2]);
             N = N+1;
-            menu.Setup(N).List = {'Tidal Levels','River Discharge'};
-            menu.Setup(N).Callback = repmat({'gcbo;'},[1,2]);   
+            menu.Setup(N).List = {'Tidal Levels','River Discharge','Classification'};
+            menu.Setup(N).Callback = repmat({'gcbo;'},[1,3]);   
             N = N+1;
             menu.Setup(N).List = {'Add','Edit','Delete'};
-            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,23]);
+            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
+            N = N+1;
+            menu.Setup(N).List = {'Add','Edit','Delete'};
+            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
             N = N+1;
             menu.Setup(N).List = {'Add','Edit','Delete'};
             menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
@@ -220,7 +223,8 @@ classdef EstuaryDB < muiModelUI
             subtabs.Table(1,:)   = {'  Dataset  ',@obj.getTabData};
             subtabs.Table(2,:)   = {' Tides ',@obj.getTabData};
             subtabs.Table(3,:)   = {' Rivers ',@obj.getTabData};
-            subtabs.Table(4,:)   = {' Morphology ',@obj.getTabData};
+            subtabs.Table(4,:)   = {'Classification',@obj.getTabData};
+            subtabs.Table(5,:)   = {' Morphology ',@obj.getTabData};
 
             tabs.Plot   = {'  Q-Plot  ',@obj.getTabData};
             tabs.Stats = {'   Stats   ',@obj.setTabAction};
@@ -251,7 +255,7 @@ classdef EstuaryDB < muiModelUI
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
                     tabStats(lobj,src);
-                case {'Dataset','Tides','Rivers','Morphology'}
+                case {'Dataset','Tides','Rivers','Morphology','Classification'}
                     classname = metaclass(cobj).Name;
                     if strcmp(classname,'EDBimport')
                         switch src.Tag
@@ -326,7 +330,7 @@ classdef EstuaryDB < muiModelUI
             switch src.Text
                 case 'Add'
                     switch src.Parent.Text
-                        case {'Tidal Levels','River Discharge'}
+                        case {'Tidal Levels','River Discharge','Classification'}
                             EDBimport.loadHydroData(obj.Cases,src.Parent.Text);
                         case 'Gross Properties'
                             EDBimport.loadTable(obj.Cases,src.Parent.Text);

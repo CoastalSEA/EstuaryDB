@@ -100,9 +100,9 @@ function  get_reachPlot(mobj,option)
     maxV = max([maxV{:}]);
 
     %tidal levels
-    if isfield(cobj.EstuaryProps,'TidalLevels')
+    if ~isempty(obj.TidalProps)
         %adds spring tide levels and mtl to a plot (y-axis must be elevations)
-        tlevels = cobj.EstuaryProps.TidalLevels; 
+        tlevels = cobj.TidalProps; 
     else
         tlevels = [];
     end
@@ -181,9 +181,8 @@ function get_surfaceArea(mobj)
     shp = cobj.WaterBody;  %current saved waterbody polygon
     %add spring tide levels and mtl to a plot (y-axis must be elevations)
     tlevels = [];
-    if isfield(cobj.EstuaryProps,'TidalLevels')
-        
-        tlevels = cobj.EstuaryProps.TidalLevels;   
+    if ~isempty(obj.TidalProps)        
+        tlevels = cobj.TidalProps;   
     end
     
     %gereate figure with plot of waterbody and hypsometry alongside

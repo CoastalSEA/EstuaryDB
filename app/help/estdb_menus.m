@@ -58,6 +58,9 @@
 % a new dataset to an existing Case. If the dataset already exists the user
 % is prompted to either overwrite the existing dataset, or add another dataset 
 % of the same type.
+% * *Load archive file* - load an estuary Case from an archived ASCII file. 
+% The archive file is created using Tools >Archive and the format of the 
+% file is detailed in Appendix F – Archive File Format on the <matlab:estdb_open_manual manual>.
 % * *Delete Dataset* - select an estuary case and the Dataset(s) to be
 % deleted (NB: this only deletes Datasets and not the Case, which can be
 % deleted using Project>Cases>Delete Case).
@@ -281,6 +284,18 @@
 % as a table once, Tidal Levels and a Surface area or Width hypsometry have
 % been defined. Add a row of data to the morphological properties
 % table by selecting a hypsometry and a tidal data set to use.
+% * *Combine Tables*: the tabular property data for individual estuary can 
+% be combined into a table allowing intercomparison between estuaries. 
+% The estuary Cases can be in the current file or in saved project files. 
+% The output is a table of values for a number of estuaries. The table cannot 
+% accept data from multiple sources with the same estuary name 
+% (row names must be unique). Similarly, when combining Gross Property 
+% tables, it is necessary to select a single row for inclusion in the combined table. 
+% These can be selected based on the Source and Notes in fields of the source tables.
+% * *Archive*: save an estuary Case as an ASCII text file. This file can be 
+% loaded into EstuaryDB using _Setup > Import Spatial Data > Load archive file_. 
+% The format of the saved file is detailed in Appendix F – Archive File Format
+% of the <matlab:estdb_open_manual manual>.  _[Under development]_.
 % * *Derive Output*: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.
 % * *User Tools*: calls function ‘edb_user_tools.m’, which includes a function to:
 %

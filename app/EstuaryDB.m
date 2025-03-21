@@ -128,8 +128,8 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).List = {'Rows','Variables','Dataset'};
             menu.Setup(N).Callback = repmat({@obj.loadTableOptions},[1,3]);
             N = N+1;
-            menu.Setup(N).List = {'Load or Add dataset','Delete dataset'};
-            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,2]);
+            menu.Setup(N).List = {'Load or Add dataset','Load archive file','Delete dataset'};
+            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
             N = N+1;
             menu.Setup(N).List = {'Tidal Levels','River Discharge','Classification'};
             menu.Setup(N).Callback = repmat({'gcbo;'},[1,3]);   
@@ -181,10 +181,10 @@ classdef EstuaryDB < muiModelUI
 
             %% Tools menu ---------------------------------------------------
             menu.Tools(1).List = {'Hypsometry','Gross Properties',...
-                                 'Combine Tables','Derive Output','User Tools'};
-            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,3]),...
-                                     repmat({@obj.toolsMenuOptions},[1,2])];
-            menu.Tools(1).Separator = {'off','off','off','on','on'}; %separator preceeds item
+                                 'Combine Tables','Archive','Derive Output','User Tools'};
+            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,2]),...
+                                     repmat({@obj.toolsMenuOptions},[1,4])];
+            menu.Tools(1).Separator = {'off','off','off','off','on','on'}; %separator preceeds item
 
             menu.Tools(2).List = {'Surface area','Width'};
             menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,2]);
@@ -255,17 +255,14 @@ classdef EstuaryDB < muiModelUI
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
                     tabStats(lobj,src);
-                case {'Dataset','Tides','Rivers','Morphology','Classification'}
+                case 'Dataset'
+                    tabTable(cobj,src); 
+                case {'Tides','Rivers','Morphology','Classification'}
                     classname = metaclass(cobj).Name;
                     if strcmp(classname,'EDBimport')
-                        switch src.Tag
-                            case 'Dataset'
-                                tabTable(cobj,src);
-                            otherwise
-                                tabTablesection(cobj,src);  
-                        end
+                       tabTablesection(cobj,src);  
                     else
-                        tabTable(cobj,src);   
+                        getdialog('Not an estuary data set (EDBimport)')
                     end
             end
         end      
@@ -323,6 +320,8 @@ classdef EstuaryDB < muiModelUI
             switch src.Text
                 case 'Load or Add dataset'
                     EDBimport.loadData(obj.Cases);
+                case 'Load archive file'
+                    EDBimport.loadArchive(obj.Cases);
                 case 'Delete dataset'
                     useCase(obj.Cases,'single',{classname},'delDataset');                             
             end
@@ -331,7 +330,7 @@ classdef EstuaryDB < muiModelUI
                 case 'Add'
                     switch src.Parent.Text
                         case {'Tidal Levels','River Discharge','Classification'}
-                            EDBimport.loadHydroData(obj.Cases,src.Parent.Text);
+                            EDBimport.loadEstuaryData(obj.Cases,src.Parent.Text);
                         case 'Gross Properties'
                             EDBimport.loadTable(obj.Cases,src.Parent.Text);
                     end
@@ -391,7 +390,9 @@ classdef EstuaryDB < muiModelUI
                 case {'Surface area','Width'}
                     EDBimport.loadTable(obj.Cases,src.Text); 
                 case 'Combine Tables'
-                    EDBimport.combineTables(mobj);
+                    EDBimport.combineTables(obj);
+                case 'Archive'
+                    EDBimport.archiveTables(obj);
                 case 'Derive Output'
                     obj.mUI.ManipUI = muiManipUI.getManipUI(obj);
                 case 'User Tools'

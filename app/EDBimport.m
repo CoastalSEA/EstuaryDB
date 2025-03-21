@@ -23,18 +23,26 @@ classdef EDBimport < GD_ImportData
 %    
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet        
-        Sections   %GD_Section instance with properties for Boundary, 
-                   %ChannelLine, ChannelProps, SectionLines and CrossSections
-        WaterBody  %shape file or xy struct polygon      
+        Sections     %GD_Section instance with properties for Boundary, 
+                     %ChannelLine, ChannelProps, SectionLines and CrossSections
+        WaterBody    %shape file or xy struct polygon      
+
+        %to be removed
         HydroProps
         EstuaryProps %struct for TidalLevels, RiverDischarges and Classification
-        MorphProps %table for morphological gross properties derived from
-                   %surface area or width hypsometry (row for each)
+        MorphProps   %table for morphological gross properties derived from
+                     %surface area or width hypsometry (row for each)
+%change estuary properties and grossproperties to be stand alone properties
+        TidalProps   %table of tidal levels
+        RiverProps   %table of river discharges
+        ClassProps   %table of estuary classification
+        GrossProps   %table of estuary gross morphological properties
     end
 
     properties (Transient)
-        formatypes
-        datasetnames
+        formatypes   %import format file definitions
+        datasetnames %reserved dataset names for each dataset type
+        tablenames   %reserved table names for estuary properties
     end
     
     methods 
@@ -43,6 +51,8 @@ classdef EDBimport < GD_ImportData
             if nargin<1
                 formatfile = obj.setFileFormat;
                 if isempty(formatfile), return; end
+            elseif formatfile
+                return  %set formatfile to true to return an empty instance
             end
             %different types of data can be added to a case. Hence the
             %format file spec is dynamic and can change with selection
@@ -183,6 +193,14 @@ classdef EDBimport < GD_ImportData
             end
             %--------------------------------------------------------------
         end
+
+%%
+        function loadArchive(muicat)
+            %load class record from ASCII edb archive file (file created using
+            %archiveTables - see below)
+            getdialog('Not yet implemented')
+        end
+
 %%
         function loadTable(muicat,newdataset)
             %use bathymetry to create a SurfaceArea or Width table
@@ -202,7 +220,7 @@ classdef EDBimport < GD_ImportData
                 [cobj,isok] = edb_width_table(cobj);
             elseif strcmp(dset2add,'Properties')
                 %output derived from SurfaceArea and Width Data sets
-                %and saved as MorphProps property (NOT a cobj.Data dataset)
+                %and saved as GrossProps property (NOT a cobj.Data dataset)
                 [cobj,isok] = edb_grossprops_table(cobj);
             else
                 errdlg('Should not be here'); return;
@@ -215,7 +233,7 @@ classdef EDBimport < GD_ImportData
         end
 
 %%
-        function loadHydroData(muicat,srctxt)
+        function loadEstuaryData(muicat,srctxt)
             %load tidal levels or river discharges
             promptxt = sprintf('Select Cases to add %s:',srctxt);
             %prompt to select cases and return the case record number
@@ -223,18 +241,12 @@ classdef EDBimport < GD_ImportData
                            'PromptText',promptxt,...
                            'SelectionMode','multiple','ListSize', [300,200]);             
             if ~ok, return; end
-            nrec = length(caserec);
+            nrec = length(caserec);            
+            anobj = muicat.DataSets.EDBimport(1);
+            propname = anobj.tablenames{srctxt,1}{1}; 
+            promptxt = sprintf('Select %s Excel Spreadsheet',srctxt);
 
-            if strcmp(srctxt,'Tidal Levels')
-                promptxt = 'Select Water Levels Excel Spreadsheet';
-                propname = 'TidalLevels';
-            elseif strcmp(srctxt,'River Discharge')
-                promptxt = 'Select River Discharges Excel Spreadsheet';
-                propname = 'RiverDischarges';
-            else
-                promptxt = 'Select Classification Excel Spreadsheet';
-                propname = 'Classification';               
-            end
+            %now get file to load data from
             [fname,path,nfiles] = getfiles('FileType','*.xlsx','PromptText',promptxt);
             if nfiles<1, return; end
         
@@ -289,31 +301,22 @@ classdef EDBimport < GD_ImportData
 
             switch srctxt
                 case 'Tidal Levels'
-                    if isempty(cobj.EstuaryProps) || ...
-                            ~isfield(cobj.EstuaryProps,'TidalLevels') || ...
-                                    isempty(cobj.EstuaryProps.TidalLevels)
-                        getdialog('No tidal level data to edit');
-                    elseif ~isempty(cobj.EstuaryProps.TidalLevels)
-                        dst = cobj.EstuaryProps.TidalLevels; 
-                        cobj.EstuaryProps.TidalLevels = displayTable(dst);
-                    end
+                    msgtxt = 'No tidal level data to edit';
                 case 'River Discharge'
-                    if  isempty(cobj.EstuaryProps)|| ...
-                            ~isfield(cobj.EstuaryProps,'RiverDischarges') ||...
-                                 isempty(cobj.EstuaryProps.RiverDischarges)
-                        getdialog('No river discharge data to edit');
-                    elseif ~isempty(cobj.EstuaryProps.RiverDischarges)
-                        dst = cobj.EstuaryProps.RiverDischarges; 
-                        cobj.EstuaryProps.RiverDischarges = displayTable(dst);
-                    end
+                    msgtxt = 'No river discharge data to edit';
+                case 'Classification'
+                    msgtxt = 'No classification data to edit';                                    
                 case 'Gross Properties'
-                    if isempty(cobj.MorphProps)
-                        getdialog('No morphological properties data to edit');
-                    else
-                        dst = cobj.MorphProps; 
-                        cobj.MorphProps = displayTable(dst);
-                    end
-            end  
+                    msgtxt = 'No morphological properties data to edit';
+            end 
+
+            propname = cobj.tablenames{srctxt,1}{1}; 
+            if isempty(cobj.(propname))
+                getdialog(msgtxt);
+            else
+                dst = cobj.(propname); 
+                cobj.(propname) = displayTable(dst);
+            end
 
             % Nested function----------------------------------------------
             function output = displayTable(dst)
@@ -335,23 +338,12 @@ classdef EDBimport < GD_ImportData
             if isempty(cobj), return; end
             
             desc = [];
-            switch srctxt
-                case 'Tidal Levels'
-                    if ~isempty(cobj.EstuaryProps.TidalLevels)
-                        desc = cobj.EstuaryProps.TidalLevels.Description;
-                        cobj.EstuaryProps.TidalLevels = [];                        
-                    end
-                case 'River Discharge'
-                    if ~isempty(cobj.EstuaryProps.RiverDischarges)
-                        desc = cobj.EstuaryProps.RiverDischarges.Description;
-                        cobj.EstuaryProps.RiverDischarges = [];
-                    end
-                case 'Gross Properties'
-                    if ~isempty(cobj.MorphProps)
-                        desc = cobj.MorphProps.Description;
-                        cobj.MorphProps = [];
-                    end
-            end 
+            propname = cobj.tablenames{srctxt,1}{1};  
+            if ~isempty(cobj.(propname))
+                desc = cobj.(propname).Description;
+                cobj.(propname) = [];
+            end
+
             %notify user of any changes
             if isempty(desc)
                 desc =catrec.CaseDescription;
@@ -363,9 +355,93 @@ classdef EDBimport < GD_ImportData
 
 %%
         function combineTables(mobj)
-            getdialog('Not yet implemented')
+            %combine tabular data held in EstuaryProps or MorphProps into a
+            %multi-estuary summary table
+            anobj = EDBimport(true);           
+            datatypes = anobj.tablenames.Properties.RowNames;
+            selection = listdlg("PromptString",'Select table type:',...
+                                'SelectionMode','single','ListSize',[160,100],...
+                                'ListString',datatypes);
+            if isempty(selection), return; end
+            propname = anobj.tablenames{selection,1}{1};  
+            clear anobj
+
+
+            allobj = getClassObj(mobj,'Cases','EDBimport');
+
+            [fname,path,nfiles] = getfiles('FileType','*.mat;','MultiSelect','on',...
+                                      'PromptText','Select files to query');
+            if nfiles>0
+                for i=1:nfiles
+                    S = load([path,fname{i}],'-mat');
+                    addobj = S.sobj.Cases.DataSets.EDBimport;
+                    allobj = [allobj,addobj];
+                end
+            end
+            clear S
+
+            ij = 1;
+            for ii=1:length(allobj)
+                if ~isempty(allobj(ii).(propname)) 
+                    estnames{ij} = allobj(ii).(propname).Description;
+                    ij = ij+1;
+                end
+            end
+            selection = listdlg("PromptString",'Select table type:',...
+                                'SelectionMode','multiple','ListSize',[160,100],...
+                                'ListString',estnames);
+            if isempty(selection), return; end
+
+            cobj = allobj(selection);
+
+            proptable = [];
+            if ~isempty(cobj)
+                for j=1:length(cobj)
+                    newtable = cobj(j).(propname);
+                    if strcmp(propname,'GrossProps')
+                        newtable = selectRow(newtable); %subselect single row
+                    end
+                    %
+                    if ~isempty(newtable) && isempty(proptable)
+                        proptable = newtable;
+                    else                        
+                        proptable = [proptable;newtable];
+                    end
+                end
+            end
+            
+            obj = muiTableImport;
+            setDataSetRecord(obj,mobj.Cases,proptable,'data'); 
+
+            %nested function ----------------------------------------------
+            function newtable = selectRow(newtable)
+                if height(newtable)==1, return; end %single row in table
+                 newtable = activatedynamicprops(newtable);  
+                 for k=1:height(newtable)
+                    listxt{k} = sprintf('%s: %s',newtable.DataTable.Source{k},newtable.Notes{k});
+                 end
+                iselect = listdlg("PromptString",'Select row to use:',...
+                                'SelectionMode','single','ListSize',[180,100],...
+                                'ListString',listxt');
+                if isempty(iselect), iselect = 1; end
+                newtable = getDSTable(newtable,iselect,[]);
+                newtable.RowNames = {newtable.Description};
+            end
+            % -------------------------------------------------------------
         end
-        
+
+%%
+        function archiveTables(mobj)
+            %save an estuary Case to a an ASCII file (import using
+            %loadArchive - see above)
+            getdialog('Not yet implemented'); return
+
+            promptxt = 'Select Cases archive';
+            [cobj,~,catrec] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+
+        end
+                
 %%
         function dsp = loadDSproperties(dspvars)
             %define a dsproperties struct and add the metadata
@@ -404,6 +480,15 @@ classdef EDBimport < GD_ImportData
             calltxt = {'Grid','Surface area','Width','Image','Gross Properties','GeoImage'};
             dsetnames = {'Grid';'SurfaceArea';'Width';'Image';'Properties';'GeoImage'};            
             dsname = table(dsetnames,'RowNames',calltxt);
+        end
+
+%%
+        function tablename = get.tablenames(obj) %#ok<MANU> 
+            %create look-up table for dataset names from call text
+            calltxt = {'Tidal Levels','River Discharge','Classification','Gross Properties'};
+            dsetnames = {'TidalProps';'RiverProps';'ClassProps';'GrossProps'};
+            tabnames = {'Tides';'Rivers';'Classification';'Morphology'};
+            tablename = table(dsetnames,tabnames,'RowNames',calltxt);
         end
 
 %%
@@ -470,30 +555,17 @@ classdef EDBimport < GD_ImportData
         
 %%
         function tabTablesection(obj,src)
-            %select between HydroData and other data sets
+            %select between Datasets and other data sets
             ht = findobj(src,'-not','Type','uitab'); %clear any existing content
             delete(ht)
             dst = [];
             if strcmp(src.Tag,'Dataset')
                 tabTable(obj,src);
             else
-                switch src.Tag
-                    case 'Tides'
-                        if isfield(obj.EstuaryProps,'TidalLevels')
-                            dst = obj.EstuaryProps.TidalLevels;
-                        end
-                    case 'Rivers'
-                        if isfield(obj.EstuaryProps,'RiverDischarges')
-                            dst = obj.EstuaryProps.RiverDischarges;
-                        end
-                    case 'Classification'
-                        if isfield(obj.EstuaryProps,'Classification')
-                            dst = obj.EstuaryProps.Classification;
-                        end                    
-                    case 'Morphology'
-                        if ~isempty(obj.MorphProps)
-                            dst = obj.MorphProps;
-                        end 
+                idr = strcmp(obj.tablenames{:,2},src.Tag);
+                propname = obj.tablenames{idr,1}{1};  
+                if ~isempty(obj.(propname))
+                    dst = obj.(propname);
                 end
                 if isempty(dst), getdialog('No data',[],1); return; end
 

@@ -100,14 +100,9 @@ function newdst = getData(obj,filename,metatxt)
     meta.data = sprintf('%s (Rotate option = %d)',metatxt,rotate);
     newgrid(1,:,:) = grid.z;
     obj = setGrid(obj,{newgrid},dims,meta);
-    
-    latlong = inputdlg('Latitude and Longitude of mouth','Bathymetry',1,{'0','0'});
-    if ~isempty(latlong)
-        latlong = str2num(latlong{1}); %#ok<ST2NM> handle vector input
-    end
+
     dst = obj.Data.Grid;
     dst.UserData.props = props;
-    dst.UserData.LatLong = latlong;
     dst.Description = estname;
     newdst.Grid = dst;  %Grid is the dataset name for this format
 end

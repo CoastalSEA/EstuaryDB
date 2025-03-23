@@ -128,8 +128,9 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).List = {'Rows','Variables','Dataset'};
             menu.Setup(N).Callback = repmat({@obj.loadTableOptions},[1,3]);
             N = N+1;
-            menu.Setup(N).List = {'Load or Add dataset','Load archive file','Delete dataset'};
-            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,3]);
+            menu.Setup(N).List = {'Load or Add dataset','Load archive file',...
+                  'Add/Edit Summary','Add/Edit Location','Delete dataset'};
+            menu.Setup(N).Callback = repmat({@obj.loadMenuOptions},[1,5]);
             N = N+1;
             menu.Setup(N).List = {'Tidal Levels','River Discharge','Classification'};
             menu.Setup(N).Callback = repmat({'gcbo;'},[1,3]);   
@@ -216,15 +217,16 @@ classdef EstuaryDB < muiModelUI
             %format for subtabs: 
             %    subtabs.<tagname>(i,:) = {<subtab label>,<callback function>};
             %where <tagname> is the struct fieldname for the top level tab. 
-            tabs.Data  = {'   Data  ',@obj.refresh};        
-            tabs.Models = {'  Models  ',@obj.refresh};   
+            tabs.Estuary = {'  Estuary  ',@obj.refresh}; 
+            tabs.Data  = {'   Data   ',@obj.refresh};       
             tabs.Inputs = {'  Inputs  ',@obj.InputTabSummary};
-            tabs.Table = {'  Table  ',''};
-            subtabs.Table(1,:)   = {'  Dataset  ',@obj.getTabData};
-            subtabs.Table(2,:)   = {' Tides ',@obj.getTabData};
-            subtabs.Table(3,:)   = {' Rivers ',@obj.getTabData};
-            subtabs.Table(4,:)   = {'Classification',@obj.getTabData};
-            subtabs.Table(5,:)   = {' Morphology ',@obj.getTabData};
+            tabs.Table = {' Properties ',''};
+            subtabs.Table(1,:)   = {'  Summary  ',@obj.getTabData};
+            subtabs.Table(2,:)   = {'  Dataset  ',@obj.getTabData};
+            subtabs.Table(3,:)   = {' Tides ',@obj.getTabData};
+            subtabs.Table(4,:)   = {' Rivers ',@obj.getTabData};
+            subtabs.Table(5,:)   = {'Classification',@obj.getTabData};
+            subtabs.Table(6,:)   = {' Morphology ',@obj.getTabData};
 
             tabs.Plot   = {'  Q-Plot  ',@obj.getTabData};
             tabs.Stats = {'   Stats   ',@obj.setTabAction};
@@ -255,6 +257,13 @@ classdef EstuaryDB < muiModelUI
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
                     tabStats(lobj,src);
+                case 'Summary'
+                    classname = metaclass(cobj).Name;
+                    if strcmp(classname,'EDBimport')
+                        tabSummary(cobj,obj,src)
+                    else
+                        getdialog('Not an estuary data set (EDBimport)')
+                    end
                 case 'Dataset'
                     tabTable(cobj,src); 
                 case {'Tides','Rivers','Morphology','Classification'}
@@ -322,6 +331,10 @@ classdef EstuaryDB < muiModelUI
                     EDBimport.loadData(obj.Cases);
                 case 'Load archive file'
                     EDBimport.loadArchive(obj.Cases);
+                case 'Add/Edit Summary'
+                    EDBimport.addSummary(obj.Cases);
+                case 'Add/Edit Location'
+                    EDBimport.addLocation(obj.Cases);
                 case 'Delete dataset'
                     useCase(obj.Cases,'single',{classname},'delDataset');                             
             end
@@ -462,6 +475,7 @@ classdef EstuaryDB < muiModelUI
             caseclass = muicat.Catalogue.CaseClass(caserec);
 
             cdata = {'0','Type','Description of individual cases','#'};
+            ecdata = {'0','Type','Description of individual cases','#','#','xxx'};
             irec = 1;
             for i=1:length(caseid)
                 case_id = num2str(caseid(i));
@@ -470,27 +484,31 @@ classdef EstuaryDB < muiModelUI
                     type = 'New';
                 else
                     type = caseclass{i};
-                    if contains(type,'CT_')
-                        type = split(type,'_');
-                        type = type{2};
-                    elseif strcmpi(type(1:2),'ct')
-                        type = type(3:end);
-                    end
                 end
                 %
-                dst = getDataset(muicat,caserec(i),1);
-                if isempty(dst), continue; end
-                reclen = num2str(height(dst.DataTable));
-                cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen}; 
+                if strcmp(ht.Tag,'Estuary')
+                    cobj = getCase(muicat,caserec(i));
+                    lat = cobj.Location.Longitude;
+                    long = cobj.Location.Latitude;
+                    proj = cobj.Location.Projection;
+                    ecdata(irec,:) = {case_id,type,char(casedesc{i}),long,lat,proj};
+                else
+                    dst = getDataset(muicat,caserec(i),1);
+                    if isempty(dst), continue; end
+                    reclen = num2str(height(dst.DataTable));
+                    cdata(irec,:) = {case_id,type,char(casedesc{i}),reclen}; 
+                end
                 irec = irec+1;
             end
             
-            if strcmp(ht.Tag,'Models')
-                headers = {'ID','Model Class','Model Description','Nrec'...
-                };
+            if strcmp(ht.Tag,'Estuary')
+                headers = {'ID','Model Class','Model Description',...
+                           'Long/East','Lat/North','Projection'};
+                cwidth = {25 100 240 70 70 70 };
+                cdata = ecdata;
             else
-                headers = {'ID','Data Class','Data Description','Nrec'...
-                };
+                headers = {'ID','Data Class','Data Description','Nrec'};
+                cwidth = {25 100 380 70};
             end
             
             % draw table of case descriptions
@@ -500,12 +518,37 @@ classdef EstuaryDB < muiModelUI
             tc.ColumnName = headers;
             tc.RowName = {};
             tc.Data = cdata;
-            tc.ColumnWidth = {25 100 380 70};
+            tc.ColumnWidth = cwidth;
             tc.RowStriping = 'on';
             tc.Position(3:4)=[0.935 0.8];    %may need to use tc.Extent?
             tc.Position(2)=0.9-tc.Position(4);
         end   
-    end    
+%%
+        function subset = tabSubset(obj,srctxt)  
+            %get the cases of a given CaseType and return as logical array
+            %in CoastalTools seperate data from everything else
+            % srctxt - Tag for selected tab (eg src.Tag)
+            % Called by MapTable. Separate function so that it can be 
+            % overloaded from muiModelUI version.
+            caseclass = obj.Cases.Catalogue.CaseClass;
+            switch srctxt
+                case 'Estuary'
+                    subset = contains(caseclass,'EDBimport');   
+                otherwise
+                    subset = ~contains(caseclass,'EDBimport');  
+            end
+        end
+%%
+
+
+    end 
+
+%%
+    methods
+        function vN = getVersion(obj)
+            vN = obj.vNumber;
+        end
+    end
 end    
     
     

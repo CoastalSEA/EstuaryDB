@@ -21,6 +21,7 @@ classdef EDBimport < GD_ImportData
 % CoastalSEA (c) Oct 2024
 %--------------------------------------------------------------------------
 %    
+
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet        
         Sections     %GD_Section instance with properties for Boundary, 
@@ -37,6 +38,9 @@ classdef EDBimport < GD_ImportData
         RiverProps   %table of river discharges
         ClassProps   %table of estuary classification
         GrossProps   %table of estuary gross morphological properties
+        Summary      %summary description of estuary
+                     %Latitude and Longitude of estuary mouth
+        Location = struct('Latitude',[],'Longitude',[],'Projection','')     
     end
 
     properties (Transient)
@@ -51,7 +55,7 @@ classdef EDBimport < GD_ImportData
             if nargin<1
                 formatfile = obj.setFileFormat;
                 if isempty(formatfile), return; end
-            elseif formatfile
+            elseif all(formatfile==true)
                 return  %set formatfile to true to return an empty instance
             end
             %different types of data can be added to a case. Hence the
@@ -129,10 +133,11 @@ classdef EDBimport < GD_ImportData
                 %if the estuary does not exist save as new record                    
                 if isnew
                     %add estuary as a new case record
-                    %classobj,muicat,dataset,casetype,casedesc,SupressPrompts
+                    %classobj,muicat,dataset,casetype,casedesc,SupressPrompts 
                     dtype = obj.DataFormats{3};
                     setDataSetRecord(obj,muicat,newdata,dtype,{estname},false); %false-force prompt for case description
                     obj = EDBimport(obj.DataFormats{2}); %initialise next instance
+                    getdialog('Add Summary and Location details using Setup>Import Spatial Data options');
                 else
                     %estuary exists - add data to existing record
                     classrec = find(strcmp(existest,estname)); 
@@ -198,7 +203,61 @@ classdef EDBimport < GD_ImportData
         function loadArchive(muicat)
             %load class record from ASCII edb archive file (file created using
             %archiveTables - see below)
-            getdialog('Not yet implemented')
+            datatables = edb_read_archive();
+        end
+
+
+%%
+        function addSummary(muicat)
+            %add or edit summary text description about the estuary
+            promptxt = 'Select Cases to add/edit summary:';
+            %prompt to select cases and return the case record number
+            [cobj,~,~] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+
+            caserec = caseRec(muicat,cobj.CaseIndex);
+            casedesc = muicat.Catalogue.CaseDescription(caserec);
+            if isempty(cobj.Summary), cobj.Summary = ''; end
+            %summary = inputdlg({'Add/edit summary'},'Summary',1,{cobj.Summary});
+            figtitle = {'Summary',sprintf('Summary description for %s',casedesc)};
+            paneltxt = 'Add or edit a short descrition of the estuary. Plain text with no formatting';
+            butdef = {'Save','Quit'};
+            % inp = table({cobj.Summary});
+            % summary = tablefigureUI(figtitle,paneltxt,inp,true,butdef);%true to edit
+            [hf,hb,ht] = textfigure(figtitle,paneltxt,cobj.Summary,butdef);
+            uiwait(hf)
+            if any([hb(:).UserData]==1)
+                summary = ht.String;
+                if ~isempty(summary)
+                    cobj.Summary = summary;
+                end
+            end
+            delete(hf)
+        end
+
+%%
+        function addLocation(muicat)
+            %add the latitude and longitude coordinates at the mouth
+            promptxt = 'Select Cases to add/edit location:';
+            %prompt to select cases and return the case record number
+            [cobj,~,~] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+            if isempty(cobj.Location.Longitude)
+                defaults = {'999','999','WGS 94/OSGB36'};
+            else
+                defaults{1} = num2str(cobj.Location.Longitude);
+                defaults{2} = num2str(cobj.Location.Latitude);
+                defaults{3} = cobj.Location.Projection;
+            end
+            caserec = caseRec(muicat,cobj.CaseIndex);
+            casedesc = muicat.Catalogue.CaseDescription(caserec);
+            prompt1 = sprintf('Add co-ordinates (Lat/Long or Easting/Northing) %s\nLongitude/Easting',casedesc);
+            promptxt = {prompt1,'Latitude/Northing','Coordinate Projection'};
+            inp = inputdlg(promptxt,'Location',1,defaults);
+            if isempty(inp), return; end
+            cobj.Location.Longitude = str2double(inp{1}); 
+            cobj.Location.Latitude = str2double(inp{2});             
+            cobj.Location.Projection = inp{3};
         end
 
 %%
@@ -434,12 +493,13 @@ classdef EDBimport < GD_ImportData
         function archiveTables(mobj)
             %save an estuary Case to a an ASCII file (import using
             %loadArchive - see above)
-            getdialog('Not yet implemented'); return
-
             promptxt = 'Select Cases archive';
-            [cobj,~,catrec] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
+            [cobj,~,~] = selectCaseObj(mobj.Cases,[],{'EDBimport'},promptxt);
             if isempty(cobj), return; end
-
+            vN = getVersion(mobj);
+            date = mobj.Info.ProjectDate;
+            if isempty(date), date = cellstr(datetime('now'),'dd-MM-yyyy'); end
+            edb_write_archive(cobj,vN,date);
         end
                 
 %%
@@ -559,28 +619,52 @@ classdef EDBimport < GD_ImportData
             ht = findobj(src,'-not','Type','uitab'); %clear any existing content
             delete(ht)
             dst = [];
-            if strcmp(src.Tag,'Dataset')
-                tabTable(obj,src);
-            else
-                idr = strcmp(obj.tablenames{:,2},src.Tag);
-                propname = obj.tablenames{idr,1}{1};  
-                if ~isempty(obj.(propname))
-                    dst = obj.(propname);
-                end
-                if isempty(dst), getdialog('No data',[],1); return; end
-
-                desc = sprintf('Source: %s\nMeta-data: %s',dst.Source,dst.MetaData);
-                titletxt = dst.Description;
-                dst.UserData.isFormat = true;
-                [ht,hp] = tablefigure(src,desc,dst); %ht-tab; hp-panel; htable-table
-                ht.Units = 'normalized'; hp.Units = 'normalized'; 
-                htxt = findobj(ht,'Tag','statictextbox');
-                htxt.Units = 'normalized';
-                uicontrol('Parent',ht,'Style','text',...
-                    'Units','normalized','Position',[0.1,0.97,0.8,0.035],...
-                    'String',['Case: ',titletxt],'FontSize',10,...
-                    'HorizontalAlignment','center','Tag','titletxt');
+            idr = strcmp(obj.tablenames{:,2},src.Tag);
+            propname = obj.tablenames{idr,1}{1};  
+            if ~isempty(obj.(propname))
+                dst = obj.(propname);
             end
+            if isempty(dst), getdialog('No data',[],1); return; end
+
+            desc = sprintf('Source: %s\nMeta-data: %s',dst.Source,dst.MetaData);
+            titletxt = dst.Description;
+            dst.UserData.isFormat = true;
+            [ht,hp] = tablefigure(src,desc,dst); %ht-tab; hp-panel; htable-table
+            ht.Units = 'normalized'; hp.Units = 'normalized'; 
+            htxt = findobj(ht,'Tag','statictextbox');
+            htxt.Units = 'normalized';
+            uicontrol('Parent',ht,'Style','text',...
+                'Units','normalized','Position',[0.1,0.97,0.8,0.035],...
+                'String',['Case: ',titletxt],'FontSize',10,...
+                'HorizontalAlignment','center','Tag','titletxt');
+        end
+
+%%
+        function tabSummary(obj,mobj,src)
+            %display summary description of estuary on a tab
+            ht = findobj(src,'-not','Type','uitab'); %clear any existing content
+            delete(ht)
+            caserec = caseRec(mobj.Cases,obj.CaseIndex);
+            titletxt = mobj.Cases.Catalogue.CaseDescription(caserec);
+            if isempty(obj.Location)
+                titletxt = sprintf('Case: %s',titletxt); 
+            else
+                lat = obj.Location.Latitude; long = obj.Location.Longitude;
+                titletxt = sprintf('Case: %s (%d, %d)',titletxt,lat,long);              
+            end
+
+            uicontrol('Parent',src,'Style','text',...
+                'Units','normalized','Position',[0.1,0.95,0.8,0.04],...
+                'String',titletxt,'FontSize',10,...
+                'HorizontalAlignment','center','Tag','titletxt');
+
+            h_pan = uipanel('Parent',src,'Units','normalized',...
+                                  'Position',[0.02,0.02,0.95,0.90]); 
+
+            uicontrol('Parent',h_pan,'Style','text',...
+                'String',obj.Summary,'FontSize',9,...
+                'Units','normalized','Position',[0,0,1,1],...
+                'HorizontalAlignment','left','Max',2);
         end
 
 %%

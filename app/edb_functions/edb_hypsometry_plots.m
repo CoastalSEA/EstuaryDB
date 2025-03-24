@@ -100,7 +100,7 @@ function  get_reachPlot(mobj,option)
     maxV = max([maxV{:}]);
 
     %tidal levels
-    if ~isempty(obj.TidalProps)
+    if ~isempty(cobj.TidalProps)
         %adds spring tide levels and mtl to a plot (y-axis must be elevations)
         tlevels = cobj.TidalProps; 
     else
@@ -181,7 +181,7 @@ function get_surfaceArea(mobj)
     shp = cobj.WaterBody;  %current saved waterbody polygon
     %add spring tide levels and mtl to a plot (y-axis must be elevations)
     tlevels = [];
-    if ~isempty(obj.TidalProps)        
+    if ~isempty(cobj.TidalProps)        
         tlevels = cobj.TidalProps;   
     end
     

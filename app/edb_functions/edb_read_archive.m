@@ -38,25 +38,63 @@ function est = edb_read_archive()
     %read header
     filename = [path,fname];
     fid = fopen(filename,'r');
-    est.header = readHeader(fid);
+    est.Header = readHeader(fid);
 
     %read the property tables foor Tidal, River, Class and Gross Props.
     allnames = [propnames;{'EndProps';'SurfaceArea';'Width';'TopoEdges';'TopoNodes'}];
     nlines = findTableLines(fid,allnames);
     opts = detectImportOptions(filename);
     opts.VariableNames = {'Name','Description','Unit','Label','QCflag','Data'};
-    opts.VariableTypes = {'char','char','char','char','char','double'};
-    for i=1:length(propnames)
+    opts.VariableTypes = {'char','char','char','char','char','char'};
+    nprops = length(propnames);
+    for i=1:nprops
         if nlines(i)>0                                 %if property table exists
             opts.DataLines = [nlines(i)+2,nlines(i+1)-2]; %DSP properties and data
             est.(propnames{i}) = readtable(filename,opts);
         end
     end
 
+    opts.VariableNames = {'Name','Description','Unit','Label','QCflag'};
+    opts.VariableTypes = {'char','char','char','char','char'};
     %read the surface area hypsomtery data
+    nlineS = nlines(nprops+2);
+    opts.DataLines = [nlineS+2,nlineS+3];
+    est.SurfaceArea.DSP = readtable(filename,opts);
+    est.SurfaceArea.Sa = readVariable(fid,nlineS+4);
+    est.SurfaceArea.Z = readVariable(fid,nlineS+5);
+    %linework
+    est.WaterBody.X = readVariable(fid,nlineS+7);
+    est.WaterBody.Y = readVariable(fid,nlineS+8);
 
     %read the width hypsomtery data
+    nlineW = nlines(nprops+3);
+    opts.DataLines = [nlineW+2,nlineW+4];
+    est.Width.DSP = readtable(filename,opts);
+    est.Width.W = readVariable(fid,nlineW+5);
+    est.Width.X = readVariable(fid,nlineW+6);
+    est.Width.Z = readVariable(fid,nlineW+7);
+    %linework
+    est.Boundary.X = readVariable(fid,nlineW+9);
+    est.Boundary.Y = readVariable(fid,nlineW+10);    
+    est.ChannelLine.X = readVariable(fid,nlineW+11);
+    est.ChannelLine.Y = readVariable(fid,nlineW+12);
+    est.SectionLines.X = readVariable(fid,nlineW+13);
+    est.SectionLines.Y = readVariable(fid,nlineW+14);
+    est.ChannelProp = readVariable(fid,nlineW+15);
+    est.ChannelLengths = readVariable(fid,nlineW+16);
+    
+    %Graph tables 
+    nlineE = nlines(nprops+4);
+    nlineN = nlines(end);
+    opts.DataLines = [nlineE+2,nlineN-1];
+    opts.VariableNames = {'EndNodes_1','EndNodes_2','Weight','Node1','Node2','Line1','Line2'};
+    opts.VariableTypes = repmat({'double'},1,7);
+    est.TopoEdges = readtable(filename,opts);
 
+    opts.DataLines = [nlineN+2,inf];
+    opts.VariableNames = {'Names','Distance'};
+    opts.VariableTypes = {'char','char'};
+    est.TopoNodes = readtable(filename,opts);
 end
 
 %%
@@ -100,4 +138,13 @@ function header = readHeader(fid)
         header.(vartxt{1}) = strip(vartxt{2});
     end
     
+end
+
+%%
+function var = readVariable(fid,linenum)
+    %read the data for the surface area table
+    frewind(fid);
+    aline = readLine(fid,linenum);
+    vartxt = split(aline,':');
+    var = str2num(strip(vartxt{2})); %#ok<ST2NM> read vector
 end

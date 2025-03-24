@@ -42,7 +42,7 @@ end
 %--------------------------------------------------------------------------
 function obj = getFormat(obj,formatfile)
     %return the file import format settings
-    obj.DataFormats = {'muiUserData',formatfile,'image'};
+    obj.DataFormats = {'EDBimport',formatfile,'image'};
     obj.idFormat = 1;
     obj.FileSpec = {'on','*.jpg;'};
 end

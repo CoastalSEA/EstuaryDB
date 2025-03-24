@@ -52,7 +52,7 @@ end
 %--------------------------------------------------------------------------
 function obj = getFormat(obj,formatfile)
     %return the file import format settings
-    obj.DataFormats = {'muiUserData',formatfile,'data'};
+    obj.DataFormats = {'EDBimport',formatfile,'data'};
     obj.idFormat = 1;
     obj.FileSpec = {'on','*.txt; *.csv; *.xlsx;*.xls;'};
 end
@@ -131,7 +131,7 @@ function ok = getPlot(obj,src,dsetname)
     hold off
     xlabel(sprintf('%s and %s',dst.VariableLabels{1},'Volume (m^3)'));
     ylabel(dst.DimensionLabels{1});
-     title(sprintf('%s(%s)',dst.Description,dsetname));
+     title(sprintf('Case: %s(%s)',dst.Description,dsetname));
     legend('Location','southeast')
     if ~isempty(obj.TidalProps)
         edb_plot_tidelevels(ax,obj.TidalProps);

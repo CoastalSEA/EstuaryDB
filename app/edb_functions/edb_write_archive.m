@@ -29,6 +29,7 @@ function edb_write_archive(obj,vN,projdate)
     if isempty(inp), return; end
     promptxt = {'Author/Creator','Affiliation'};
     auth = inputdlg(promptxt,'Archive',1);
+    if isempty(auth), return; end
     %open file and write header
     fid = fopen(inp{1},'w');
     fprintf(fid,'EstuaryDB archive file\nvNumber: %s\nDate: %s\n',vN,projdate);
@@ -51,7 +52,7 @@ function edb_write_archive(obj,vN,projdate)
             nrec = size(vars,2);
             % Assign each column of cell array to new cell array
             for j = 1:nrec
-                dvars{1,j} = vars(:, j);
+                dvars{1,j} = vars(:, j); %#ok<AGROW> 
             end
             dvar = split(sprintf('Data%d,', 1:nrec),',');
             dsp = addvars(dsp,dvars{:},'NewVariableNames',dvar(1:nrec));
@@ -84,9 +85,9 @@ function edb_write_archive(obj,vN,projdate)
         fprintf(fid,'\nZ: ');
         fprintf(fid,'%f\t',dst.Dimensions.Z);
         fprintf(fid,'\n');
-        fprintf(fid,'\nWaterbody.X: ');
+        fprintf(fid,'\nWaterBody.X: ');
         fprintf(fid,'%f\t',obj.WaterBody.x);
-        fprintf(fid,'\nWaterbody.Y: ');
+        fprintf(fid,'\nWaterBody.Y: ');
         fprintf(fid,'%f\t',obj.WaterBody.y);
     end
     fprintf(fid,'\n\n');
@@ -111,14 +112,21 @@ function edb_write_archive(obj,vN,projdate)
         fprintf(fid,'\nZ: ');
         fprintf(fid,'%f\t',dst.Dimensions.Z);
         fprintf(fid,'\n');
-        fprintf(fid,'\nCentreLine.X: ');
+        fprintf(fid,'\nBoundary.X: ');
+        fprintf(fid,'%f\t',obj.Sections.Boundary.x);
+        fprintf(fid,'\nBoundary.Y: ');
+        fprintf(fid,'%f\t',obj.Sections.Boundary.y);        
+        fprintf(fid,'\nChannelLine.X: ');
         fprintf(fid,'%f\t',obj.Sections.ChannelLine.x);
-        fprintf(fid,'\nCentreLine.Y: ');
+        fprintf(fid,'\nChannelLine.Y: ');
         fprintf(fid,'%f\t',obj.Sections.ChannelLine.y);
-        fprintf(fid,'\nSections.X: ');
+        fprintf(fid,'\nSectionLines.X: ');
         fprintf(fid,'%f\t',obj.Sections.SectionLines.x);
-        fprintf(fid,'\nSections.Y: ');
+        fprintf(fid,'\nSectionLines.Y: ');
         fprintf(fid,'%f\t',obj.Sections.SectionLines.y);
+        fprintf(fid,'\nChannelProps: ');
+        pp = obj.Sections.ChannelProps;
+        fprintf(fid,'%f\t',pp.maxwl,pp.dexp,pp.cint);
         fprintf(fid,'\nChannelLengths: ');
         fprintf(fid,'%f\t',obj.Sections.ChannelProps.ChannelLengths);
         writeTopoTables(fid,obj.Sections.ChannelProps.topo);
@@ -137,6 +145,7 @@ function writePropTableLine(fid,vars)
     end
     fprintf(fid,'%s\n',vars{nvars});
 end
+
 %%
 function writeTopoTables(fid,topo)
     %write the Edges and Nodes tables to file
@@ -152,6 +161,4 @@ function writeTopoTables(fid,topo)
     for i=1:height(topo.Nodes)
         fprintf(fid,'%s\t%s\n',topo.Nodes{i,:});
     end
-
-
 end

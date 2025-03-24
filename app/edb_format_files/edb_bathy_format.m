@@ -49,7 +49,7 @@ end
 %--------------------------------------------------------------------------
 function obj = getFormat(obj,formatfile)
     %return the file import format settings
-    obj.DataFormats = {'muiUserData',formatfile,'data'};
+    obj.DataFormats = {'EDBimport',formatfile,'data'};
     obj.idFormat = 1;
     obj.FileSpec = {'on','*.txt; *.csv; *.tif; *.tiff; *.mat;'};
 end

@@ -199,11 +199,62 @@ classdef EDBimport < GD_ImportData
             %--------------------------------------------------------------
         end
 
-%%
+        %%
         function loadArchive(muicat)
-            %load class record from ASCII edb archive file (file created using
-            %archiveTables - see below)
-            datatables = edb_read_archive();
+            %load class record from ASCII edb archive file
+            %file is created using archiveTables - see below
+            dstr = edb_read_archive();
+            %datastruct should include Header,TidalProps,RiverProps,
+            %ClassProps,GrossProps,SurfaceArea,WaterBody,Width,ChannelLine,
+            %SectionLines,ChannelLengths,TopoEdges,TopoNodes.
+            obj = EDBimport(true);
+            obj.DataFormats = {'EDBimport','edb_s_hyps_format','data'};
+            obj.idFormat = 1;
+            obj.FileSpec = {'on','*.txt; *.csv; *.xlsx;*.xls;'};
+            estname = dstr.Header.Name;
+            coords = split(dstr.Header.Coordinates,',');
+            obj.Location.Longitude = coords{1};
+            obj.Location.Latitude = coords{2};
+            obj.Location.Projection = dstr.Header.Projection;
+            obj.Summary = dstr.Header.Summary;
+            propnames = fieldnames(dstr);
+            obj = setPropertyTables(obj,dstr,propnames,estname);
+            %add surface area table and linework
+            atable = dstr.SurfaceArea.DSP;
+            dspvars = table2cell(atable(:,1:5));
+            dsp = EDBimport.loadDSPproptables(dspvars);
+            dst = dstable(dstr.SurfaceArea.Sa,'RowNames',{estname},'DSproperties',dsp);                
+            dst.Dimensions.Z = dstr.SurfaceArea.Z;
+            dst.Description = estname;
+            obj.Data.SurfaceArea = dst;
+            obj.WaterBody.x = dstr.WaterBody.X;
+            obj.WaterBody.y = dstr.WaterBody.Y;
+
+            %add width table and linework
+            atable = dstr.Width.DSP;
+            dspvars = table2cell(atable(:,1:5));
+            dsp = EDBimport.loadDSPproptables(dspvars);
+            ncol = length(dstr.Width.X); 
+            nrow = length(dstr.Width.Z);
+            width = reshape(dstr.Width.W,1,ncol,nrow);
+            dst = dstable(width,'RowNames',{estname},'DSproperties',dsp);    
+            dst.Dimensions.X = dstr.Width.X;
+            dst.Dimensions.Z = dstr.Width.Z;
+            dst.Description = estname;
+            obj.Data.Width = dst;
+            obj.Sections = PL_Sections.getSections(obj);
+            obj.Sections.Boundary.x = dstr.Boundary.X;
+            obj.Sections.Boundary.y = dstr.Boundary.Y;
+            obj.Sections.ChannelLine.x = dstr.ChannelLine.X;
+            obj.Sections.ChannelLine.y = dstr.ChannelLine.Y;
+            obj.Sections.SectionLines.x = dstr.SectionLines.X;
+            obj.Sections.SectionLines.y = dstr.SectionLines.Y;
+            pp = dstr.ChannelProp;
+            obj.Sections.ChannelProps = struct('maxwl',pp(1),'dexp',pp(2),'cint',pp(3));
+            obj.Sections.ChannelProps.ChannelLenths = dstr.ChannelLengths;
+            %topology of network
+
+            setDataSetRecord(obj,muicat,obj.Data,'data',{estname},false);
         end
 
 
@@ -434,7 +485,7 @@ classdef EDBimport < GD_ImportData
                 for i=1:nfiles
                     S = load([path,fname{i}],'-mat');
                     addobj = S.sobj.Cases.DataSets.EDBimport;
-                    allobj = [allobj,addobj];
+                    allobj = [allobj,addobj]; %#ok<AGROW> 
                 end
             end
             clear S
@@ -442,7 +493,7 @@ classdef EDBimport < GD_ImportData
             ij = 1;
             for ii=1:length(allobj)
                 if ~isempty(allobj(ii).(propname)) 
-                    estnames{ij} = allobj(ii).(propname).Description;
+                    estnames{ij} = allobj(ii).(propname).Description; %#ok<AGROW> 
                     ij = ij+1;
                 end
             end
@@ -464,7 +515,7 @@ classdef EDBimport < GD_ImportData
                     if ~isempty(newtable) && isempty(proptable)
                         proptable = newtable;
                     else                        
-                        proptable = [proptable;newtable];
+                        proptable = [proptable;newtable]; %#ok<AGROW> 
                     end
                 end
             end
@@ -477,7 +528,7 @@ classdef EDBimport < GD_ImportData
                 if height(newtable)==1, return; end %single row in table
                  newtable = activatedynamicprops(newtable);  
                  for k=1:height(newtable)
-                    listxt{k} = sprintf('%s: %s',newtable.DataTable.Source{k},newtable.Notes{k});
+                    listxt{k} = sprintf('%s: %s',newtable.DataTable.Source{k},newtable.Notes{k}); %#ok<AGROW> 
                  end
                 iselect = listdlg("PromptString",'Select row to use:',...
                                 'SelectionMode','single','ListSize',[180,100],...
@@ -512,13 +563,37 @@ classdef EDBimport < GD_ImportData
                 'Description',{'Estuary'},...
                 'Unit',{'-'},...
                 'Label',{'Estuary'},...
-                'Format',{''});       
+                'Format',{''});   
             dsp.Dimensions = struct(...    
                 'Name',{''},...
                 'Description',{''},...
                 'Unit',{''},...
                 'Label',{''},...
                 'Format',{''});   
+        end
+
+%%
+        function dsp = loadDSPproptables(dspvars)
+            %add the variable dimension properties for width or surface area
+            dsp = struct('Variables',[],'Row',[],'Dimensions',[]); 
+            dsp.Variables = struct(...
+                'Name',dspvars(1,1),...
+                'Description',dspvars(1,2),...
+                'Unit',dspvars(1,3),...
+                'Label',dspvars(1,4),...
+                'QCflag',dspvars(1,5));
+            dsp.Row = struct(...
+                'Name',{'Location'},...
+                'Description',{'Estuary'},...
+                'Unit',{'-'},...
+                'Label',{'Estuary'},...
+                'Format',{''});   
+            dsp.Dimensions = struct(...
+                'Name',dspvars(2:end,1),...
+                'Description',dspvars(2:end,2),...
+                'Unit',dspvars(2:end,3),...
+                'Label',dspvars(2:end,4),...
+                'Format',dspvars(2:end,5));
         end
     end
 %--------------------------------------------------------------------------
@@ -586,6 +661,7 @@ classdef EDBimport < GD_ImportData
             datasetname = getDataSetName(obj);
             if isempty(datasetname), return; end
             dst = obj.Data.(datasetname);
+            if isempty(dst), return; end
 
             if strcmp(datasetname,'Width')
                 varnames = dst.VariableDescriptions;
@@ -698,6 +774,50 @@ classdef EDBimport < GD_ImportData
 
             obj.Data = dst;
             updateCase(muicat,obj,classrec);
+        end
+
+%%
+        function obj = setPropertyTables(obj,dstr,propnames,estname)
+            %add the archived property tables to a class instance
+            % dstr - stuct read from archive file
+            % propnames - cell array of table property names
+            % estname - estuary name (Case) 
+            idf = find(contains(propnames,'Props'));
+            for i = 1:length(idf)
+                atable = dstr.(propnames{idf(i)});
+                dspvars = table2struct(atable(:,1:5));
+                dsp = EDBimport.loadDSproperties(dspvars);
+                %convert character strings of numbers to numeric and leave text unchanged
+                vars = cellfun(@(x) ifelse(isnan(str2double(x)),{x},str2double(x)),...
+                                     atable{:,6}','UniformOutput',false);
+                obj.(propnames{idf(i)}) = dstable(vars{:},'DSproperties',dsp);
+                obj.(propnames{idf(i)}).Description = estname;
+                if strcmp(propnames{idf(i)},'GrossProps')
+                    nrow = 1;
+                    obj.(propnames{idf(i)}).RowNames = nrow;
+                else
+                    obj.(propnames{idf(i)}).RowNames = {estname};
+                end
+                    
+                if width(atable)>6
+                    for j=7:width(atable)
+                        nrow = nrow+1;
+                        rowvars = cellfun(@(x) ifelse(isnan(str2double(x)),{x},str2double(x)),...
+                                         atable{:,j}','UniformOutput',false);
+                        obj.(propnames{idf(i)}) = addrows(obj.(propnames{idf(i)}),nrow,rowvars{:});
+                    end
+                end               
+            end
+            %nested function ----------------------------------------------
+            function result = ifelse(condition, trueResult, falseResult)
+                % Helper function for inline if-else
+                if condition
+                    result = trueResult;
+                else
+                    result = falseResult;
+                end
+            end
+            %--------------------------------------------------------------            
         end
 
 %%

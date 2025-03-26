@@ -2,6 +2,7 @@
 app/EstuaryDB.mlappinstall
 app/Data
 app/Working Docs
+app/Projects
 app/Saved plot selections
 app/*.mat
 app/*.xlsx

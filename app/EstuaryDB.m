@@ -488,8 +488,8 @@ classdef EstuaryDB < muiModelUI
                 %
                 if strcmp(ht.Tag,'Estuary')
                     cobj = getCase(muicat,caserec(i));
-                    lat = cobj.Location.Longitude;
-                    long = cobj.Location.Latitude;
+                    long = cobj.Location.Longitude;
+                    lat = cobj.Location.Latitude;
                     proj = cobj.Location.Projection;
                     ecdata(irec,:) = {case_id,type,char(casedesc{i}),long,lat,proj};
                 else
@@ -502,7 +502,7 @@ classdef EstuaryDB < muiModelUI
             end
             
             if strcmp(ht.Tag,'Estuary')
-                headers = {'ID','Model Class','Model Description',...
+                headers = {'ID','Data Class','Estuary Name',...
                            'Long/East','Lat/North','Projection'};
                 cwidth = {25 100 240 70 70 70 };
                 cdata = ecdata;

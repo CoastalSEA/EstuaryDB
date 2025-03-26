@@ -16,7 +16,7 @@ function output = edb_bathy_format(funcall,varargin)
 % NOTES
 %   This file loads the bathymetry data for an estuary 
 %   Input data format is a text file or a .mat file containing a grid
-%   object
+%   object, or a geo-referenced shape file.
 %   text file header defines format and X,Y,Z data follows in columns, e.g.
 %           %f %f %f
 %           12.7 14.5 -3.4

@@ -1,4 +1,4 @@
-function est = edb_read_archive()
+function est = edb_read_archive(filename)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,6 +7,8 @@ function est = edb_read_archive()
 %   read an archive file to recreate an estuary Case.
 % USAGE
 %   est = edb_read_archive();
+% INPUTS
+%   filename - full path and file name to archive file to be read
 % OUTPUT
 %   est - struct of data required to load as a case in EstuaryDB:
 %         > header: details of vNumber used, Project date, Estuary name
@@ -25,18 +27,13 @@ function est = edb_read_archive()
 % CoastalSEA (c) Mar 2025
 %--------------------------------------------------------------------------
 %
-    [fname,path,nfiles] = getfiles('MultiSelect','off',...
-                    'FileType','*.txt;','PromptText','Select archive file:');
-    if nfiles<1, return; end
-    
     %when reading files in conjunction with EstuaryDB App use:
-    obj = EDBimport(true);
+    obj = EDBimport();
     propnames = obj.tablenames.dsetnames;
     %else define propnames to be read, e.g:
     %propnmes = {'TidalProps';'RiverProps';'ClassProps';'GrossProps'};
 
     %read header
-    filename = [path,fname];
     fid = fopen(filename,'r');
     est.Header = readHeader(fid);
 
@@ -58,43 +55,48 @@ function est = edb_read_archive()
     opts.VariableTypes = {'char','char','char','char','char'};
     %read the surface area hypsomtery data
     nlineS = nlines(nprops+2);
-    opts.DataLines = [nlineS+2,nlineS+3];
-    est.SurfaceArea.DSP = readtable(filename,opts);
-    est.SurfaceArea.Sa = readVariable(fid,nlineS+4);
-    est.SurfaceArea.Z = readVariable(fid,nlineS+5);
-    %linework
-    est.WaterBody.X = readVariable(fid,nlineS+7);
-    est.WaterBody.Y = readVariable(fid,nlineS+8);
+    if nlineS>0
+        opts.DataLines = [nlineS+2,nlineS+3];
+        est.SurfaceArea.DSP = readtable(filename,opts);
+        est.SurfaceArea.Sa = readVariable(fid,nlineS+4);
+        est.SurfaceArea.Z = readVariable(fid,nlineS+5);
+        %linework
+        est.WaterBody.X = readVariable(fid,nlineS+7);
+        est.WaterBody.Y = readVariable(fid,nlineS+8);
+    end
 
     %read the width hypsomtery data
     nlineW = nlines(nprops+3);
-    opts.DataLines = [nlineW+2,nlineW+4];
-    est.Width.DSP = readtable(filename,opts);
-    est.Width.W = readVariable(fid,nlineW+5);
-    est.Width.X = readVariable(fid,nlineW+6);
-    est.Width.Z = readVariable(fid,nlineW+7);
-    %linework
-    est.Boundary.X = readVariable(fid,nlineW+9);
-    est.Boundary.Y = readVariable(fid,nlineW+10);    
-    est.ChannelLine.X = readVariable(fid,nlineW+11);
-    est.ChannelLine.Y = readVariable(fid,nlineW+12);
-    est.SectionLines.X = readVariable(fid,nlineW+13);
-    est.SectionLines.Y = readVariable(fid,nlineW+14);
-    est.ChannelProp = readVariable(fid,nlineW+15);
-    est.ChannelLengths = readVariable(fid,nlineW+16);
+    if nlineW>0
+        opts.DataLines = [nlineW+2,nlineW+4];
+        est.Width.DSP = readtable(filename,opts);
+        est.Width.W = readVariable(fid,nlineW+5);
+        est.Width.X = readVariable(fid,nlineW+6);
+        est.Width.Z = readVariable(fid,nlineW+7);
+        %linework
+        est.Boundary.X = readVariable(fid,nlineW+9);
+        est.Boundary.Y = readVariable(fid,nlineW+10);    
+        est.ChannelLine.X = readVariable(fid,nlineW+11);
+        est.ChannelLine.Y = readVariable(fid,nlineW+12);
+        est.SectionLines.X = readVariable(fid,nlineW+13);
+        est.SectionLines.Y = readVariable(fid,nlineW+14);
+        est.ChannelProp = readVariable(fid,nlineW+15);
+        est.ChannelLengths = readVariable(fid,nlineW+16);
+        
+        %Graph tables 
+        nlineE = nlines(nprops+4);
+        nlineN = nlines(end);
+        opts.DataLines = [nlineE+2,nlineN-1];
+        opts.VariableNames = {'EndNodes_1','EndNodes_2','Weight','Node1','Node2','Line1','Line2'};
+        opts.VariableTypes = repmat({'double'},1,7);
+        est.TopoEdges = readtable(filename,opts);
     
-    %Graph tables 
-    nlineE = nlines(nprops+4);
-    nlineN = nlines(end);
-    opts.DataLines = [nlineE+2,nlineN-1];
-    opts.VariableNames = {'EndNodes_1','EndNodes_2','Weight','Node1','Node2','Line1','Line2'};
-    opts.VariableTypes = repmat({'double'},1,7);
-    est.TopoEdges = readtable(filename,opts);
-
-    opts.DataLines = [nlineN+2,inf];
-    opts.VariableNames = {'Names','Distance'};
-    opts.VariableTypes = {'char','char'};
-    est.TopoNodes = readtable(filename,opts);
+        opts.DataLines = [nlineN+2,inf];
+        opts.VariableNames = {'Names','Distance'};
+        opts.VariableTypes = {'char','char'};
+        est.TopoNodes = readtable(filename,opts);
+    end
+    fclose(fid);
 end
 
 %%

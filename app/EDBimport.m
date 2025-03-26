@@ -21,18 +21,11 @@ classdef EDBimport < GD_ImportData
 % CoastalSEA (c) Oct 2024
 %--------------------------------------------------------------------------
 %    
-
     properties  
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet        
         Sections     %GD_Section instance with properties for Boundary, 
                      %ChannelLine, ChannelProps, SectionLines and CrossSections
         WaterBody    %shape file or xy struct polygon      
-
-        %to be removed
-        HydroProps
-        EstuaryProps %struct for TidalLevels, RiverDischarges and Classification
-        MorphProps   %table for morphological gross properties derived from
-                     %surface area or width hypsometry (row for each)
 %change estuary properties and grossproperties to be stand alone properties
         TidalProps   %table of tidal levels
         RiverProps   %table of river discharges
@@ -52,18 +45,14 @@ classdef EDBimport < GD_ImportData
     methods 
         function obj = EDBimport(formatfile)                
             %class constructor
-            if nargin<1
-                formatfile = obj.setFileFormat;
-                if isempty(formatfile), return; end
-            elseif all(formatfile==true)
-                return  %set formatfile to true to return an empty instance
+            if nargin==1
+                %different types of data can be added to a case. Hence the
+                %format file spec is dynamic and can change with selection
+                varlist = '(getFormat,var1,var2)';
+                funcall = sprintf('@%s ',varlist);
+                heq = str2func([funcall,[formatfile,varlist]]);
+                obj = heq('getFormat',obj,formatfile);
             end
-            %different types of data can be added to a case. Hence the
-            %format file spec is dynamic and can change with selection
-            varlist = '(getFormat,var1,var2)';
-            funcall = sprintf('@%s ',varlist);
-            heq = str2func([funcall,[formatfile,varlist]]);
-            obj = heq('getFormat',obj,formatfile);
         end
     end
 
@@ -121,11 +110,13 @@ classdef EDBimport < GD_ImportData
                 if ok<1 || isempty(newdata), continue; end
                 dstname = fieldnames(newdata);
                 estname = newdata.(dstname{1}).Description;
+                
                 idx = strcmp(muicat.Catalogue.CaseClass,classname);        %index for existing class records
                 existest = muicat.Catalogue.CaseDescription(idx);          %Case names
-                isnew = isempty(existest);                                 %no cases - must be new
-                if ~isnew                
-                    isnew =  all(~strcmp(existest,estname));               %does not exist in catalogue
+                if isempty(existest)                                       
+                   isnew = true;                                           %no cases - must be new
+                else
+                    isnew =  ~any(strcmp(existest,estname));               %does not exist in catalogue
                     %check where user wants to save new data
                     [isnew,estname] = estuaryName(dstname{1},estname,existest,isnew);
                 end
@@ -142,14 +133,16 @@ classdef EDBimport < GD_ImportData
                     %estuary exists - add data to existing record
                     classrec = find(strcmp(existest,estname)); 
                     localObj = muicat.DataSets.(classname)(classrec);
-                    if isfield(localObj.Data,dstname{1})
+                    if isfield(localObj.Data,dstname{1}) %dataset already exists
                         dst = newdata.(dstname{1});
-                        dstname = {setEDBdataset(localObj,dstname{1})};
-                        if ~isempty(dstname)
-                            localObj.Data.(dstname{1}) = dst; 
-                            updateCase(muicat,localObj,classrec,false);
-                        end
+                        dstname = {setEDBdataset(localObj,dstname{1})}; %option to add or overwrite
+                        if isempty(dstname), continue; end
+                    else
+                        dst = newdata.(dstname{1});                        
                     end
+                    dst.Description = estname;
+                    localObj.Data.(dstname{1}) = dst; 
+                    updateCase(muicat,localObj,classrec,false);                
                 end  
                
                 clear existest newdata estname dstname isnew
@@ -169,11 +162,12 @@ classdef EDBimport < GD_ImportData
                 if strcmp(answr,'New')
                     isnew = true;
                 else
-                    if isnew
-                        %select case from existing cases
+                    if isnew 
+                        %add to an existing cases
                         idc = selectEstuaryCase(existest,dstname);
                         if isempty(idc), return; end %returns isnew as true and estname unchanged
                     else
+
                         prmptxt = sprintf('Add to %s case',estname);
                         answr = questdlg(prmptxt,'Load','Yes','No','Yes');
                         if strcmp(answr,'Yes')
@@ -203,58 +197,72 @@ classdef EDBimport < GD_ImportData
         function loadArchive(muicat)
             %load class record from ASCII edb archive file
             %file is created using archiveTables - see below
-            dstr = edb_read_archive();
-            %datastruct should include Header,TidalProps,RiverProps,
-            %ClassProps,GrossProps,SurfaceArea,WaterBody,Width,ChannelLine,
-            %SectionLines,ChannelLengths,TopoEdges,TopoNodes.
-            obj = EDBimport(true);
-            obj.DataFormats = {'EDBimport','edb_s_hyps_format','data'};
-            obj.idFormat = 1;
-            obj.FileSpec = {'on','*.txt; *.csv; *.xlsx;*.xls;'};
-            estname = dstr.Header.Name;
-            coords = split(dstr.Header.Coordinates,',');
-            obj.Location.Longitude = coords{1};
-            obj.Location.Latitude = coords{2};
-            obj.Location.Projection = dstr.Header.Projection;
-            obj.Summary = dstr.Header.Summary;
-            propnames = fieldnames(dstr);
-            obj = setPropertyTables(obj,dstr,propnames,estname);
-            %add surface area table and linework
-            atable = dstr.SurfaceArea.DSP;
-            dspvars = table2cell(atable(:,1:5));
-            dsp = EDBimport.loadDSPproptables(dspvars);
-            dst = dstable(dstr.SurfaceArea.Sa,'RowNames',{estname},'DSproperties',dsp);                
-            dst.Dimensions.Z = dstr.SurfaceArea.Z;
-            dst.Description = estname;
-            obj.Data.SurfaceArea = dst;
-            obj.WaterBody.x = dstr.WaterBody.X;
-            obj.WaterBody.y = dstr.WaterBody.Y;
+            [fname,path,nfiles] = getfiles('MultiSelect','on','FileType','*.txt;',...
+                                      'PromptText','Select archive file:');
+            if nfiles<1, return; end
 
-            %add width table and linework
-            atable = dstr.Width.DSP;
-            dspvars = table2cell(atable(:,1:5));
-            dsp = EDBimport.loadDSPproptables(dspvars);
-            ncol = length(dstr.Width.X); 
-            nrow = length(dstr.Width.Z);
-            width = reshape(dstr.Width.W,1,ncol,nrow);
-            dst = dstable(width,'RowNames',{estname},'DSproperties',dsp);    
-            dst.Dimensions.X = dstr.Width.X;
-            dst.Dimensions.Z = dstr.Width.Z;
-            dst.Description = estname;
-            obj.Data.Width = dst;
-            obj.Sections = PL_Sections.getSections(obj);
-            obj.Sections.Boundary.x = dstr.Boundary.X;
-            obj.Sections.Boundary.y = dstr.Boundary.Y;
-            obj.Sections.ChannelLine.x = dstr.ChannelLine.X;
-            obj.Sections.ChannelLine.y = dstr.ChannelLine.Y;
-            obj.Sections.SectionLines.x = dstr.SectionLines.X;
-            obj.Sections.SectionLines.y = dstr.SectionLines.Y;
-            pp = dstr.ChannelProp;
-            obj.Sections.ChannelProps = struct('maxwl',pp(1),'dexp',pp(2),'cint',pp(3));
-            obj.Sections.ChannelProps.ChannelLenths = dstr.ChannelLengths;
-            %topology of network
-
-            setDataSetRecord(obj,muicat,obj.Data,'data',{estname},false);
+            for i=1:nfiles
+                filename = [path,fname{i}];
+                dstr = edb_read_archive(filename);
+                %datastruct should include Header,TidalProps,RiverProps,
+                %ClassProps,GrossProps,SurfaceArea,WaterBody,Width,ChannelLine,
+                %SectionLines,ChannelLengths,TopoEdges,TopoNodes.
+                obj = EDBimport();
+                obj.DataFormats = {'EDBimport','edb_s_hyps_format','data'};
+                obj.idFormat = 1;
+                obj.FileSpec = {'on','*.txt; *.csv; *.xlsx;*.xls;'};
+                estname = dstr.Header.Name;
+                coords = split(dstr.Header.Coordinates,',');
+                obj.Location.Longitude = str2double(coords{1});
+                obj.Location.Latitude = str2double(coords{2});
+                obj.Location.Projection = dstr.Header.Projection;
+                obj.Summary = dstr.Header.Summary;
+                propnames = fieldnames(dstr);
+                obj = setPropertyTables(obj,dstr,propnames,estname);
+                %add surface area table and linework
+                if isfield(dstr,'SurfaceArea')
+                    atable = dstr.SurfaceArea.DSP;
+                    dspvars = table2cell(atable(:,1:5));
+                    dsp = EDBimport.loadDSPproptables(dspvars);
+                    dst = dstable(dstr.SurfaceArea.Sa,'RowNames',{estname},'DSproperties',dsp);                
+                    dst.Dimensions.Z = dstr.SurfaceArea.Z;
+                    dst.Description = estname;
+                    obj.Data.SurfaceArea = dst;
+                    obj.WaterBody.x = dstr.WaterBody.X;
+                    obj.WaterBody.y = dstr.WaterBody.Y;
+                end
+    
+                %add width table and linework
+                if isfield(dstr,'Width')
+                    atable = dstr.Width.DSP;
+                    dspvars = table2cell(atable(:,1:5));
+                    dsp = EDBimport.loadDSPproptables(dspvars);
+                    ncol = length(dstr.Width.X); 
+                    nrow = length(dstr.Width.Z);
+                    width = reshape(dstr.Width.W,1,ncol,nrow);
+                    dst = dstable(width,'RowNames',{estname},'DSproperties',dsp);    
+                    dst.Dimensions.X = dstr.Width.X;
+                    dst.Dimensions.Z = dstr.Width.Z;
+                    dst.Description = estname;
+                    obj.Data.Width = dst;
+                    obj.Sections = PL_Sections.getSections(obj);
+                    obj.Sections.Boundary.x = dstr.Boundary.X;
+                    obj.Sections.Boundary.y = dstr.Boundary.Y;
+                    obj.Sections.ChannelLine.x = dstr.ChannelLine.X;
+                    obj.Sections.ChannelLine.y = dstr.ChannelLine.Y;
+                    obj.Sections.SectionLines.x = dstr.SectionLines.X;
+                    obj.Sections.SectionLines.y = dstr.SectionLines.Y;
+                    pp = dstr.ChannelProp;
+                    obj.Sections.ChannelProps = struct('maxwl',pp(1),'dexp',pp(2),'cint',pp(3));
+                    obj.Sections.ChannelProps.ChannelLenths = dstr.ChannelLengths;
+                    %topology of network
+                    edges = mergevars(dstr.TopoEdges,{'EndNodes_1','EndNodes_2'},...
+                                                'NewVariableName','EndNodes');
+                    nodes = dstr.TopoNodes;
+                    obj.Sections.ChannelProps.Network = digraph(edges,nodes);
+                end
+                setDataSetRecord(obj,muicat,obj.Data,'data',{estname},false);
+            end
         end
 
 
@@ -345,6 +353,13 @@ classdef EDBimport < GD_ImportData
 %%
         function loadEstuaryData(muicat,srctxt)
             %load tidal levels or river discharges
+            answer = questdlg('Load data from Excel file or using UI?',...
+                              'PropData','File','UI','File');
+            if strcmp(answer,'UI')
+                EDBimport.setEstuaryDataUI(muicat,srctxt);
+                return;
+            end
+
             promptxt = sprintf('Select Cases to add %s:',srctxt);
             %prompt to select cases and return the case record number
             [caserec,ok] = selectRecord(muicat,'CaseClass', {'EDBimport'},...
@@ -394,7 +409,7 @@ classdef EDBimport < GD_ImportData
                 dst.Source = fname;
                 dst.MetaData = srctxt;
                 dst.Description = casedesc;
-                cobj.EstuaryProps.(propname) = dst;
+                cobj.(propname) = dst;
                 %write new table to Case instance
                 updateCase(muicat,cobj,classrec,false);
             end
@@ -467,7 +482,7 @@ classdef EDBimport < GD_ImportData
         function combineTables(mobj)
             %combine tabular data held in EstuaryProps or MorphProps into a
             %multi-estuary summary table
-            anobj = EDBimport(true);           
+            anobj = EDBimport();           
             datatypes = anobj.tablenames.Properties.RowNames;
             selection = listdlg("PromptString",'Select table type:',...
                                 'SelectionMode','single','ListSize',[160,100],...
@@ -544,15 +559,113 @@ classdef EDBimport < GD_ImportData
         function archiveTables(mobj)
             %save an estuary Case to a an ASCII file (import using
             %loadArchive - see above)
-            promptxt = 'Select Cases archive';
-            [cobj,~,~] = selectCaseObj(mobj.Cases,[],{'EDBimport'},promptxt);
-            if isempty(cobj), return; end
+            promptxt = 'Select Cases to archive';
+            [caserecs,ok] = selectRecord(mobj.Cases,'PromptText',promptxt,...
+                                'SelectionMode','multiple','CaseClass',...
+                                {'EDBimport'},'ListSize', [180,120]);
+            if ok<1, return; end
+            cobj = getCases(mobj.Cases,caserecs);
+            %[cobj,~,~] = selectCaseObj(mobj.Cases,[],{'EDBimport'},promptxt);
+            %if isempty(cobj), return; end
             vN = getVersion(mobj);
             date = mobj.Info.ProjectDate;
             if isempty(date), date = cellstr(datetime('now'),'dd-MM-yyyy'); end
-            edb_write_archive(cobj,vN,date);
+            %prompt for creator name and affiliation
+            promptxt = {'Author/Creator','Affiliation'};
+            auth = inputdlg(promptxt,'Archive',1);
+            if isempty(auth), auth = {'',''}; end
+            %wrtie each of selected cases to an archive file
+            for i=1:length(cobj)
+                edb_write_archive(cobj(i),vN,date,auth);
+            end
         end
-                
+
+%%
+        function setEstuaryDataUI(muicat,srctxt)
+            promptxt = sprintf('Select Case to add %s:',srctxt);
+            %prompt to select cases and return the case record number
+            [caserec,ok] = selectRecord(muicat,'CaseClass', {'EDBimport'},...
+                           'PromptText',promptxt,...
+                           'SelectionMode','single','ListSize', [300,200]);             
+            if ~ok, return; end
+            [cobj,classrec] = getCase(muicat,caserec);
+            casedesc = muicat.Catalogue.CaseDescription(caserec);
+            dsp = EDBimport.getDSPvariables(srctxt);
+            propdesc = {dsp.Variables(:).Description};
+            inp = inputdlg(propdesc,'PropData',1);
+            if isempty(inp), return; end
+            vars = EDBimport.converCharNum(inp);
+            dst = dstable(vars{:},'DSproperties',dsp);
+            dst.Description = casedesc;
+            dst.Source = 'User input';
+            dst.MetaData = srctxt;
+            propname = cobj.tablenames{srctxt,1}{1}; 
+            cobj.(propname) = dst;
+            %write new table to Case instance
+            updateCase(muicat,cobj,classrec,false);  
+        end
+
+%%
+        function vars = converCharNum(strtxt)
+            %convert character strings of numbers to numeric and leave text unchanged
+            vars = cellfun(@(x) ifelse(isnan(str2double(x)),{x},str2double(x)),...
+                                   strtxt,'UniformOutput',false);
+            %nested function ----------------------------------------------
+            function result = ifelse(condition, trueResult, falseResult)
+                % Helper function for inline if-else
+                if condition
+                    result = trueResult;
+                else
+                    result = falseResult;
+                end
+            end
+            %-------------------------------------------------------------- 
+        end
+%%
+        function dsp = getDSPvariables(srctxt)
+            switch srctxt
+                case 'Tidal Levels'
+                    vars = {...
+                        'HAT','Highest astronomical tide','mAD','Tide level (mAD)','data';...
+                        'MHHW','Mean high high water','mAD','Tide level (mAD)','data';...
+                        'MHW','Mean high water','mAD','Tide level (mAD)','data';...
+                        'MLHW','Mean low high water','mAD','Tide level (mAD)','data';...
+                        'MTL','Mean tide level','mAD','Tide level (mAD)','data';...
+                        'MHLW','Mean high low water','mAD','Tide level (mAD)','data';...
+                        'MLW','Mean low water','mAD','Tide level (mAD)','data';...
+                        'MLLW','Mean low low water','mAD','Tide level (mAD)','data';...
+                        'LAT','Lowest astronomical tide','mAD','Tide level (mAD)','data'};
+                case 'River Discharge'
+                    vars = {...
+                        'Qf_annual_high','Annual high river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_annual_mean','Annual mean river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_annual_low','Annual low river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_spring_high','Spring high river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_spring_mean','Spring mean river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_spring_low','Spring low river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_summer_high','Summer high river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_summer_mean','Summer mean river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_summer_low','Summer low river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_autumn_high','Autumnhigh river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_autumn_mean','Autumn mean river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_autumn_low','Autumn low river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_winter_high','Winter high river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_winter_mean','Winter mean river discharge','m^3/s','River discharge (m^3/s)','data';...
+                        'Qf_winter_low','Winter low river discharge','m^3/s','River discharge (m^3/s)','data'};
+                case 'Classification'
+                    vars = {...
+                        'Country','Country','-','Country','data';...
+                        'id','Index','-','Index','data';...
+                        'EstuaryType','Estuary classification','-','Estuary/Inlet type','data';...
+                        'TidalType','Tidal Type','-','Tidal type','data';...
+                        'GeomorType','Geomorphic classification','-','Estuary/Inlet type','data'};
+            end
+            Variables = struct('Name',vars(:,1)','Description',vars(:,2)',...
+                       'Unit',vars(:,3)','Label',vars(:,4)',...
+                       'QCflag',vars(:,5)');
+            dsp = EDBimport.loadDSproperties(Variables);
+        end
+
 %%
         function dsp = loadDSproperties(dspvars)
             %define a dsproperties struct and add the metadata
@@ -602,18 +715,20 @@ classdef EDBimport < GD_ImportData
     methods   
         function fmt = get.formatypes(obj) %#ok<MANU> 
             %create look-up table for file formats from dataset names
-            dsetnames = {'Grid','SurfaceArea','Width','Image','GeoImage'};
+            dsetnames = {'Grid','SurfaceArea','Width','Image','GeoImage','ZMdata'};
             files = {'edb_bathy_format';'edb_s_hyps_format';...
                      'edb_w_hyps_format';'edb_image_format';...
-                     'gd_geoimage_format'};
+                     'gd_geoimage_format';'edb_zm_data_format'};
             fmt = table(files,'RowNames',dsetnames);
         end
 
 %%
         function dsname = get.datasetnames(obj) %#ok<MANU> 
             %create look-up table for dataset names from call text
-            calltxt = {'Grid','Surface area','Width','Image','Gross Properties','GeoImage'};
-            dsetnames = {'Grid';'SurfaceArea';'Width';'Image';'Properties';'GeoImage'};            
+            calltxt = {'Grid','Surface area','Width','Image',...
+                                   'Gross Properties','GeoImage','ZMdata'};
+            dsetnames = {'Grid';'SurfaceArea';'Width';'Image';...
+                                         'Properties';'GeoImage';'ZMdata'};            
             dsname = table(dsetnames,'RowNames',calltxt);
         end
 
@@ -722,11 +837,11 @@ classdef EDBimport < GD_ImportData
             delete(ht)
             caserec = caseRec(mobj.Cases,obj.CaseIndex);
             titletxt = mobj.Cases.Catalogue.CaseDescription(caserec);
-            if isempty(obj.Location)
+            if isempty(obj.Location.Latitude)
                 titletxt = sprintf('Case: %s',titletxt); 
             else
                 lat = obj.Location.Latitude; long = obj.Location.Longitude;
-                titletxt = sprintf('Case: %s (%d, %d)',titletxt,lat,long);              
+                titletxt = sprintf('Case: %s (%d, %d)',titletxt,long,lat);              
             end
 
             uicontrol('Parent',src,'Style','text',...
@@ -787,9 +902,8 @@ classdef EDBimport < GD_ImportData
                 atable = dstr.(propnames{idf(i)});
                 dspvars = table2struct(atable(:,1:5));
                 dsp = EDBimport.loadDSproperties(dspvars);
-                %convert character strings of numbers to numeric and leave text unchanged
-                vars = cellfun(@(x) ifelse(isnan(str2double(x)),{x},str2double(x)),...
-                                     atable{:,6}','UniformOutput',false);
+                %convert character strings of numbers to numeric and leave text unchanged 
+                vars = EDBimport.converCharNum(atable{:,6}');
                 obj.(propnames{idf(i)}) = dstable(vars{:},'DSproperties',dsp);
                 obj.(propnames{idf(i)}).Description = estname;
                 if strcmp(propnames{idf(i)},'GrossProps')
@@ -802,27 +916,18 @@ classdef EDBimport < GD_ImportData
                 if width(atable)>6
                     for j=7:width(atable)
                         nrow = nrow+1;
-                        rowvars = cellfun(@(x) ifelse(isnan(str2double(x)),{x},str2double(x)),...
-                                         atable{:,j}','UniformOutput',false);
+                        rowvars = EDBimport.converCharNum(atable{:,j}');
                         obj.(propnames{idf(i)}) = addrows(obj.(propnames{idf(i)}),nrow,rowvars{:});
                     end
                 end               
             end
-            %nested function ----------------------------------------------
-            function result = ifelse(condition, trueResult, falseResult)
-                % Helper function for inline if-else
-                if condition
-                    result = trueResult;
-                else
-                    result = falseResult;
-                end
-            end
-            %--------------------------------------------------------------            
+                       
         end
 
 %%
         function datasetname = setEDBdataset(obj,type)
             %set the name of a dataset to be added to a Case
+            % type - core name: Grid, Width, SurfaceArea, Image, GeoImage
             dsetnames = fieldnames(obj.Data);
             %check whether existing table is to be overwritten or a new table created
             isdset = any(ismatch(dsetnames,type));

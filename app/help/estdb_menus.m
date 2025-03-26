@@ -61,6 +61,9 @@
 % * *Load archive file* - load an estuary Case from an archived ASCII file. 
 % The archive file is created using Tools >Archive and the format of the 
 % file is detailed in Appendix F – Archive File Format on the <matlab:estdb_open_manual manual>.
+% * *Add/Edit Summary* - add or edit a short description of the estuary
+% * *Add/Edit Location* - add or edit the coordinates of the estuary and 
+% the grid projection used for the coordinate system.
 % * *Delete Dataset* - select an estuary case and the Dataset(s) to be
 % deleted (NB: this only deletes Datasets and not the Case, which can be
 % deleted using Project>Cases>Delete Case).

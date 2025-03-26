@@ -1,17 +1,22 @@
 %% EstuaryDB Example Folder
 % A selection of data sets can be found in the example folder
-% <matlab:estdb_example_folder here>. 
-%
+% <matlab:estdb_example_folder here>. The example folder includes:
 %%
-% The example folders include:
+% Sample files to create an estuary case:
 %%
-% * Estuary_Inlet db.xlsx - UK data and classification.
-% * Estuary_DSproperties.xlsx - file to load DSproperties for the properties
-% used in Estuary_Inlet db.xlsx.
-% * Sample_mat_import.mat - matlab table of the JNCC estuary data for the UK.
-% * Sample_text.txt - sub-set of UK estuary database with type, range,
-% volumes and areas (same as Sample_Excel.xlsx).
-% * Sample_Excel.xlsx - sub-set of UK estuary database with type, range,
-% volumes and areas (same as Sample_text.txt).
+% * archive_file_format.txt - file with headerr text for an estuary archive file with explanation of content (see Appendix F  in manual)
+% * EDB_default_DSproperties.xlsx - definitions of the DSproperties for the estuary property tables used in EstuaryDB
+% * Poole.txt - xyz file of bathymetry grid for Poole harbour
+% * Poole_sample estuary_properties.xlsx - classification, tide and river properties for Poole harbour (use EDB_default_DSproperties.xlsx to define the DSproperties)
+%%
+% Sample files to load tabular datasets:
+%%
+% * Sample_mat_import.mat - matlab table of the JNCC estuary data for the UK
+% * Sample_text_import.txt - sub-set of UK estuary database with type, range, volumes and areas (same as Sample_Excel_import.xlsx)
+% * Sample_Excel_import.xlsx - sub-set of UK estuary database with type, range, volumes and areas (same as Sample_text_import.txt)
+% * Sample_DSproperties.xlsx - file to load DSproperties for the Sample import files (use JNCC option when loading the mat file)
+%% 
+% * UK_Estuary_Inlet db.xlsx - UK data and classification
+% * UK_Estuary_DSproperties.xlsx - file to load DSproperties for the properties used in UK_Estuary_Inlet db.xlsx
 
  

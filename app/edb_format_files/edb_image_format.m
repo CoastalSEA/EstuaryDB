@@ -44,7 +44,7 @@ function obj = getFormat(obj,formatfile)
     %return the file import format settings
     obj.DataFormats = {'EDBimport',formatfile,'image'};
     obj.idFormat = 1;
-    obj.FileSpec = {'on','*.jpg;'};
+    obj.FileSpec = {'on','*.jpg;*.tif;*.tiff;'};
 end
 %%
 %--------------------------------------------------------------------------

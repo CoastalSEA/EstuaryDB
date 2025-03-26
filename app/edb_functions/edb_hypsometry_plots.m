@@ -82,22 +82,31 @@ function  get_reachPlot(mobj,option)
     Z = dst.Dimensions.Z;
     X = dst.Dimensions.X;   
 
-    Vr = cellfun(@squeeze,table2cell(dst.DataTable(1,2:end)),'UniformOutput',false);    
-    Xr = dst.UserData.Xr;
-    nreach = length(Vr);
-
-    if strcmp(option,'Reach CSA plot')
-        Vall = getCSA(X,Z,Vall);
-        for i=1:nreach
-            Vr{i} = getCSA(Xr{i},Z,Vr{i});
+    if width(dst)>1
+        Vr = cellfun(@squeeze,table2cell(dst.DataTable(1,2:end)),'UniformOutput',false);    
+        Xr = dst.UserData.Xr;
+        nreach = length(Vr);
+        if strcmp(option,'Reach CSA plot')
+            Vall = getCSA(X,Z,Vall);
+            for i=1:nreach
+                Vr{i} = getCSA(Xr{i},Z,Vr{i});
+            end
+            plottxt{1} = 'CSA (m^2)'; vartxt = 'CSA';
+        else
+            plottxt{1} = 'Width (m)'; vartxt = 'Width';
         end
-        Vall = getCSA(X,Z,Vall);
-        plottxt{1} = 'CSA (m^2)'; vartxt = 'CSA';
+        maxV = cellfun(@(x) max(x,[],'all'),Vr,'UniformOutput',false); 
+        maxV = max([maxV{:}]);
     else
-        plottxt{1} = 'Width (m)'; vartxt = 'Width';
+        nreach = 0;
+        if strcmp(option,'Reach CSA plot')
+            Vall = getCSA(X,Z,Vall);
+            plottxt{1} = 'CSA (m^2)'; vartxt = 'CSA';
+        else
+            plottxt{1} = 'Width (m)'; vartxt = 'Width';
+        end
+        maxV = max(Vall);
     end
-    maxV = cellfun(@(x) max(x,[],'all'),Vr,'UniformOutput',false); 
-    maxV = max([maxV{:}]);
 
     %tidal levels
     if ~isempty(cobj.TidalProps)
@@ -115,21 +124,23 @@ function  get_reachPlot(mobj,option)
     hyps_plot(ax,Vall,X,Z,plottxt,tlevels);
     axis tight
     xlimits = ax.XLim;
-
-    hf = figure('Name','Hypsometry','Units','Normalized','Resize','on','Tag','PlotFig');
-    subplot(axes(hf));
-    for i=1:nreach
-        si = subplot(nreach,1,i);
-        plottxt{2} = sprintf('%s for reach %d',vartxt,i);
-        Var = Vr{i};
-        Var(Var==0) = NaN;                    %mask zero values
-        hyps_plot(si,Var,Xr{i},Z,plottxt,tlevels);
-        si.CLim(2) = ceil(maxV);
-        si.XLim = xlimits;        
+    
+    if nreach>0
+        hf = figure('Name','Hypsometry','Units','Normalized','Resize','on','Tag','PlotFig');
+        subplot(axes(hf));
+        for i=1:nreach
+            si = subplot(nreach,1,i);
+            plottxt{2} = sprintf('%s for reach %d',vartxt,i);
+            Var = Vr{i};
+            Var(Var==0) = NaN;                    %mask zero values
+            hyps_plot(si,Var,Xr{i},Z,plottxt,tlevels);
+            si.CLim(2) = ceil(maxV);
+            si.XLim = xlimits;        
+        end
+        sgtitle(sprintf('Reach contributions for %s',dst.Description))
+        hf = gcf;
+        hf.Position = [0.40,0.28,0.31,0.65];
     end
-    sgtitle(sprintf('Reach contributions for %s',dst.Description))
-    hf = gcf;
-    hf.Position = [0.40,0.28,0.31,0.65];
 end
 
 

@@ -36,9 +36,8 @@ function [obj,isok] = edb_grossprops_table(obj)
     if contains(datasetname,'SurfaceArea')
         grossprops = grossProperties(var.S,var.V,z,wl);   
     else
-        delx = abs(x(2)-x(1));
-        S = sum(var.W,1)*delx;
-        V = sum(var.A,1)*delx;
+        S = trapz(x,var.W);                %integrate over channel length
+        V = trapz(x,var.A);
         grossprops = grossProperties(S,V,z,wl);
         grossprops = addMouthProps(var,grossprops,z,wl);
     end

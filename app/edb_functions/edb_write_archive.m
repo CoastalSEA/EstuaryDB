@@ -1,4 +1,4 @@
-function edb_write_archive(obj,vN,projdate)
+function edb_write_archive(obj,vN,projdate,auth)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -11,6 +11,7 @@ function edb_write_archive(obj,vN,projdate)
 %   obj - handle to class instance for EDBimport
 %   vN - version number for EstuaryDB
 %   projdate - date project file was created
+%   auth - cell array for text to define creator and affiliation
 % OUTPUT
 %   output dataset saved to a file
 % NOTES
@@ -27,9 +28,6 @@ function edb_write_archive(obj,vN,projdate)
     promptxt = 'Filename for archive file:';
     inp = inputdlg(promptxt,'Archive',1,{[estname,'_archive.txt']});
     if isempty(inp), return; end
-    promptxt = {'Author/Creator','Affiliation'};
-    auth = inputdlg(promptxt,'Archive',1);
-    if isempty(auth), return; end
     %open file and write header
     fid = fopen(inp{1},'w');
     fprintf(fid,'EstuaryDB archive file\nvNumber: %s\nDate: %s\n',vN,projdate);
@@ -37,7 +35,8 @@ function edb_write_archive(obj,vN,projdate)
     fprintf(fid,'Name: %s\nCoordinates: %d, %d\nProjection: %s\n', ...
                          estname,loc.Latitude,loc.Longitude,loc.Projection);
     fprintf(fid,'Creator: %s\nAffiliation: %s\n',auth{1},auth{2});
-    fprintf(fid,'Summary: %s\n\n',obj.Summary);
+    if isempty(obj.Summary), obj.Summary = ''; end
+    fprintf(fid,'Summary: %s\n\n',strip(reshape(obj.Summary',1,[])));
 
     %write property tables
     fprintf(fid,'%%\n%% Property Tables ----------------\n%%\n');

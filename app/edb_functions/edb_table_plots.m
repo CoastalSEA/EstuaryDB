@@ -66,8 +66,8 @@ function range_plot(mobj)
 
     islog = strcmp(set.Xvar(1).scale,'Log') | strcmp(set.Yvar(1).scale,'Log'); %only test first selection
     ax = var_range_plot(hfig,X,Y,select.names,[],islog);    %muitoolbox function
-    ax.XLabel.String = select.Xvar(1).label;
-    ax.YLabel.String = select.Yvar(1).label;
+    ax.XLabel.String = select.Xvar(1).desc;
+    ax.YLabel.String = select.Yvar(1).desc;
     ax.Title.String = get_selection_text(select.Xvar(1),0); %0 = case (dataset)
 end
 

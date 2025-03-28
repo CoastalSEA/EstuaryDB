@@ -38,11 +38,13 @@ function est = edb_read_archive(filename)
     est.Header = readHeader(fid);
 
     %read the property tables foor Tidal, River, Class and Gross Props.
-    allnames = [propnames;{'EndProps';'SurfaceArea';'Width';'TopoEdges';'TopoNodes'}];
+    allnames = [propnames;{'EndProps';'SurfaceArea';'Width';'Reaches';...
+                                  'SectionLines';'TopoEdges';'TopoNodes'}];
     nlines = findTableLines(fid,allnames);
     opts = detectImportOptions(filename);
     opts.VariableNames = {'Name','Description','Unit','Label','QCflag','Data'};
     opts.VariableTypes = {'char','char','char','char','char','char'};
+    opts.Delimiter = '\t';
     nprops = length(propnames);
     for i=1:nprops
         if nlines(i)>0                                 %if property table exists
@@ -54,7 +56,7 @@ function est = edb_read_archive(filename)
     opts.VariableNames = {'Name','Description','Unit','Label','QCflag'};
     opts.VariableTypes = {'char','char','char','char','char'};
     %read the surface area hypsomtery data
-    nlineS = nlines(nprops+2);
+    nlineS = nlines(strcmp(allnames,'SurfaceArea'));
     if nlineS>0
         opts.DataLines = [nlineS+2,nlineS+3];
         est.SurfaceArea.DSP = readtable(filename,opts);
@@ -66,26 +68,35 @@ function est = edb_read_archive(filename)
     end
 
     %read the width hypsomtery data
-    nlineW = nlines(nprops+3);
+    nlineW = nlines(strcmp(allnames,'Width'));           
+    nlineR = nlines(strcmp(allnames,'Reaches'));
+    nlineL = nlines(strcmp(allnames,'SectionLines'));
     if nlineW>0
-        opts.DataLines = [nlineW+2,nlineW+4];
+        opts.DataLines = [nlineW+2,nlineR-4];
         est.Width.DSP = readtable(filename,opts);
-        est.Width.W = readVariable(fid,nlineW+5);
-        est.Width.X = readVariable(fid,nlineW+6);
-        est.Width.Z = readVariable(fid,nlineW+7);
+        est.Width.W = readVariable(fid,nlineR-3);
+        est.Width.X = readVariable(fid,nlineR-2);
+        est.Width.Z = readVariable(fid,nlineR-1);
+        if nlineR>0
+            nvar = str2double(readLine(fid,nlineR+1));
+            for i=1:nvar
+                est.Width.Wr{i} = readVariable(fid,nlineR+2*i);
+                est.Width.Xr{i} = readVariable(fid,nlineR+1+2*i);
+            end
+        end
         %linework
-        est.Boundary.X = readVariable(fid,nlineW+9);
-        est.Boundary.Y = readVariable(fid,nlineW+10);    
-        est.ChannelLine.X = readVariable(fid,nlineW+11);
-        est.ChannelLine.Y = readVariable(fid,nlineW+12);
-        est.SectionLines.X = readVariable(fid,nlineW+13);
-        est.SectionLines.Y = readVariable(fid,nlineW+14);
-        est.ChannelProp = readVariable(fid,nlineW+15);
-        est.ChannelLengths = readVariable(fid,nlineW+16);
+        est.Boundary.X = readVariable(fid,nlineL+1);
+        est.Boundary.Y = readVariable(fid,nlineL+2);    
+        est.ChannelLine.X = readVariable(fid,nlineL+3);
+        est.ChannelLine.Y = readVariable(fid,nlineL+4);
+        est.SectionLines.X = readVariable(fid,nlineL+5);
+        est.SectionLines.Y = readVariable(fid,nlineL+6);
+        est.ChannelProp = readVariable(fid,nlineL+7);
+        est.ChannelLengths = readVariable(fid,nlineL+8);
         
         %Graph tables 
-        nlineE = nlines(nprops+4);
-        nlineN = nlines(end);
+        nlineE = nlines(strcmp(allnames,'TopoEdges'));
+        nlineN = nlines(strcmp(allnames,'TopoNodes')); 
         opts.DataLines = [nlineE+2,nlineN-1];
         opts.VariableNames = {'EndNodes_1','EndNodes_2','Weight','Node1','Node2','Line1','Line2'};
         opts.VariableTypes = repmat({'double'},1,7);

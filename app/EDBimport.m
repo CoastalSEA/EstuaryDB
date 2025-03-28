@@ -223,7 +223,7 @@ classdef EDBimport < GD_ImportData
                 if isfield(dstr,'SurfaceArea')
                     atable = dstr.SurfaceArea.DSP;
                     dspvars = table2cell(atable(:,1:5));
-                    dsp = EDBimport.loadDSPproptables(dspvars);
+                    dsp = EDBimport.loadDSPproptables(dspvars,1);
                     dst = dstable(dstr.SurfaceArea.Sa,'RowNames',{estname},'DSproperties',dsp);                
                     dst.Dimensions.Z = dstr.SurfaceArea.Z;
                     dst.Description = estname;
@@ -235,14 +235,26 @@ classdef EDBimport < GD_ImportData
                 %add width table and linework
                 if isfield(dstr,'Width')
                     atable = dstr.Width.DSP;
-                    dspvars = table2cell(atable(:,1:5));
-                    dsp = EDBimport.loadDSPproptables(dspvars);
+                    %load width data
                     ncol = length(dstr.Width.X); 
                     nrow = length(dstr.Width.Z);
-                    width = reshape(dstr.Width.W,1,ncol,nrow);
-                    dst = dstable(width,'RowNames',{estname},'DSproperties',dsp);    
+                    width = {reshape(dstr.Width.W,1,ncol,nrow)};
+                    if isfield(dstr.Width,'Wr')
+                        nrec = length(dstr.Width.Wr);
+                        for i=1:nrec
+                            ncol = length(dstr.Width.Xr{i});
+                            Wr{i} = reshape(dstr.Width.Wr{i},1,ncol,nrow);
+                        end
+                        width = [width,Wr]; %#ok<AGROW> 
+                    else
+                        nrec = 0;
+                    end 
+                    dspvars = table2cell(atable(:,1:5));
+                    dsp = EDBimport.loadDSPproptables(dspvars,nrec+1);
+                    dst = dstable(width{:},'RowNames',{estname},'DSproperties',dsp);    
                     dst.Dimensions.X = dstr.Width.X;
                     dst.Dimensions.Z = dstr.Width.Z;
+                    dst.UserData.Xr = dstr.Width.Xr;
                     dst.Description = estname;
                     obj.Data.Width = dst;
                     obj.Sections = PL_Sections.getSections(obj);
@@ -264,7 +276,6 @@ classdef EDBimport < GD_ImportData
                 setDataSetRecord(obj,muicat,obj.Data,'data',{estname},false);
             end
         end
-
 
 %%
         function addSummary(muicat)
@@ -686,15 +697,15 @@ classdef EDBimport < GD_ImportData
         end
 
 %%
-        function dsp = loadDSPproptables(dspvars)
+function dsp = loadDSPproptables(dspvars,nr)
             %add the variable dimension properties for width or surface area
             dsp = struct('Variables',[],'Row',[],'Dimensions',[]); 
             dsp.Variables = struct(...
-                'Name',dspvars(1,1),...
-                'Description',dspvars(1,2),...
-                'Unit',dspvars(1,3),...
-                'Label',dspvars(1,4),...
-                'QCflag',dspvars(1,5));
+                'Name',dspvars(1:nr,1),...
+                'Description',dspvars(1:nr,2),...
+                'Unit',dspvars(1:nr,3),...
+                'Label',dspvars(1:nr,4),...
+                'QCflag',dspvars(1:nr,5));
             dsp.Row = struct(...
                 'Name',{'Location'},...
                 'Description',{'Estuary'},...
@@ -702,11 +713,11 @@ classdef EDBimport < GD_ImportData
                 'Label',{'Estuary'},...
                 'Format',{''});   
             dsp.Dimensions = struct(...
-                'Name',dspvars(2:end,1),...
-                'Description',dspvars(2:end,2),...
-                'Unit',dspvars(2:end,3),...
-                'Label',dspvars(2:end,4),...
-                'Format',dspvars(2:end,5));
+                'Name',dspvars(nr+1:end,1),...
+                'Description',dspvars(nr+1:end,2),...
+                'Unit',dspvars(nr+1:end,3),...
+                'Label',dspvars(nr+1:end,4),...
+                'Format',dspvars(nr+1:end,5));
         end
     end
 %--------------------------------------------------------------------------

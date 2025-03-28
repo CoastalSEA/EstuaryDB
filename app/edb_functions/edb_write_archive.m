@@ -99,7 +99,9 @@ function edb_write_archive(obj,vN,projdate,auth)
         dsp = dst.DSproperties.Variables;
         dsp = struct2table(dsp,'AsArray',true);
         writePropTableLine(fid,dsp.Properties.VariableNames);
-        writePropTableLine(fid,dsp{1,:});          %Width 
+        for i=1:height(dsp)
+            writePropTableLine(fid,dsp{i,:});          %Width 
+        end
         dsp = dst.DSproperties.Dimensions;
         dsp = struct2table(dsp,'AsArray',true);
         writePropTableLine(fid,dsp{1,:});          %X-dimension
@@ -110,24 +112,20 @@ function edb_write_archive(obj,vN,projdate,auth)
         fprintf(fid,'%f\t',dst.Dimensions.X);
         fprintf(fid,'\nZ: ');
         fprintf(fid,'%f\t',dst.Dimensions.Z);
+        fprintf(fid,'\nReaches:');
+        fprintf(fid,'\n%d',width(dst)-1);
+        if width(dst)>1
+            Wr = cellfun(@squeeze,table2cell(dst.DataTable(1,2:end)),'UniformOutput',false);    
+            Xr = dst.UserData.Xr;                
+            for i=1:length(Wr)
+                fprintf(fid,'\nWr%d: ',i);
+                fprintf(fid,'%f\t',Wr{i});
+                fprintf(fid,'\nXr%d: ',i);
+                fprintf(fid,'%f\t',Xr{i});
+            end
+        end
         fprintf(fid,'\n');
-        fprintf(fid,'\nBoundary.X: ');
-        fprintf(fid,'%f\t',obj.Sections.Boundary.x);
-        fprintf(fid,'\nBoundary.Y: ');
-        fprintf(fid,'%f\t',obj.Sections.Boundary.y);        
-        fprintf(fid,'\nChannelLine.X: ');
-        fprintf(fid,'%f\t',obj.Sections.ChannelLine.x);
-        fprintf(fid,'\nChannelLine.Y: ');
-        fprintf(fid,'%f\t',obj.Sections.ChannelLine.y);
-        fprintf(fid,'\nSectionLines.X: ');
-        fprintf(fid,'%f\t',obj.Sections.SectionLines.x);
-        fprintf(fid,'\nSectionLines.Y: ');
-        fprintf(fid,'%f\t',obj.Sections.SectionLines.y);
-        fprintf(fid,'\nChannelProps: ');
-        pp = obj.Sections.ChannelProps;
-        fprintf(fid,'%f\t',pp.maxwl,pp.dexp,pp.cint);
-        fprintf(fid,'\nChannelLengths: ');
-        fprintf(fid,'%f\t',obj.Sections.ChannelProps.ChannelLengths);
+        writeSectionLines(fid,obj)
         writeTopoTables(fid,obj.Sections.ChannelProps.topo);
     end
     fprintf(fid,'\n');
@@ -143,6 +141,29 @@ function writePropTableLine(fid,vars)
         fprintf(fid,'%s\t',vars{j});
     end
     fprintf(fid,'%s\n',vars{nvars});
+end
+
+%%
+function writeSectionLines(fid,obj)
+    %write x and y for the section lines, channel props and channel lengths
+    fprintf(fid,'\nSectionLines:');
+    fprintf(fid,'\nBoundary.X: ');
+    fprintf(fid,'%f\t',obj.Sections.Boundary.x);
+    fprintf(fid,'\nBoundary.Y: ');
+    fprintf(fid,'%f\t',obj.Sections.Boundary.y);        
+    fprintf(fid,'\nChannelLine.X: ');
+    fprintf(fid,'%f\t',obj.Sections.ChannelLine.x);
+    fprintf(fid,'\nChannelLine.Y: ');
+    fprintf(fid,'%f\t',obj.Sections.ChannelLine.y);
+    fprintf(fid,'\nSectionLines.X: ');
+    fprintf(fid,'%f\t',obj.Sections.SectionLines.x);
+    fprintf(fid,'\nSectionLines.Y: ');
+    fprintf(fid,'%f\t',obj.Sections.SectionLines.y);
+    fprintf(fid,'\nChannelProps: ');
+    pp = obj.Sections.ChannelProps;
+    fprintf(fid,'%f\t',pp.maxwl,pp.dexp,pp.cint);
+    fprintf(fid,'\nChannelLengths: ');
+    fprintf(fid,'%f\t',obj.Sections.ChannelProps.ChannelLengths);
 end
 
 %%

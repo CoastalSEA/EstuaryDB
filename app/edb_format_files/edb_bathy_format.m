@@ -112,6 +112,50 @@ function grid = formatGridData(data)
             %grid.z = flipud(Z);
         catch
             warndlg('Unable to resolve grid from data')
+<<<<<<< Updated upstream
+=======
+            grid = []; return;
+        end
+    end
+    grid = checkGrid(grid);
+end
+
+%%
+function grid = checkGrid(grid)
+    %In EstuaryDB images are used as alternative to grids as the backdrop
+    %grids with unveven grid spacing can cause problems, see:
+    %https://uk.mathworks.com/matlabcentral/answers/2173624-plot-an-image-with-axes-that-match-the-source-surface-plot
+    %to prevent this reformat the grid if required
+    dx = diff(grid.x);
+    dy = diff(grid.y);
+    if all(diff(dx)==0) && all(diff(dy)==0)
+        return
+    elseif ~all(diff(dx)==0) && ~all(diff(dy)==0)   
+       figure; plot(dx); hold on; plot(dy); hold off;
+       xlabel('diff(x) or (y)') % error in original code cannot plot(x,y), hence ammended to the code
+       ylabel('x- or y-increments')
+       legend('diff(x)','diff(y)')
+       title('Increments along x and y-axes are not constant')
+    elseif ~all(diff(dx)==0)
+       figure; plot(dx);
+       xlabel('diff(x)')
+       ylabel('x-increment')
+       title('Increments along x-axis are not constant')
+    elseif ~all(diff(dy)==0)
+       figure; plot(dy);
+       xlabel('diff(y)')
+       ylabel('y-increment')
+       title('Increments along y-axis are not constant')
+    end
+    %
+    answer = questdlg('Regrid at constant increments?','Bathymetry','Yes','No','Yes');
+    if strcmp(answer,'Yes')
+        defaults = {num2str(mode(dx)), num2str(mode(dy))};
+        promptxt = {'x-interval','y-interval'};
+        inp = inputdlg(promptxt,'Bathymetry',1,defaults);
+        if isempty(inp)
+            warndlg('Regridding cancelled'); 
+>>>>>>> Stashed changes
             grid = [];
         end
     end

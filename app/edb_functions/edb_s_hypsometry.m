@@ -31,7 +31,7 @@ function hyps = edb_s_hypsometry(grid,uplimit,histint,isplot)
     delx = abs(grid.x(2)-grid.x(1));
     dely = abs(grid.y(2)-grid.y(1));
     % range for histogram data - general
-    lowlimit = floor(min(min(grid.z)));   
+    lowlimit = floor(min(min(grid.z,[],'omitnan'),[],'omitnan'));  
     zedge = lowlimit:histint:uplimit;
     zedge(zedge>(uplimit+histint)) = [];
     % calculate histogram and format output

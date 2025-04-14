@@ -145,9 +145,14 @@ function grid = checkGrid(grid)
     if all(diff(dx)==0) && all(diff(dy)==0)
         return
     elseif ~all(diff(dx)==0) && ~all(diff(dy)==0)   
-       figure; plot(dx,dy);
-       xlabel('diff(x)')
-       ylabel('diff(y)')
+       figure; 
+       yyaxis left
+       plot(dx);
+       xlabel('diff')
+       ylabel('x-increment')
+       yyaxis right
+       plot(dy)
+       ylabel('y-increment')
        title('Increments along x and y-axes are not constant')
     elseif ~all(diff(dx)==0)
        figure; plot(dx);

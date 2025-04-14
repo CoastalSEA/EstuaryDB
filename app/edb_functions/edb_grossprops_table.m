@@ -32,6 +32,7 @@ function [obj,isok] = edb_grossprops_table(obj)
 
     %see if tidal data is available
     [wl,selection] = edb_waterlevels(obj,mnmx,dz);
+    if isempty(wl), isok = 0; return; end
 
     if contains(datasetname,'SurfaceArea')
         grossprops = grossProperties(var.S,var.V,z,wl);   
@@ -77,9 +78,12 @@ end
                'Shw',0,'Smt',0,'Slw',0,'Vhw',0,'Vmt',0,'Vlw',0,'Pr',0,...
                'gam',0,'Vs',0,'Vc',0,'VsoVc',0,'SflShw',0,'a',0,'hyd',0,...
                'aoh',0,'Whw',0,'Wmt',0,'Wlw',0,'Ahw',0,'Amt',0,'Alw',0,'PoA',0); %NB W0 and A0 not assigned
-    r.Shw = zsurf(idh);                 %surface area at high water
-    r.Vhw = zvol(idh);                  %volume at high water
+    
     r.a   = am;                         %tidal amplitude
+    if ~isempty(idh)
+        r.Shw = zsurf(idh);             %surface area at high water
+        r.Vhw = zvol(idh);              %volume at high water        
+    end
 
     if ~isempty(ido)
         r.Smt = zsurf(ido);             %surface area at mean tide

@@ -241,9 +241,9 @@ classdef EDBimport < GD_ImportData
                     width = {reshape(dstr.Width.W,1,ncol,nrow)};
                     if isfield(dstr.Width,'Wr')
                         nrec = length(dstr.Width.Wr);
-                        for i=1:nrec
-                            ncol = length(dstr.Width.Xr{i});
-                            Wr{i} = reshape(dstr.Width.Wr{i},1,ncol,nrow);
+                        for j=1:nrec
+                            ncol = length(dstr.Width.Xr{j});
+                            Wr{j} = reshape(dstr.Width.Wr{j},1,ncol,nrow);
                         end
                         width = [width,Wr]; %#ok<AGROW> 
                     else

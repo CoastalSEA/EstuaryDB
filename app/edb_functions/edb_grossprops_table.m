@@ -76,8 +76,8 @@ end
     
     r = struct('HWL',wl.HW,'MTL',wl.MT,'LWL',wl.LW,...
                'Shw',0,'Smt',0,'Slw',0,'Vhw',0,'Vmt',0,'Vlw',0,'Pr',0,...
-               'gam',0,'Vs',0,'Vc',0,'VsoVc',0,'SflShw',0,'a',0,'hyd',0,...
-               'aoh',0,'Whw',0,'Wmt',0,'Wlw',0,'Ahw',0,'Amt',0,'Alw',0,'PoA',0); %NB W0 and A0 not assigned
+               'gam',NaN,'Vs',0,'Vc',0,'VsoVc',NaN,'SflShw',NaN,'a',0,'hyd',NaN,...
+               'aoh',NaN,'Whw',0,'Wmt',0,'Wlw',0,'Ahw',0,'Amt',0,'Alw',0,'PoA',NaN); %NB W0 and A0 not assigned
     
     r.a   = am;                         %tidal amplitude
     if ~isempty(idh)
@@ -96,11 +96,19 @@ end
         r.Slw = zsurf(idl);             %surface area at low water
         r.Vlw = zvol(idl);              %volume at low water
         r.Pr  = r.Vhw-r.Vlw;            %volume of tidal prism
+
         beta = 1;                       %assume Schw/Sclw = 1
-        r.gam = (r.Slw./r.Shw).^3.*(r.Vhw./r.Vlw).^2.*beta;  %Dronkers gamma (~1)  
+        if r.Vlw>0
+            r.gam = (r.Slw./r.Shw).^3.*(r.Vhw./r.Vlw).^2.*beta;  %Dronkers gamma (~1)  
+        end
+        
         r.Vs  = (r.Vhw-r.Vlw)-2.*am.*r.Slw;  %storage volume over intertidal
-        r.Vc  = r.Vlw+2.*am.*r.Slw;          %channel volume
-        r.VsoVc = r.Vs./r.Vc;           %ratio fo storage to channel volumes
+        if r.Vs<0, r.Vs = 0; end
+
+        if r.Slw>0
+            r.Vc  = r.Vlw+2.*am.*r.Slw; %channel volume
+            r.VsoVc = r.Vs./r.Vc;           %ratio fo storage to channel volumes
+        end
         r.SflShw = (r.Shw-r.Slw)/r.Shw; %ratio of intertidal area to basin area
     else
         r.Pr  = r.Vhw;                  %volume of tidal prism

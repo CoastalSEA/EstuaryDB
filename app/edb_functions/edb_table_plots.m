@@ -11,7 +11,8 @@ function edb_table_plots(mobj)
 % INPUTS
 %   mobj - ModelUI instance
 % OUTPUT
-%   user defined plot or other output
+%   plots for 2 and 3 variable Scatter plot, bar plot classified by Type, 
+%   min-max Range plot and a Geyer-McCready plot
 % NOTES
 %    called as part of EstuaryDB App.
 % SEE ALSO

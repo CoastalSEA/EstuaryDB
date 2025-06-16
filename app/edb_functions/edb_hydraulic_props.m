@@ -1,45 +1,52 @@
-function edb_derived_props(mobj)
+function edb_hydraulic_props(mobj)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_derived_props.m
+%   edb_hydraulic_props.m
 % PURPOSE
-%   Functions to derive datasets related to estuary gross properties such
+%   Functions to derive datasets related to estuary hydraulic properties such
 %   as hydraulic depths, prism etc.
 % USAGE
-%   edb_derived_props(mobj)
+%   edb_hydraulic_props(mobj)
 % INPUTS
 %   mobj - handle to EstuaryDB App
 % OUTPUT
-%   adds Derived dataset to the selected muiTableImport instance
+%   adds Hydro dataset to the selected muiTableImport instance
 % NOTES
-%   
+%   called from edb_user_tools in EstuaryDB
 %
 % Author: Ian Townend
 % CoastalSEA (c) Oct 2024
 %--------------------------------------------------------------------------
 %
+    n1 = 0.5;               %exponent for estimate of La
+    n2 = 0.6;               %exponent for estimate of La
     muicat = mobj.Cases;
     
-    promptxt = 'Select case to derive addtional gross properties:';
+    promptxt = 'Select case to derive additional gross properties:';
     [cobj,classrec,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
     if isempty(cobj), return; end
     dst = cobj.Data.(datasets{idd});  %selected dataset
     Hmlw = dst.Vmlw./dst.Smlw;
     Hmtl = dst.Vmtl./dst.Smtl;
     Hmhw = dst.Vmhw./dst.Smhw;
+    Pr = dst.Vmhw-dst.Vmlw;
+    La1 = 0.35*dst.Smhw.^n1.*(1+dst.Smlw./dst.Smhw);
+    La2 = 0.35*dst.Smhw.^n2.*(1+dst.Smlw./dst.Smhw);
+    lamda = sqrt(9.81*Hmtl).*12.4*3600;
 
-    dsp = derived_dsprops(); %set metadata properties
-    dvdst = dstable(Hmlw,Hmtl,Hmhw,'RowNames',dst.RowNames,'DSproperties',dsp);
+    dsp = hydraulic_dsprops(); %set metadata properties
+    dvdst = dstable(Hmlw,Hmtl,Hmhw,Pr,La1,La2,lamda,'RowNames',dst.RowNames,...
+                                    'DSproperties',dsp);
     
-    answer = questdlg('Add dataset to existing case or create a new one?','EDB derive','Add','New','New');
+    answer = questdlg('Add dataset to existing case or create a new one?','EDB derived','Add','New','New');
     if strcmp(answer,'Add')
         %to assign as a dataset to the selected case
-        dsetname = 'Derived';
+        dsetname = 'HydroProps';
         if any(contains(datasets,dsetname))
-            overwrite = questdlg('Overwrite existing Derived dataset?','EDB derive','Yes','No','Yes');
+            overwrite = questdlg('Overwrite existing Derived dataset?','EDB derived','Yes','No','Yes');
             if strcmp(overwrite,'No') 
-                newname = inputdlg('New name for dataset','EDB derive',1,{[dsetname,'_1']});
+                newname = inputdlg('New name for dataset','EDB derived',1,{[dsetname,'_1']});
                 dsetname = newname{1};
             end
         end
@@ -49,23 +56,31 @@ function edb_derived_props(mobj)
         %to assign as a new case use:
         anobj = muiTableImport;
         %suggest output description but allow user to edit
-        casetxt = sprintf('Derived using %s',dst.Description);
+        casetxt = sprintf('Hydraulic properties using %s',dst.Description);
         setDataSetRecord(anobj,muicat,dvdst,'model',{casetxt},false); %true to suppress user prompt
     end
 end
 %%
-function dsp = derived_dsprops()
+function dsp = hydraulic_dsprops()
     %define the variables in the dataset
     dsp = blank_dsprops();
     %variables to be included
-    dsp.Variables.Name = {'Hlw','Hmt','Hhw'};
+    dsp.Variables.Name = {'Hlw','Hmt','Hhw','Pr','La1','La2','lamda'};
     dsp.Variables.Description = {'Depth at Low Water',...
                                  'Depth at Mean Tide',...
-                                 'Depth at High Water'};
-    dsp.Variables.Unit = {'m','m','m'};
+                                 'Depth at High Water',...
+                                 'Tidal prism',...
+                                 'CSA convergence length, n=0.5',...
+                                 'CSA convergence length, n=0.6',...
+                                 'Tidal wavelength @ mtl'};
+    dsp.Variables.Unit = {'m','m','m','m3','m','m','m'};
     dsp.Variables.Label = {'Hydraulic depth (m)',...
                            'Hydraulic depth (m)',...
-                           'Hydraulic depth (m)'};
+                           'Hydraulic depth (m)',...
+                           'Tidal Prism, (m^3)',...
+                           'Convergence length (m)',...
+                           'Convergence length (m)',...
+                           'Wave length (m)'};
     dsp.Variables.QCflag = repmat({'derived'},1,length(dsp.Variables.Name));
 end
 %%

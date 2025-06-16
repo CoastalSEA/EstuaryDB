@@ -20,7 +20,8 @@ function edb_user_tools(mobj)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %     
-    listxt = {'Table figure','Derived gross properties','Convergence analysis'};
+    listxt = {'Table figure','Hydraulic properties','Empirical properties',...
+                                        'Convergence analysis'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
@@ -31,8 +32,10 @@ function edb_user_tools(mobj)
         switch listxt{selection}
             case 'Table figure'
                 get_dataTable(mobj);
-            case 'Derived gross properties'
-                edb_derived_props(mobj)
+            case 'Hydraulic properties'
+                edb_hydraulic_props(mobj);
+            case 'Empirical properties'
+                edb_empirical_props(mobj);
             case 'Convergence analysis'
                 get_ConvergenceAnalysis(mobj);
         end

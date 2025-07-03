@@ -67,7 +67,7 @@ classdef EstuaryDB < muiModelUI
             %submenus in order following each brach to the lowest level 
             %before defining the next branch.         
                                                              
-            MenuLabels = {'File','Clear','Project','Setup','Tools',...
+            MenuLabels = {'File','Tools','Project','Setup','Utilities',...
                                                         'Analysis','Help'};
             menu = menuStruct(obj,MenuLabels);  %create empty menu struct
             %
@@ -78,12 +78,18 @@ classdef EstuaryDB < muiModelUI
             
             %% Clear menu -------------------------------------------------
             %list as per muiModelUI.toolsMenuOptions
-            menu.Clear(1).List = {'Refresh','Clear all'};
-            menu.Clear(1).Callback = {@obj.refresh, 'gcbo;'};  
+            menu.Tools(1).List = {'Refresh','Clear all'};
+            menu.Tools(1).Callback = {@obj.refresh, 'gcbo;'};  
             
             % submenu for 'Clear all'
-            menu.Clear(2).List = {'Model','Figures','Cases'};
-            menu.Clear(2).Callback = repmat({@obj.toolsMenuOptions},[1,3]);
+            menu.Tools(2).List = {'Project','Figures','Cases'};
+            %menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,3]);
+            
+            menu.Tools(2).Callback = {@obj.toolsMenuOptions,'gcbo;',...
+                                                    @obj.toolsMenuOptions};
+
+            menu.Tools(3).List = {'UI Figures','Tag Figures'};
+            menu.Tools(3).Callback = repmat({@obj.toolsMenuOptions},[1,2]);
 
             %% Project menu -----------------------------------------------
             menu.Project(1).List = {'Project Info','Cases','Export/Import'};
@@ -181,17 +187,17 @@ classdef EstuaryDB < muiModelUI
             menu.Setup(N).Callback = repmat({@obj.sectionMenuOptions},[1,6]);
 
             %% Tools menu ---------------------------------------------------
-            menu.Tools(1).List = {'Hypsometry','Gross Properties',...
+            menu.Utilities(1).List = {'Hypsometry','Gross Properties',...
                                  'Combine Tables','Archive','Derive Output','User Tools'};
-            menu.Tools(1).Callback = [repmat({'gcbo;'},[1,2]),...
-                                     repmat({@obj.toolsMenuOptions},[1,4])];
-            menu.Tools(1).Separator = {'off','off','off','off','on','on'}; %separator preceeds item
+            menu.Utilities(1).Callback = [repmat({'gcbo;'},[1,2]),...
+                                     repmat({@obj.utilsMenuOptions},[1,4])];
+            menu.Utilities(1).Separator = {'off','off','off','off','on','on'}; %separator preceeds item
 
-            menu.Tools(2).List = {'Surface area','Width'};
-            menu.Tools(2).Callback = repmat({@obj.toolsMenuOptions},[1,2]);
+            menu.Utilities(2).List = {'Surface area','Width'};
+            menu.Utilities(2).Callback = repmat({@obj.utilsMenuOptions},[1,2]);
 
-            menu.Tools(3).List = {'Add','Edit','Delete'};
-            menu.Tools(3).Callback = repmat({@obj.loadMenuOptions},[1,3]);
+            menu.Utilities(3).List = {'Add','Edit','Delete'};
+            menu.Utilities(3).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics','Tabular Plots',...
@@ -394,8 +400,8 @@ classdef EstuaryDB < muiModelUI
             DrawMap(obj);
         end    
 
-        %% Tools menu -------------------------------------------------------
-        function toolsMenuOptions(obj,src,~)
+        %% Utilities menu -------------------------------------------------------
+        function utilsMenuOptions(obj,src,~)
             %callback functions to run model
             switch src.Text                   
                 case 'Models'

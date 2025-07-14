@@ -19,19 +19,30 @@ function edb_empirical_props(mobj)
 % CoastalSEA (c) June 2025
 %--------------------------------------------------------------------------
 %
-    promptxt = 'Select observed data for empirical relationships:';
-    [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
-    if isempty(cobj), return; end
-    datadst = cobj.Data.(datasets{idd});   %selected observed variable dataset
-    
-    ok = 0;
-    while ok<1
-        promptxt = 'Select hydraulic properties to use:';
-        [cobj,~,datasets,idl] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
-        if isempty(cobj), return; end
-        hydrodst = cobj.Data.(datasets{idl});  %selected hydraulic variable dataset 
-        if any(strcmp(hydrodst.VariableNames,'Hmlw')), ok = 1; end
+    % promptxt = 'Select observed data for empirical relationships:';
+    % [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
+    % if isempty(cobj), return; end
+    % datadst = cobj.Data.(datasets{idd});   %selected observed variable dataset
+    % 
+    % ok = 0;
+    % while ok<1
+    %     promptxt = 'Select hydraulic properties to use:';
+    %     [cobj,~,datasets,idl] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
+    %     if isempty(cobj), return; end
+    %     hydrodst = cobj.Data.(datasets{idl});  %selected hydraulic variable dataset 
+    %     if any(strcmp(hydrodst.VariableNames,'Hmlw')), ok = 1; end
+    % end
+
+        %Bespoke selection
+    answer = questdlg('Select dataset','Empirical','UK','WS','UK');
+    if strcmp(answer,'UK')
+        datadst = mobj.Cases.DataSets.muiTableImport(1).Data.UKdata;
+        hydrodst = mobj.Cases.DataSets.muiTableImport(1).Data.HydroProps;
+    else
+        datadst = mobj.Cases.DataSets.muiTableImport(2).Data.WSdata;
+        hydrodst = mobj.Cases.DataSets.muiTableImport(2).Data.HydroProps;
     end
+
 
     %option to remove selected estuaries from the dataset
     % answer = questdlg('Mask dataset','Mask','Yes','No','Yes');
@@ -71,10 +82,12 @@ function [depvar,plotxt] = getDependentVariable(datadst)
     datdesc = datadst.VariableDescriptions;
     derdesc = {'Intertidal Area','Intertidal Volume'};
     depdesc =[datdesc,derdesc];
-    idd = listdlg("ListString",depdesc,"PromptString",'Select hydraulic variable:',...
-                  'SelectionMode','single','ListSize',[200,300],...
-                  'Name','EDBtools');
-    if isempty(idd), depvar = []; plotxt = []; return; end  
+            % idd = listdlg("ListString",depdesc,"PromptString",'Select hydraulic variable:',...
+            %               'SelectionMode','single','ListSize',[200,300],...
+            %               'Name','EDBtools');
+            % if isempty(idd), depvar = []; plotxt = []; return; end  
+
+    idd = 6;
 
     switch depdesc{idd}
         case 'Intertidal Area'
@@ -100,10 +113,12 @@ function [indvar,plotxt] = getIndependentVariable(hydrodst,datadst,plotxt)
     derdesc = {'Modified prism','Modified prism/Tidal range','Modified basin area'};
     inddesc =[hyddesc,derdesc];
     
-    idh = listdlg("ListString",inddesc,"PromptString",'Select hydraulic variable:',...
-                  'SelectionMode','single','ListSize',[200,300],...
-                  'Name','EDBtools');
-    if isempty(idh), indvar = []; return; end  
+            % idh = listdlg("ListString",inddesc,"PromptString",'Select hydraulic variable:',...
+            %               'SelectionMode','single','ListSize',[200,300],...
+            %               'Name','EDBtools');
+            % if isempty(idh), indvar = []; return; end  
+
+    idh = 6;
     
     switch inddesc{idh}
         case 'Modified basin area'  
@@ -118,19 +133,23 @@ function [indvar,plotxt] = getIndependentVariable(hydrodst,datadst,plotxt)
             plotxt.xlabel = 'Modified basin area (m^2)' ;
             plotxt.varname =sprintf('%s (%s)',plotxt.varname,hydrodst.VariableNames{idh});
         case 'Modified prism'     
-            [indvar,exponent] = modifiedPrism(datadst,hydrodst);
+            [mprism,exponent] = modifiedPrism(datadst,hydrodst);
+            if isempty(mprism), indvar = []; return; end
+            indvar = mprism.La;
             plotxt.xlabel = 'Modified prism (m^3)';
             plotxt.varname = sprintf('%s (n=%.2f)',plotxt.varname,exponent);
         case 'Modified prism/Tidal range'
             [mprism,exponent] = modifiedPrism(datadst,hydrodst);
-            indvar = mprism./datadst.TidalRange;
+            if isempty(mprism), indvar = []; return; end
+            indvar = mprism.Lw./datadst.TidalRange;
             plotxt.xlabel = 'Modified prism/Tidal range (m^2)';
             plotxt.varname = sprintf('%s (n=%.2f)',plotxt.varname,exponent);
         otherwise            
             indvar = hydrodst.(hydrodst.VariableNames{idh}); 
             plotxt.xlabel = hydrodst.VariableLabels{idh};
     end  
-    plotxt.title = sprintf('%s (N=%d)',plotxt.title,length(indvar));
+    nrec = sum(~isnan(indvar));
+    plotxt.title = sprintf('%s (N=%d)',plotxt.title,nrec);
 end
 
 %%
@@ -159,7 +178,8 @@ function empirical_plot(x,y,vartxt)
      xlabel(vartxt.xlabel)
      ylabel(vartxt.ylabel)
      grid on
-     daspect([1 1 1 ]) 
+     axis square
+     xlim(mm); ylim(mm);
      legend('Location','northwest')
      title(vartxt.title)
      subtitle(sprintf('Linear: %s; Power: %s',txtl,txtp))
@@ -168,13 +188,51 @@ end
 %% 
 function [mprism,exponent] = modifiedPrism(datadst,hydrodst)
     %modify the prism to take account of the channel length
-    inp = inputdlg('Convergence exponent, n','Convergence',1,{'0.6'});
+    inp = inputdlg({'Convergence exponent, n','Dronkers gamma','Wind speed'},...
+                                    'Convergence',1,{'0.6','1.1','0'});
+    if isempty(inp), mprism = []; exponent = []; return; end
     exponent = str2double(inp{1});
-    La = 0.35*datadst.Smhw.^exponent.*(1+datadst.Smlw./datadst.Smhw);
-    Del = 1-exp(-datadst.Lchannel*1000./La/2);
-    mprism = hydrodst.Pr./Del;
+    param.gamma = str2double(inp{2});
+    param.Uw = str2double(inp{3});
+
+    % %use first order convergent channel for initial estimate of La
+    % %which we ASSUME scales with the main (longest) channel length
+    % La1 = datadst.Smhw.^exponent; 
+    % %adjust this estimate for short basins (Dronkers)
+    % La = 0.35*La1.*(1+datadst.Smlw./datadst.Smhw);
+
+    %basin length 
+    if strcmp(datadst.Description,'UK dataset')
+        Le = datadst.Lchannel;
+    else
+        Le = datadst.Smhw.^exponent; %main (longest) channel length
+    end    
+
+    nest = height(datadst);
+    La = NaN(nest,1); Lw = La;
+    for i=1:nest
+        if isnan(datadst.TidalRange(i))
+            La(i) = NaN; Lw(i) = NaN;
+        else
+            [La(i),Lw(i)] = edb_convergence_lengths(datadst,Le,param,i);
+            if isnan(La(i))
+                fprintf('%d, ',i)
+            end
+        end
+    end
+    
+    figure('Tag','FigPlot')
+    plot(Le,La,'x')
+    xlabel('Le'); ylabel('La');
+
+    %length correction (1=exp(-Le/La))^-1
+    DelA = 1./(1-exp(-Le./La));
+    mprism.La = DelA.*hydrodst.Pr;
+    DelW = 1./(1-exp(-Le./Lw));
+    mprism.Lw = DelW.*hydrodst.Pr;
 end
-   %h1.Annotation.LegendInformation.IconDisplayStyle = 'off';  
+
+
     
     
     

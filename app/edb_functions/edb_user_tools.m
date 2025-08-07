@@ -21,7 +21,7 @@ function edb_user_tools(mobj)
 %--------------------------------------------------------------------------
 %     
     listxt = {'Table figure','Hydraulic properties','Empirical properties',...
-                                        'Convergence analysis'};
+                                        'Convergence table'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
@@ -36,8 +36,8 @@ function edb_user_tools(mobj)
                 edb_hydraulic_props(mobj);
             case 'Empirical properties'
                 edb_empirical_props(mobj);
-            case 'Convergence analysis'
-                get_ConvergenceAnalysis(mobj);
+            case 'Convergence table'
+                get_ConvergenceTable(mobj);
         end
     end
 end
@@ -58,7 +58,7 @@ end
 
 %% additional functions here or external-----------------------------------
 
-function get_ConvergenceAnalysis(mobj)
+function get_ConvergenceTable(mobj)
     %add convergence analysis results as a dataset to existing case
     getdialog('This option is specific to along-channel vector datasets')
     muicat = mobj.Cases;                      %handle to model catalogue
@@ -78,9 +78,10 @@ function get_ConvergenceAnalysis(mobj)
         [cobj,~] = getCase(muicat,caserec(i));
         dst(i) = cobj.Data.(datasetname);     %datasets to be included in output
         %check that data is vector
-        if ~isvector(dst(i).xCh), dst(i) =[]; end
+        if ~isvector(cobj.Data.(datasetname)(1,1)), dst(i) =[]; end
     end
-    
+    if isempty(dst), return; end
+
     cnvdst = edb_regression_analysis(dst);
     anobj = muiTableImport;  
     %suggest output description but allow user to edit

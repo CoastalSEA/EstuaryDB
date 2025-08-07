@@ -28,7 +28,7 @@ function cnvdst = edb_regression_analysis(dst)
     rownames{nrec,1} = [];
     for i=1:nrec        
         d = dst(i);
-        x = d.xCh;  
+        x = d.Dimensions.X;
         rownames{i} = d.Description;
         for j=1:3
             for k=1:3
@@ -49,6 +49,9 @@ function cnvdst = edb_regression_analysis(dst)
                                                     'DSproperties',dsp);
     cnvdst.Dimensions.Var = ["Width","Area","Depth"];
     cnvdst.Dimensions.WL = ["LW","MT","HW"];
+    cnvdst.Source = 'edb_regression_analysis';
+    cnvdst.MetaData = 'Along-channel regression at LW, MT and HW';
+    cnvdst.UserData = [];       %unused 
 end
 
 %%

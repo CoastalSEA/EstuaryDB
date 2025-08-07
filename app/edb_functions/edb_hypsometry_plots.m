@@ -54,7 +54,13 @@ function get_ConvergencePlot(mobj)
                             'SelectionMode','single','ListSize',[160,200]);
         if isempty(idd), return; end
     end
-    dst = edb_convergence_data(cobj,datasets{idd});
+    srcdst = cobj.Data.(datasets{idd});
+    if any(contains(srcdst.VariableNames,'hLW'))
+        dst = srcdst;
+    else
+        dst = edb_convergence_data(cobj,datasets{idd});
+    end
+
     if isempty(dst), return; end
     edb_regression_plot(cobj,dst);
 end

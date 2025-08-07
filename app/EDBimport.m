@@ -15,7 +15,8 @@ classdef EDBimport < GD_ImportData
 %   as used for profiles in CoastalTools. Multiple tables can be added
 %   to a location for vector data, bathymetry, images, etc.
 % SEE ALSO
-%   uses dstable and dscatalogue and inherits muiDataSet 
+%   uses dstable and dscatalogue and inherits muiDataSet via GD_ImportData
+%   and GDinterface
 %
 % Author: Ian Townend
 % CoastalSEA (c) Oct 2024
@@ -65,7 +66,7 @@ classdef EDBimport < GD_ImportData
         function obj = loadData(muicat)
             %load user data set from one or more files
             % mobj - handle to modelui instance 
-            listxt = {'Bathymetry','Surface area','Width','Image','GeoImage'};
+            listxt = {'Bathymetry','Surface area','Width','Image','GeoImage','Other'};
             selection = listdlg('PromptString','Select data type to import:',...
                 'ListString',listxt,'ListSize',[140,100],'SelectionMode','single');
             if isempty(selection), return; end
@@ -81,6 +82,11 @@ classdef EDBimport < GD_ImportData
                     formatfile = 'edb_image_format';
                 case 5 %geoimage
                     formatfile = 'gd_geoimage_format';
+                case 6 %user selects format file
+                    [fname,~,nfiles] = getfiles('MultiSelect','off',...
+                        'FileType',{'*.m'},'PromptText','Select format file:');
+                    if nfiles<1, return; end
+                    [~,formatfile] = fileparts(fname);
             end
 
             obj = EDBimport(formatfile);   
@@ -243,7 +249,7 @@ classdef EDBimport < GD_ImportData
                         nrec = length(dstr.Width.Wr);
                         for j=1:nrec
                             ncol = length(dstr.Width.Xr{j});
-                            Wr{j} = reshape(dstr.Width.Wr{j},1,ncol,nrow);
+                            Wr{j} = reshape(dstr.Width.Wr{j},1,ncol,nrow); %#ok<AGROW>
                         end
                         width = [width,Wr]; %#ok<AGROW> 
                     else
@@ -753,7 +759,7 @@ function dsp = loadDSPproptables(dspvars,nr)
         end
 
 %%
-        function tabPlot(obj,src)
+        function tabPlot(obj,~,src)
             %generate plot for display on Q-Plot tab
             funcname = 'getPlot';
             datasetname = getDataSetName(obj);

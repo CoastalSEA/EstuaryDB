@@ -15,7 +15,10 @@ function output = edb_zm_data_format(funcall,varargin)
 %   output - function specific output
 % NOTES
 %   ZM analysed UK estuaries using the SEAZONE bathymetry. This file loads
-%   the along-channel data
+%   the along-channel data. File format is:
+%           id	w-LW	h-LW	w-HW	h=HW	w-MTL	h-MTL	x	csa-LW	csa-HW	csa-MTL
+%           3	40.216691	0	231.289526	0.453168	135.753109	0.38491	11400	0	104.8130119	52.25272919
+%           4	59.453982	0	855.704152	1.062226	457.579067	0.993116	11250	0	908.9511986	454.4290927
 %
 % Author: Ian Townend
 % CoastalSEA (c) Oct 2024
@@ -52,15 +55,19 @@ end
 %--------------------------------------------------------------------------
 % getData
 %--------------------------------------------------------------------------
-function newdst = getData(obj,filename) %#ok<INUSD>
+function newdst = getData(obj,filename,metatxt) %#ok<INUSD>
     %read and load a data set from a file
+    [~,estname] = fileparts(filename);      %estuary name defined by filename
     dsp = setDSproperties;                  %set metadata
     %load table and clean data to required format
     itable = readtable(filename);
-    itable = cleandata(itable,filename);
-    idx = 1:height(itable);
-    dst = dstable(itable,'RowNames',idx,'DSproperties',dsp);
-    dst.Description = itable.Properties.Description;
+    [inp,X] = cleandata(itable,filename);
+    dst = dstable(inp{:},'RowNames',{estname},'DSproperties',dsp);
+    dst.Dimensions.X = X; 
+    dst.Description = estname;
+    dst.Source = filename;
+    dst.MetaData = metatxt;
+    dst.UserData = [];       %unused  
     newdst.ZMdata = dst;                    %ZMdata is the dataset name for this format
 end
 %%
@@ -75,33 +82,31 @@ function dsp = setDSproperties()
     %accept most data types but the values in each vector must be unique
     %struct entries are cell arrays and can be column or row vectors
     dsp.Variables = struct(...                      
-        'Name',{'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW','xCh'},...
+        'Name',{'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW'},...
         'Description',{'Depth at Low Water','Depth at Mean Tide','Depth at High Water',...
                        'Width at Low Water','Width at Mean Tide','Width at High Water',...
-                       'CSA at Low Water','CSA at Mean Tide','CSA at High Water',...
-                       'Distance'},...
-        'Unit',{'m','m','m','m','m','m','m^2','m^2','m^2','m'},...
+                       'CSA at Low Water','CSA at Mean Tide','CSA at High Water'},...
+        'Unit',{'m','m','m','m','m','m','m^2','m^2','m^2'},...
         'Label',{'Hydraulic depth (m)','Hydraulic depth (m)','Hydraulic depth (m)',...
                  'Width (m)','Width (m)','Width (m)',...
-                 'Cross-sectional area (m^2)','Cross-sectional area (m^2)','Cross-sectional area (m^2)',...
-                 'Distance from mouth (m)'},...
-        'QCflag',repmat({'data'},1,10)); 
+                 'Cross-sectional area (m^2)','Cross-sectional area (m^2)','Cross-sectional area (m^2)'},...
+        'QCflag',repmat({'data'},1,9)); 
     dsp.Row = struct(...
-        'Name',{'XIndex'},...
-        'Description',{'X-Index'},...
+        'Name',{'Location'},...
+        'Description',{'Estuary'},...
         'Unit',{'-'},...
-        'Label',{'X-index'},...
-        'Format',{''});        
+        'Label',{'Estuary'},...
+        'Format',{''});                    
     dsp.Dimensions = struct(...    
-        'Name',{''},...
-        'Description',{''},...
-        'Unit',{''},...
-        'Label',{''},...
-        'Format',{''});   
+        'Name',{'X'},...
+        'Description',{'Distance'},...
+        'Unit',{'m'},...
+        'Label',{'Distance to mouth (m)'},...
+        'Format',{''}); 
 end
 
 %%
-function datable = cleandata(datable,fname)
+function [inp,X] = cleandata(datable,fname)
     %ZM data has no header and the following variables (columns)
     %
     %correct issues in data and re-order variables
@@ -125,10 +130,14 @@ function datable = cleandata(datable,fname)
         datable{idx,i} = 0.5;
         datable{idx,i+6} = 0.5*datable{idx,i+3};
     end
+    X = datable{:,10};
+    datable(:,10) = [];
+    inp = arrayfun(@(i) datable{:,i}', 1:width(datable), 'UniformOutput', false);
+
     %check that distance starts at zero
-    if datable{1,10}>0
-        datable{:,10} = datable{:,10}-datable{1,10};
-    end    
+    if X(1)>0
+        X = X-X(1);
+    end  
 end
 
 %%
@@ -152,8 +161,8 @@ function ok = getPlot(obj,src,dsetname)
     idv = idv:idv+2;
     %test for a vector data set
     if isvector(dst.(dst.VariableNames{idv(1)}))
-        idx = find(strcmp(dst.VariableNames,'xCh')); %index of distance from mouth
-        pmax = vectorplot(ax,dst,props,idv,idx);
+        %idx = find(strcmp(dst.VariableNames,'xCh')); %index of distance from mouth
+        pmax = vectorplot(ax,dst,props,idv);
 
         %add text box with min max range of variable and length
         boxtxt = sprintf('Length: %.0f m\nMax at LW: %.1e, MT: %.1e, HW: %.1e',pmax.x,pmax.var{:});
@@ -177,10 +186,10 @@ function output = dataQC(ob1j) %#ok<INUSD>
     output = [];    %if no QC implemented in dataQC
 end
 %%
-function [pmax] = vectorplot(ax,dst,props,idv,idx)
+function [pmax] = vectorplot(ax,dst,props,idv)
     %plot selected variable for all locations 
     %props - array of props, same size as idv to define legend
-    Xvar = dst.(dst.VariableNames{idx});
+    Xvar = dst.Dimensions.X;
     xvar = Xvar/max(Xvar);
     hold on
     for i=1:length(idv)
@@ -195,7 +204,7 @@ function [pmax] = vectorplot(ax,dst,props,idv,idx)
     pmax.x = max(Xvar);
     hold off
     legend
-    xlabel(sprintf('Normalised %s',dst.VariableLabels{idx}))
+    xlabel(sprintf('Normalised %s',dst.DimensionLabels{1}))
     ylabel(sprintf('Normalised %s',dst.VariableLabels{idv(1)}))
     title(['Case: ',dst.Description])
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot  

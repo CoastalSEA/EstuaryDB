@@ -77,6 +77,7 @@ function res = getsubplot(ax,x,y,labels,res)
     markers = {':k','-.k','--k'};
     maxy = max(max(y))*1.1;
     hold on
+    Ltxt = ['L',lower(labels.y(1))];  %label for convergence length
     for i=1:size(y,2)
         plot(ax,x/1000,y(:,i));
         ylim([0,maxy]);
@@ -84,9 +85,9 @@ function res = getsubplot(ax,x,y,labels,res)
         hp = plot(ax,ex/1000,ey,markers{i});
         set(get(get(hp,'Annotation'),'LegendInformation'),...
                     'IconDisplayStyle','off'); % Exclude line from legend
-        labels.leg{i} = sprintf('%s: a=%-3.2e, b=%-3.2e, R^2=%-3.2g',...
-                                                labels.leg{i},a,1/b,Rsq); 
-        res = [res;{x(end)-x(1),y(1,i),a,1/b,Rsq,mean(y(:,i)),std(y(:,i))}];                                 
+        labels.leg{i} = sprintf('%s: a=%-3.2e, %s=%-3.2e, R^2=%-3.2g',...
+                                                labels.leg{i},a,Ltxt,1/b,Rsq); 
+        res = [res;{x(end)-x(1),y(1,i),a,1/b,Rsq,mean(y(:,i)),std(y(:,i))}];                                 %#ok<AGROW>
     end
     hold off
     xlabel(labels.x);

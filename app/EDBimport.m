@@ -87,6 +87,7 @@ classdef EDBimport < GD_ImportData
                         'FileType',{'*.m'},'PromptText','Select format file:');
                     if nfiles<1, return; end
                     [~,formatfile] = fileparts(fname);
+                    % formatfile = 'edb_zm_data_format';
             end
 
             obj = EDBimport(formatfile);   

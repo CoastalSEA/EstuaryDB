@@ -62,7 +62,7 @@ function get_ConvergencePlot(mobj)
     end
 
     if isempty(dst), return; end
-    edb_regression_plot(cobj,dst);
+    edb_convergence_plot(cobj,dst);
 end
 
 %%

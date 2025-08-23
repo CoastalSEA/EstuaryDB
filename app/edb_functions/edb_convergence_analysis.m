@@ -33,20 +33,21 @@ function cnvdst = edb_convergence_analysis(dst)
         d = dst(i);
         x = d.Dimensions.X;
         rownames{i} = d.Description;
-        [n,m] = selectRange(x,d,var);
-        t1 = table(x(n),x(m),'RowNames',rownames(i),'VariableNames', {'Start-X', 'End_X'});
+        [n,m] = edb_convergence_limits(x,d,var);
+        t1 = table(x(n),x(m),x(end),'RowNames',rownames(i),...
+                             'VariableNames', {'Start-X','End_X','Lobs'});
         rangetable = [rangetable;t1]; %#ok<AGROW>
 
         for j=1:3
             for k=1:3
                 y = d.(var{j,k});
-                [a(i,j,k),b,Rsq(i,j,k),~,~,~] = regression_model(x(n:m),y(n:m),'Exponential');
+                [a(i,j,k),b,Rsq(i,j,k),~,~,~] = regression_model(x(n:m)-x(n),y(n:m),'Exponential');
                 if isinf(Rsq(i,j,k)), Rsq(i,j,k) = 0; end
                 L(i,j,k) = 1/b;
-                Vo(i,j,k) = y(1);
-                Le(i,j,k) = x(find(y>0,1,'last'))-x(1);
-                emean(i,j,k) = mean(y,'omitnan');
-                estd(i,j,k) = std(y,'omitnan');
+                Vo(i,j,k) = y(n);
+                Le(i,j,k) = x(find(y>0,1,'last'))-x(n);
+                emean(i,j,k) = mean(y(n:m),'omitnan');
+                estd(i,j,k) = std(y(n:m),'omitnan');
             end
         end
     end
@@ -95,41 +96,12 @@ function dsp = getDSproperties()
 end
 
 %%
-function [n,m] = selectRange(x,dst,var)
-    %use select figure to allow user to define X start and end range
-    n = 1; m = length(x);  %default values
-    dimnames = dst.DimensionNames;
-    dim1 = dst.Dimensions.(dimnames{1});
-    %dim2 = dst.Dimensions.(dimnames{2});
-
-    hf = figure('Name','PlotFig');
-    ax = axes(hf);
-    hold on
-    for i=1:3
-        plot(ax,x,dst.(var{1,i}),'DisplayName',var{1,i})
-    end
-    hold off
-    xlabel('Distance from mouth')
-    ylabel('Area (m^2)')
-    legend
-
-    inp = inputdlg({'Start distance','End distance'},'Range',1,...
-                                            {'0',num2str(x(end))});
-    if isempty(inp), return; end %use default values - full data set
-    xstart = str2double(inp{1});
-    xend = str2double(inp{2});
-    [~, n] = min(abs(x - xstart));
-    [~, m] = min(abs(x - xend));
-    delete(hf)
-end
-
-%%
 function T = emptyTable()
     %create an empty table for the ranges used
     % Define number of rows (zero for empty), variable types, and names
-    sz = [0 2];  % 0 rows, 2 variables
-    varTypes = {'double', 'double'};
-    varNames = {'Start-X', 'End_X'};
+    sz = [0 3];  % 0 rows, 3 variables
+    varTypes = {'double', 'double', 'double'};
+    varNames = {'Start-X', 'End_X',  'Lobs'};
     
     % Create the empty table
     T = table('Size', sz, 'VariableTypes', varTypes, 'VariableNames', varNames);

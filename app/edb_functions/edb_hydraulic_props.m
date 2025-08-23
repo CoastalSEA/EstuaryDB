@@ -27,17 +27,19 @@ function edb_hydraulic_props(mobj)
     [cobj,classrec,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
     if isempty(cobj), return; end
     dst = cobj.Data.(datasets{idd});  %selected dataset
+    if ~matches(dst.VariableNames,'Vmlw'), return; end
     Hmlw = dst.Vmlw./dst.Smlw;
     Hmtl = dst.Vmtl./dst.Smtl;
     Hmhw = dst.Vmhw./dst.Smhw;
     Pr = dst.Vmhw-dst.Vmlw;
     PrTr = Pr./dst.TidalRange;
+    PrSb = Pr./dst.Smhw;
 %     La1 = 0.35*dst.Smhw.^n1.*(1+dst.Smlw./dst.Smhw);
 %     La2 = 0.35*dst.Smhw.^n2.*(1+dst.Smlw./dst.Smhw);
 %     lamda = sqrt(9.81*Hmtl).*12.4*3600;
 
     dsp = hydraulic_dsprops(); %set metadata properties
-    dvdst = dstable(Hmlw,Hmtl,Hmhw,Pr,PrTr,'RowNames',dst.RowNames,...
+    dvdst = dstable(Hmlw,Hmtl,Hmhw,Pr,PrTr,PrSb,'RowNames',dst.RowNames,...
                                     'DSproperties',dsp);
     
     answer = questdlg('Add dataset to existing case or create a new one?','EDB derived','Add','New','New');
@@ -66,18 +68,20 @@ function dsp = hydraulic_dsprops()
     %define the variables in the dataset
     dsp = blank_dsprops();
     %variables to be included
-    dsp.Variables.Name = {'Hmlw','Hmtl','Hmhw','Pr','PrTr'};
+    dsp.Variables.Name = {'Hmlw','Hmtl','Hmhw','Pr','PrTr','PrSb'};
     dsp.Variables.Description = {'Depth at Low Water',...
                                  'Depth at Mean Tide',...
                                  'Depth at High Water',...
                                  'Tidal prism',...
-                                 'Tidal prism/Tidal range'};
-    dsp.Variables.Unit = {'m','m','m','m3','m2'};
+                                 'Tidal prism / Tidal range',...
+                                 'Tidal prism / Basin area'};
+    dsp.Variables.Unit = {'m','m','m','m3','m2','m'};
     dsp.Variables.Label = {'Hydraulic depth (m)',...
                            'Hydraulic depth (m)',...
                            'Hydraulic depth (m)',...
-                           'Tidal Prism, (m^3)',...
-                           'Tidal Prism/Tidal Range, (m^2)'};
+                           'Tidal Prism (m^3)',...
+                           'Tidal Prism / Tidal Range (m^2)',...
+                           'Tidal Prism / Basin area (m)'};
     dsp.Variables.QCflag = repmat({'derived'},1,length(dsp.Variables.Name));
 end
 %%

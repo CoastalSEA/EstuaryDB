@@ -72,6 +72,7 @@ function get_ConvergenceTable(mobj)
     if isempty(cobj), return; end
     datasetname = selectDataset(muicat,cobj); %assume all selected cases
     if isempty(datasetname), return; end      %use same dataset name
+    % datasetname = 'ZMdata';
     nrec = length(caserec);
     
     [cobj,~] = getCase(muicat,caserec(1));

@@ -22,7 +22,7 @@ function [La,Lw] = edb_convergence_lengths(dst,Le,param,idx)
 %         g - acceleration due to gravity (m/s2)
 %   if waves are included:
 %         Uw - wind speed (m/s)
-%         zw - elevation of wind speed (m) - default is 10m
+%         zw - elevation of wind speed (m) - default is 10mz
 
 inp = form_solver_parameters(dst,Le,param,idx);
 %intial guess of hydraulic depth, hm
@@ -48,7 +48,7 @@ end
 
 %%
 function fy = fun_hm(inp,hme)
-    % Find the hydraulic depth based on a balance of eorsion and deposition 
+    % Find the hydraulic depth based on a balance of erosion and deposition 
     % with Uc determined from the hydraulics and Lw from equating
     % hydraulic and geometric prism estimates
     r = hypsometry_exponent(inp.amp,hme,inp.gamma,inp.isDronk);

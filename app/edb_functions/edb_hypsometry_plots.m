@@ -33,7 +33,7 @@ listxt = {'Convergence plot','Surface area','Reach Width plot','Reach CSA plot'}
 
         switch listxt{selection}
             case 'Convergence plot'
-                get_ConvergencePlot(mobj); %calls edb_regression_plot
+                get_ConvergencePlot(mobj); %calls edb_convergence_plot
             case {'Reach Width plot','Reach CSA plot'}
                 get_reachPlot(mobj,listxt{selection});
             case 'Surface area'
@@ -44,16 +44,16 @@ end
 
 %%
 function get_ConvergencePlot(mobj)
-    getdialog('This option is specific to Along-Channel datasets')
+    getdialog('This option is specific to Along-Channel datasets',[],1)
     cobj = selectCaseObj(mobj.Cases,[],{'EDBimport'},'Select Along-Channel dataset:');
     if isempty(cobj), return; end
     datasets = fields(cobj.Data);
     idd = 1;
-    if length(datasets)>1
-        idd = listdlg('PromptString','Select table:','ListString',datasets,...
-                            'SelectionMode','single','ListSize',[160,200]);
-        if isempty(idd), return; end
-    end
+    % if length(datasets)>1
+    %     idd = listdlg('PromptString','Select table:','ListString',datasets,...
+    %                         'SelectionMode','single','ListSize',[160,200]);
+    %     if isempty(idd), return; end
+    % end
     srcdst = cobj.Data.(datasets{idd});
     if any(contains(srcdst.VariableNames,'hLW'))
         dst = srcdst;
@@ -62,7 +62,7 @@ function get_ConvergencePlot(mobj)
     end
 
     if isempty(dst), return; end
-    edb_convergence_plot(cobj,dst);
+    edb_convergence_plot(cobj,dst)
 end
 
 %%

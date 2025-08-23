@@ -1,4 +1,4 @@
-function edb_convergence_plot(obj,dst)                       
+function res = edb_convergence_plot(obj,dst)                       
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -13,6 +13,7 @@ function edb_convergence_plot(obj,dst)
 %   dst - dstable with the along channel variables at defined elevations
 % OUTPUT
 %   figure with four subplots of width,csa,depth and section layout
+%   res - table of values derived for each plot
 % NOTES
 %    selected case must have variables that use the ZM SeaZone data set
 %    conventions, with variables named:
@@ -24,8 +25,8 @@ function edb_convergence_plot(obj,dst)
 % CoastalSEA (c) May 2024
 %--------------------------------------------------------------------------
 %   
-    casedesc = sprintf('%s using %s tidal range',dst.Description,dst.MetaData);
-    h_pan = panelFigure('Convergence plots',casedesc);    
+    casedesc = sprintf('%s using %s',dst.Description,dst.MetaData);
+    [h_pan,h_lbl] = panelFigure('Convergence plots',casedesc);    
     lab.x = 'Distance from mouth (km)';
     %lab.leg = {'Low water','Mean tide','High water'};
     lab.leg = {'LW','MT','HW'};
@@ -49,45 +50,55 @@ function edb_convergence_plot(obj,dst)
         set(ax1,'XTickLabel','','YTickLabel','')
     end
 
+    var = {'aLW','aMT','aHW';...
+           'wLW','wMT','wHW';...
+           'hLW','hMT','hHW'};    
+    [n,m] = edb_convergence_limits(xCh,dst,var);
+
     ax2 = subplot(2,2,2,'Parent',h_pan);
     lab.y = 'Width (m)';
-    res = getsubplot(ax2,xCh,[dst.wLW',dst.wMT',dst.wHW'],lab,res);
+    res = getsubplot(ax2,xCh,[dst.wLW',dst.wMT',dst.wHW'],lab,'Lw',res,n,m);
     %title(ax1,casedesc);
     
     ax3 = subplot(2,2,3,'Parent',h_pan);
     lab.y = 'Cross-section area (m^2)';
-    res = getsubplot(ax3,xCh,[dst.aLW',dst.aMT',dst.aHW'],lab,res);
+    res = getsubplot(ax3,xCh,[dst.aLW',dst.aMT',dst.aHW'],lab,'La',res,n,m);
     
     ax4 = subplot(2,2,4,'Parent',h_pan);
     lab.y = 'Hydraulic depth (m)';
-    res = getsubplot(ax4,xCh,[dst.hLW',dst.hMT',dst.hHW'],lab,res);
+    res = getsubplot(ax4,xCh,[dst.hLW',dst.hMT',dst.hHW'],lab,'Lh',res,n,m);
     
-    %add a summary line to res to ease creation of consolidated data set
-    res = [res;{res{1,1}/1000,res{2,2},res{2,3},res{2,4},res{5,2},...
-                                                        res{5,3},res{5,4}}];    
-    res.Properties.VariableNames = {'Lobs','v0obs','v0','Lv','vR2',...
-                                                       'v_mean','v_sdev',};
+    %add variable names and row names 
+    res.Properties.VariableNames = {'Lobs','x0','Lx','v0obs','v0fit','Lconv','R2',...
+                                                       'v_mean','v_sdev'};
     res.Properties.RowNames = {'wLW','wMT','wHW','aLW','aMT','aHW',...
-                                                   'hLW','hMT','hHW','sum'};
+                                                   'hLW','hMT','hHW'};
+    res.Properties.UserData = struct('Lobs',res.Lobs(1),'x0',res.x0(1),'Lx',res.Lx(1));
+
+    h_lbl.String = sprintf('Lobs = %.1f; x0 = %.1f; Lx = %.1f',...
+                                        res.Lobs(1),res.x0(1),res.Lx(1));
+    res.Lobs = []; res.x0 = []; res.Lx = []; 
 end
 
 %%
-function res = getsubplot(ax,x,y,labels,res)
+function res = getsubplot(ax,x,y,labels,Ltxt,res,n,m)
     %generate subplot
     markers = {':k','-.k','--k'};
     maxy = max(max(y))*1.1;
     hold on
-    Ltxt = ['L',lower(labels.y(1))];  %label for convergence length
+    % Ltxt = ['L',lower(labels.y(1))];  %label for convergence length
+
     for i=1:size(y,2)
         plot(ax,x/1000,y(:,i));
         ylim([0,maxy]);
-        [a,b,Rsq,ex,ey,~] = regression_model(x,y(:,i),'Exponential');
-        hp = plot(ax,ex/1000,ey,markers{i});
+        [a,b,Rsq,ex,ey,~] = regression_model(x(n:m)-x(n),y(n:m,i),'Exponential');
+        hp = plot(ax,(ex+x(n))/1000,ey,markers{i});
         set(get(get(hp,'Annotation'),'LegendInformation'),...
                     'IconDisplayStyle','off'); % Exclude line from legend
-        labels.leg{i} = sprintf('%s: a=%-3.2e, %s=%-3.2e, R^2=%-3.2g',...
+        labels.leg{i} = sprintf('%s: a = %-3.2e, %s = %-3.2e, R^2 = %-3.2g',...
                                                 labels.leg{i},a,Ltxt,1/b,Rsq); 
-        res = [res;{x(end)-x(1),y(1,i),a,1/b,Rsq,mean(y(:,i)),std(y(:,i))}];                                 %#ok<AGROW>
+        res = [res;{x(end)-x(1),x(n),x(m)-x(n),y(n,i),a,1/b,Rsq,...
+                                            mean(y(n:m,i)),std(y(n:m,i))}];  %#ok<AGROW>
     end
     hold off
     xlabel(labels.x);
@@ -99,7 +110,7 @@ function res = getsubplot(ax,x,y,labels,res)
 end
 
 %%
-function h_pan = panelFigure(plotname,titletxt)
+function [h_pan,h_lbl] = panelFigure(plotname,titletxt)
     %create figure and add a panel and title
     hf = figure('Name',plotname,'Units','normalized',...
                                             'Resize','on','Tag','PlotFig');                                       
@@ -116,4 +127,9 @@ function h_pan = panelFigure(plotname,titletxt)
     else
         h_pan = hf;
     end
+    %create a textbox to hold the subtitle (subtitle not an option with uipanel)
+    h_lbl = annotation(h_pan, 'textbox','String', "subtitle", ...
+                    'HorizontalAlignment','center','EdgeColor','none');
+    h_lbl.FontSize = 10;
+    h_lbl.Position = [0,1-h_lbl.Position(4),1,h_lbl.Position(4)];
 end

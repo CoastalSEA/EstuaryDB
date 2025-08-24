@@ -79,7 +79,7 @@
 %% Grid Functions
 % Functions used to manipulate cartesian grids can be found in the
 % _muiAppGridFcns_ folder and include the following:
-%%
+%% Core grid functions
 % * *gd_ax_dir*
 % - check direction of grid axes and reverse if descending, OR
 % find grid orientation using ishead and direction of x-axis, OR
@@ -114,6 +114,9 @@
 % - convert an array of structs with x,y (and z) fields to a [Nx2] or [Nx3] 
 % array of points, or a single stuct with vectors for the x, y (and z)
 % fields.
+% * *gd_read_image.m*
+% - read cdata for an image from an ASCII text file, with the positional
+% information.
 % * *gd_readshapefile.m*
 % - read the x and y coordinates from a shape file. Lines are concatenated
 % and separated by NaNs in single x and y vectors. Suitable for reading
@@ -136,23 +139,28 @@
 % * *gd_subgrid*
 % - extract a subdomain from a grid and return the extracted
 % grid and the source grid indices of the bounding rectangle.
+% * *gd_write_image.m*
+% - write image to a jpg or tif file.
+% * *gd_write_image_ascii.m*
+% - write cdata from an image to an ASCII text file, with the positional 
+% information.
+% * *gd_write_tiff.m*
+% - write the data from an image to a tif file including the position
+% information.
 % * *gd_xy2sn*
 % - map grid from cartesian to curvilinear coordinates with option to return 
 % the elevations on the source cartesian grid, or as a curvilinear grid.
 % * *gd_sn2xy*
 % - map grid from curvilinear to cartesian coordinates.
 
-%% 
-% *Additional utility functions*
-%%
+%% Additional utility functions
 % * *gd_lineongrid_plot*
 % - plots a defined line onto a countour or surface plot of a grid (e.g a
 %   channel centre-line).
 % * *gd_user_function*
 % - function for user to define bespoke use of grids and grid tools.
 
-%%
-% *Functions from Matlab(TM) Exchange Forum*
+%% Functions from Matlab(TM) Exchange Forum
 %%
 % * *a_star*
 % - implements the A* search algorithm to find the shortest path given

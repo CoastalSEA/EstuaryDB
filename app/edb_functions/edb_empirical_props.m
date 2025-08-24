@@ -75,7 +75,7 @@ function edb_empirical_props(mobj)
         if isempty(indvar), ok = 1; continue; end   
         plotxt.xlabel = plotxt.label;
         %add cases description to title
-        nrec = sum(~isnan(indvar));
+        nrec = sum(~isnan(depvar));
         plotxt.title = sprintf('%s (N=%d)',datadst.Description,nrec);
 
         if ~isempty(ide)
@@ -107,11 +107,11 @@ function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
     %set the input variable based on user selection
     datadesc = datadst.VariableDescriptions;
     hydrodesc = hydrodst.VariableDescriptions;
-    derdesc = {'Intertidal Area','Intertidal Volume'};
+    derdesc = {'Intertidal Area','Intertidal Volume','Intertidal Depth','Intertidal Box'};
     vardesc =[datadesc,hydrodesc,derdesc];
     promptxt = sprintf('Select %s',plotxt.promptxt);
     idv = listdlg("ListString",vardesc,"PromptString",promptxt,...
-                  'SelectionMode','single','ListSize',[200,350],...
+                  'SelectionMode','single','ListSize',[200,380],...
                   'Name','EDBtools');
     if isempty(idv), var = []; plotxt = []; return; end  
 
@@ -123,6 +123,16 @@ function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
             var = datadst.Vmhw-datadst.Vmlw-datadst.Smlw.*datadst.TidalRange; 
             var(var<0) = NaN;
             plotxt.label = 'Intertidal volume (m^3)' ;
+        case 'Intertidal Depth'
+            Sfl = datadst.Smhw-datadst.Smlw; 
+            Vfl = datadst.Vmhw-datadst.Vmlw-datadst.Smlw.*datadst.TidalRange; 
+            Vfl(Vfl<0) = NaN;
+            var = Vfl./Sfl;
+            plotxt.label = 'Intertidal depth (m)' ;
+        case 'Intertidal Box'
+            Sfl = datadst.Smhw; 
+            var = Sfl.*datadst.TidalRange;
+            plotxt.label = 'Intertidal box - 2a.Sfl (m)' ;
         case hydrodesc
             var = hydrodst.(hydrodst.VariableNames{idv-length(datadesc)}); 
             plotxt.label = hydrodst.VariableLabels{idv-length(datadesc)};        
@@ -130,7 +140,7 @@ function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
             var = datadst.(datadst.VariableNames{idv}); 
             plotxt.label = datadst.VariableLabels{idv};  
     end
-    varnames = [datadst.VariableNames,hydrodst.VariableNames,{'Sfl','Vfl'}];
+    varnames = [datadst.VariableNames,hydrodst.VariableNames,{'Sfl','Vfl','Hfl','Vbox'}];
     plotxt.name = varnames{idv};
 end
 
@@ -143,7 +153,7 @@ function [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt)
                'Estimated Flat area','Estimated Flat volume'};
     promptxt = sprintf('Select %s',plotxt.promptxt);
     idv = listdlg("ListString",vardesc,"PromptString",promptxt,...
-                  'SelectionMode','single','ListSize',[200,350],...
+                  'SelectionMode','single','ListSize',[200,160],...
                   'Name','EDBtools');
     if isempty(idv), var = []; plotxt = []; return; end 
 
@@ -200,7 +210,7 @@ function idh = selectDepth(hydrodst)
     %select the hydraulic depth to use
     hydrodesc = hydrodst.VariableDescriptions;
     idh = listdlg("ListString",hydrodesc(1:3),"PromptString",'Select hydraulic depth:',...
-                  'SelectionMode','single','ListSize',[200,300],...
+                  'SelectionMode','single','ListSize',[200,100],...
                   'Name','EDBtools');
 end
 
@@ -212,123 +222,6 @@ function plotxt = setVarName(plotxt,hydrodst,idh)
         plotxt.varname =sprintf('%s (%s)',plotxt.varname,hydrodst.VariableNames{idh});
     end
 end
-
-%%
-% function [depvar,plotxt] = getDependentVariable(hydrodst,datadst)
-%     %select either a data variable or a derived variable
-%     datdesc = datadst.VariableDescriptions;
-%     hyddesc = hydrodst.VariableDescriptions;
-%     derdesc = {'Intertidal Area','Intertidal Volume'};
-%     depdesc =[datdesc,hyddesc,derdesc];
-%         idd = listdlg("ListString",depdesc,"PromptString",'Select hydraulic variable:',...
-%                       'SelectionMode','single','ListSize',[200,350],...
-%                       'Name','EDBtools');
-%         if isempty(idd), depvar = []; plotxt = []; return; end  
-% 
-%     % idd = 6;
-% 
-%     switch depdesc{idd}
-%         case 'Intertidal Area'
-%             depvar = datadst.Smhw-datadst.Smlw; 
-%             plotxt.ylabel = 'Intertidal area (m^2)' ;
-%         case 'Intertidal Volume'
-%             depvar = datadst.Vmhw-datadst.Vmlw-datadst.Smlw.*datadst.TidalRange; 
-%             depvar(depvar<0) = NaN;
-%             plotxt.ylabel = 'Intertidal volume (m^3)' ;
-%         case hyddesc
-%             depvar = hydrodst.(hydrodst.VariableNames{idd-length(datdesc)}); 
-%             plotxt.ylabel = hydrodst.VariableLabels{idd-length(datdesc)};
-%         otherwise
-%             depvar = datadst.(datadst.VariableNames{idd}); 
-%             plotxt.ylabel = datadst.VariableLabels{idd};
-%     end
-%     depnames = [datadst.VariableNames,hydrodst.VariableNames,{'Sfl','Vfl'}];
-%     plotxt.varname = depnames{idd};
-%     plotxt.title = datadst.Description; 
-% end
-% 
-% %%
-% function [indvar,plotxt] = getIndependentVariable(hydrodst,datadst,classdst,plotxt)
-%     %select either a hydraulic variable or a derived variable
-%     hyddesc = hydrodst.VariableDescriptions;
-%     derdesc = {'Modified prism','Modified prism/Tidal range',...
-%                'Prism/Basin area','Modified prism/Basin area',...
-%                'Basin area','Modified Basin area',...
-%                'Estimated Flat area','Estimated Flat volume'};
-%     inddesc =[hyddesc,derdesc];
-% 
-%         idh = listdlg("ListString",inddesc,"PromptString",'Select hydraulic variable:',...
-%                       'SelectionMode','single','ListSize',[200,300],...
-%                       'Name','EDBtools');
-%         if isempty(idh), indvar = []; return; end  
-% 
-%     %idh = 6;
-% 
-%     switch inddesc{idh}
-%         case 'Basin area'
-%             indvar = datadst.Smhw;
-%             plotxt.xlabel = 'Basin area (m^2)' ;
-%             plotxt.varname =sprintf('%s',plotxt.varname);
-%         case 'Modified Basin area'  
-%             idh = listdlg("ListString",inddesc(1:3),"PromptString",'Select hydraulic depth:',...
-%                   'SelectionMode','single','ListSize',[200,300],...
-%                   'Name','EDBtools');
-%             if isempty(idh), indvar = []; return; end  
-%             indvar = modifiedArea(datadst,hydrodst,classdst,idh);
-%             plotxt.xlabel = 'Modified Basin area (m^2)' ;
-%             plotxt.varname =sprintf('%s (%s)',plotxt.varname,hydrodst.VariableNames{idh});
-%         case 'Estimated Flat area'
-%             idh = listdlg("ListString",inddesc(1:3),"PromptString",'Select hydraulic depth:',...
-%                   'SelectionMode','single','ListSize',[200,300],...
-%                   'Name','EDBtools');
-%             if isempty(idh), indvar = []; return; end  
-%             Slw = modifiedArea(datadst,hydrodst,classdst,idh);
-%             indvar = datadst.Smhw-Slw;
-%             indvar(indvar<=0) = NaN;
-%             plotxt.xlabel = 'Estimated Flat area (m^2)' ;
-%             plotxt.varname =sprintf('%s',plotxt.varname);
-%         case'Estimated Flat volume'
-%             idh = listdlg("ListString",inddesc(1:3),"PromptString",'Select hydraulic depth:',...
-%                   'SelectionMode','single','ListSize',[200,300],...
-%                   'Name','EDBtools');
-%             if isempty(idh), indvar = []; return; end  
-%             Slw = modifiedArea(datadst,hydrodst,classdst,idh);
-%             indvar = datadst.Smhw-Slw;
-%             indvar(indvar<=0) = NaN;
-%             indvar = indvar.*datadst.TidalRange;
-%             plotxt.xlabel = 'Estimated Flat volume (m^3)' ;
-%             plotxt.varname =sprintf('%s',plotxt.varname);
-%         case 'Modified prism'     
-%             mprism = modifiedPrism(datadst,hydrodst,classdst);
-%             if isempty(mprism), indvar = []; return; end
-%             indvar = mprism;
-%             plotxt.xlabel = 'Modified prism (m^3)';
-%             plotxt.varname = sprintf('%s',plotxt.varname);
-%         case 'Modified prism/Tidal range'
-%             mprism = modifiedPrism(datadst,hydrodst,classdst);
-%             if isempty(mprism), indvar = []; return; end
-%             indvar = mprism./datadst.TidalRange;
-%             plotxt.xlabel = 'Modified prism/Tidal range (m^2)';
-%             plotxt.varname = sprintf('%s',plotxt.varname);
-%         case 'Prism/Basin area'
-%             mprism = modifiedPrism(datadst,hydrodst,classdst);
-%             if isempty(mprism), indvar = []; return; end
-%             indvar = hydrodst.TidalPrism./datadst.Smhw;
-%             plotxt.xlabel = 'Prism/Basin area (m)';
-%             plotxt.varname = sprintf('%s',plotxt.varname);
-%         case 'Modified prism/Basin area'
-%             mprism = modifiedPrism(datadst,hydrodst,classdst);
-%             if isempty(mprism), indvar = []; return; end
-%             indvar = mprism./datadst.Smhw;
-%             plotxt.xlabel = 'Modified prism/Basin area (m)';
-%             plotxt.varname = sprintf('%s',plotxt.varname);
-%         otherwise            
-%             indvar = hydrodst.(hydrodst.VariableNames{idh}); 
-%             plotxt.xlabel = hydrodst.VariableLabels{idh};
-%     end  
-%     nrec = sum(~isnan(indvar));
-%     plotxt.title = sprintf('%s (N=%d)',plotxt.title,nrec);
-% end
 
 %%
 function empirical_plot(x,y,vartxt)
@@ -357,8 +250,8 @@ function empirical_plot(x,y,vartxt)
      xlabel(vartxt.xlabel)
      ylabel(vartxt.ylabel)
      grid on
-     axis square
-     %xlim(mm); ylim(mm);
+     axis equal
+     xlim(mm); ylim(mm);
      legend('Location','northwest')
      title(vartxt.title)
      subtitle(sprintf('Linear: %s\nPower: %s',txtl,txtp))
@@ -374,7 +267,13 @@ function mprism = modifiedPrism(datadst,hydrodst,classdst)
     % plot(Le,La,'x')
     % xlabel('Le'); ylabel('La');
 
-    DelA = 1./(1-exp(-Le./La));
+    %bespoke for Smt and Vmt - additional adjustment
+    % omega = 2*pi/12.4/3600;
+    % k = omega./sqrt(9.81*hydrodst.Hmlw);   %wave number
+    % scale = abs(1./cos(k.*La));            %scaling for Smt
+    scale = 1;
+
+    DelA = scale./(1-exp(-Le./La));
     mprism = DelA.*hydrodst.Pr;
 end
 
@@ -396,11 +295,11 @@ function marea = modifiedArea(datadst,hydrodst,classdst,idh)
     end
     lambda = fact.*sqrt(g*Hsel).*Tp*3600;
 
-    %options for definition of length to scale 
-    L = convergenceLength(datadst,classdst);
+    %options for definition of length to scale     
     %L = datadst.Lchannel;                 %alternative in spreadsheet
     %L = datadst.Smhw.^0.59;               %as used in spreadsheet
-    marea = (L./lambda).*datadst.Smhw; 
+    L = convergenceLength(datadst,classdst);
+    marea = 1*(L./lambda).*datadst.Smhw; 
 end
 
 %%
@@ -414,18 +313,16 @@ function La = convergenceLength(datadst,classdst)
             %fact=0.5 for WS and exponent of 0.5 and fact=1 for the UK in:         
             %using fact=1e-3 subsequently found to give a
             %more linear fit for WS. In addition tidal inlets have exponent
-            %of 1 (space filling) whereas linear channels have exponent of 0.6
-            % scale = 1;
+            %of 1 (space filling) whereas linear channels have exponent of 0.5
             if strcmp(classdst.GeomorType{i},'Tidal inlet') || ...
-                         strcmp(classdst.GeomorType{i},'Tidal flat')
-                % fact(i) = scale*(1+datadst.Smlw(i)/datadst.Smhw(i))/datadst.Wmouth(i);     
-                fact(i) = 1/datadst.Wmouth(i); 
+                    strcmp(classdst.GeomorType{i},'Tidal flat')
+                fact(i) = (1+datadst.Smlw(i)/datadst.Smhw(i))/datadst.Wmouth(i);
+                % fact(i) = 1/datadst.Wmouth(i);
                 % fact(i) = 1e-3;
             else
                 exponent(i) = 0.5;
-                % fact(i) = scale*(1+datadst.Smlw(i)/datadst.Smhw(i)); 
+                fact(i) = (1+datadst.Smlw(i)/datadst.Smhw(i));
             end
-           
         end           
     end
     La = fact.*datadst.Smhw.^exponent;

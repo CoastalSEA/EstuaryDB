@@ -21,12 +21,12 @@ function edb_user_tools(mobj)
 %--------------------------------------------------------------------------
 %     
     listxt = {'Table figure','Hydraulic properties','Empirical properties',...
-              'Convergence table','Export convergence table'};
+              'Convergence table','Export convergence table','User bespoke tool'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
                             'Select option:','SelectionMode','single',...
-                            'ListSize',[150,200],'Name','EDBtools');
+                            'ListSize',[150,120],'Name','EDBtools');
         if isempty(selection), ok = 0; continue; end
 
         switch listxt{selection}
@@ -40,6 +40,8 @@ function edb_user_tools(mobj)
                 get_ConvergenceTable(mobj);
             case 'Export convergence table'
                 exportTable(mobj);
+            case 'User bespoke tool'
+                edb_user_bespoke_tool(mobj);
         end
     end
 end

@@ -1,16 +1,16 @@
-function edb_empirical_props(mobj)
+function edb_empirical_props_multi(mobj)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_empirical_props.m
+%   edb_empirical_props_multi.m
 % PURPOSE
-%   Function to plot empirical and measured relationships
+%   Function to get regressions for empirical and measured relationships
 % USAGE
-%   edb_empirical_props(mobj)
+%   edb_empirical_props_multi(mobj)
 % INPUTS
 %   mobj - handle to EstuaryDB App
 % OUTPUT
-%   generates a range of plots
+%   generates regression outputs to the command window
 % NOTES
 %   called from edb_user_tools in EstuaryDB
 %   NB: hydraulic properties have to be added to dataset
@@ -19,23 +19,11 @@ function edb_empirical_props(mobj)
 % CoastalSEA (c) June 2025
 %--------------------------------------------------------------------------
 %
-
-    % promptxt = 'Select observed data for empirical relationships:';
-    % [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
-    % if isempty(cobj), return; end
-    % datadst = cobj.Data.(datasets{idd});   %selected observed variable dataset
-    % 
-    % ok = 0;
-    % while ok<1
-    %     promptxt = 'Select hydraulic properties to use:';
-    %     [hydobj,~,datasets,idl] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
-    %     if isempty(hydobj), return; end
-    %     hydrodst = hydobj.Data.(datasets{idl});  %selected hydraulic variable dataset 
-    %     if any(strcmp(hydrodst.VariableNames,'Hmlw')), ok = 1; end
-    % end
-
+    dataset = {'UK','WS'};
+    tableoutput = table();
+    for j = 1:2
         %Bespoke selection
-        answer = questdlg('Select dataset','Empirical','UK','WS','UK');
+        answer = dataset{j};
         if strcmp(answer,'UK')
             datadst = mobj.Cases.DataSets.muiTableImport(1).Data.UKdata;
             hydrodst = mobj.Cases.DataSets.muiTableImport(1).Data.HydroProps;
@@ -46,7 +34,7 @@ function edb_empirical_props(mobj)
             classdst = mobj.Cases.DataSets.muiTableImport(2).Data.WSclass;
         end
 
-    %option to remove selected estuaries from the dataset
+        %option to remove selected estuaries from the dataset
     % answer = questdlg('Mask dataset','Mask','Yes','No','Yes');
     % if strcmp(answer,'Yes')
     %     estdesc = datadst.RowNames;
@@ -63,54 +51,42 @@ function edb_empirical_props(mobj)
         else
             ide = [];
         end
+    
+        types = {'Input','Derived'; 'Input','Input';'Derived','Derived'};
 
-    answer = questdlg('Single or complex variable','Empirical','Single','Complex','Single');
-    %select variables to plot
-    plotxt.promptxt = '';
-    ok = 0;
-    while ok<1
-        if strcmp(answer,'Single')
-            %use observed values as the dependent variable and either 
-            %hydraulic or derived values as the indpendent variable
-            [depvar,indvar,plotxt] = singleVariables(datadst,hydrodst,classdst,plotxt);
-            if isempty(indvar), ok = 1; continue; end
-        else
-            %use more than one variable to define dependent and/or
-            %independent variables e.g. as ratios.
-            [depvar,indvar,plotxt] = complexVariables(datadst,hydrodst,classdst,plotxt);
-            if isempty(indvar), ok = 1; continue; end
+        indices(:,:,1) = [6,1;7,2;10,4];
+        indices(:,:,2) = [6,22;7,23;10,13];
+        k = 1;
+        plotxt.promptxt = '';
+        for i=1:3
+            [depvar,indvar,plotxt] = singleVariables(datadst,hydrodst,classdst,...
+                                     plotxt,types(k,:),indices(i,:,k));
+            %remove any estuaries to be excluded
+            if ~isempty(ide)
+                indvar(ide) = NaN;  %remove estuaries to be excluded
+                depvar(ide) = NaN;
+            end
+            tabout = regressionOutput(indvar,depvar,plotxt);
+            tableoutput = [tableoutput;tabout]; %#ok<AGROW>
         end
-
-        %define point lables use estuary id
-        labels = classdst.id;
-        if isnumeric(labels)
-            labels = num2str(labels);        %id used for point labels
-        end
-        
-        %remove any estuaries to be excluded
-        if ~isempty(ide)
-            indvar(ide) = NaN;  %remove estuaries to be excluded
-            depvar(ide) = NaN;
-        end
-
-        %generate plot
-        empirical_plot(indvar,depvar,labels,plotxt)
-        regressionOutput(indvar,depvar,plotxt);
     end
+    sname = inputdlg('Sheet name:','Properties',1);
+    writetable(tableoutput,'EDB_empirical_regression.xlsx',...
+                           'WriteRowNames',true,'Sheet',sname{1});    
 end
 
 %%
-function [depvar,indvar,plotxt] = singleVariables(datadst,hydrodst,classdst,plotxt)
+function [depvar,indvar,plotxt] = singleVariables(datadst,hydrodst,classdst,plotxt,type,idv)
     %use observed values as the dependent variable     
     plotxt.promptxt = 'Dependent (y) variable';
-    [depvar,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt);
+    [depvar,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt,type{1},idv(1));
     if isempty(depvar), indvar = []; return; end 
     plotxt.ylabel = plotxt.label;
     plotxt.varname = plotxt.name;
 
     %use either hydraulic or derived values as the indpendent variable
     plotxt.promptxt = 'Independent (x) variable';
-    [indvar,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt);        
+    [indvar,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt,type{2},idv(2));        
     if isempty(indvar), return; end   
     plotxt.xlabel = plotxt.label;
     plotxt.varname = [plotxt.varname,'(',plotxt.name,')'];
@@ -120,80 +96,23 @@ function [depvar,indvar,plotxt] = singleVariables(datadst,hydrodst,classdst,plot
     plotxt.title = sprintf('%s (N=%d)',datadst.Description,nrec);
 end
 
-%%
-function [depvar,indvar,plotxt] = complexVariables(datadst,hydrodst,classdst,plotxt)
-    %use more than one variable to define dependent and/or independent
-    %variables e.g. as ratios.
-    depvar = []; indvar = [];
-    promptxt = @(X) sprintf('%s\n(Quit for 1)',X);
-    plotxt.promptxt = promptxt('Nominator for Dependent (y) variable');
-    [varn,plotxtn] = getVariable(datadst,hydrodst,classdst,plotxt);
-    if isempty(plotxtn), return; end  %user selected Quit
-
-    plotxt.promptxt = promptxt('Denominator for Dependent (y) variable');
-    [vard,plotxtd] = getVariable(datadst,hydrodst,classdst,plotxt);
-
-    if isempty(varn) && isempty(vard)
-        return;
-    elseif isempty(varn)
-        depvar = 1./vard;
-        plotxt.ylabel = ['1 / ',plotxtd.label];
-        plotxt.varname = ['1 / ',plotxtd.name];
-    elseif isempty(vard)
-        depvar = varn;
-        plotxt.ylabel = plotxtn.label;
-        plotxt.varname = plotxtn.name;
-    else
-        depvar = varn./vard;
-        plotxt.ylabel = [plotxtn.label,' / ',plotxtd.label];
-        plotxt.varname = [plotxtn.name,'/',plotxtd.name];
-    end
-    
-    %now get independent variable
-    plotxt.promptxt = promptxt('Nominator for Independent (x) variable');
-    [varn,plotxtn] = getVariable(datadst,hydrodst,classdst,plotxt);
-
-    plotxt.promptxt = promptxt('Denominator for Independent (x) variable');
-    [vard,plotxtd] = getVariable(datadst,hydrodst,classdst,plotxt);
-
-    if isempty(varn) && isempty(vard)
-                return;
-    elseif isempty(varn)
-        indvar = 1./vard;
-        plotxt.xlabel = ['1 / ',plotxtd.label];
-        plotxt.varname = [plotxt.varname,'(1/',plotxtd.name,')'];
-    elseif isempty(vard)
-        indvar = varn;
-        plotxt.xlabel = plotxtn.label;
-        plotxt.varname = [plotxt.varname,'(',plotxtn.name,')'];
-    else
-        indvar = varn./vard;
-        plotxt.xlabel = [plotxtn.label,' / ',plotxtd.label];
-        plotxt.varname = [plotxt.varname,'(',plotxtn.name,'/',plotxtd.name,')'];
-    end
-    %add cases description to title
-    nrec = sum(~isnan(depvar));
-    plotxt.title = sprintf('%s (N=%d)',datadst.Description,nrec);
-end
 
 %%
-function [var,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt)
+function [var,plotxt] = getVariable(datadst,hydrodst,classdst,plotxt,type,idv)
     %select either a data variable or a derived variable
-    promptxt = sprintf('Select %s:',plotxt.promptxt);
-    answer = questdlg(promptxt,'Variable','Input','Derived','Quit','Input');
-    if strcmp(answer,'Input')
+    if strcmp(type,'Input')
         %select variable from input data set
-        [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt);        
-    elseif strcmp(answer,'Derived')
+        [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt,idv);        
+    elseif strcmp(type,'Derived')
         %select variable from derived data set or create new variable       
-        [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt);
+        [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt,idv);
     else
         var = []; plotxt = [];
     end
 end
 
 %%
-function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
+function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt,idv)
     %set the input variable based on user selection
     datadesc = datadst.VariableDescriptions;
     hydrodesc = hydrodst.VariableDescriptions;
@@ -201,11 +120,6 @@ function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
                'Intertidal Box', 'Relative tidal flat area',...
                'Amplitude / depth ratio'};
     vardesc =[datadesc,hydrodesc,derdesc];
-    promptxt = sprintf('Select %s',plotxt.promptxt);
-    idv = listdlg("ListString",vardesc,"PromptString",promptxt,...
-                  'SelectionMode','single','ListSize',[200,420],...
-                  'Name','EDBtools');
-    if isempty(idv), var = []; plotxt = []; return; end  
 
     switch vardesc{idv}
         case 'Intertidal Area'
@@ -243,7 +157,7 @@ function [var,plotxt] = setInputVariable(datadst,hydrodst,plotxt)
 end
 
 %%
-function [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt)
+function [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt,idv)
     %set the derived variable based on user selection
     vardesc = {'Modified prism','Modified prism / Tidal range',...
                'Modified prism / Basin area',...
@@ -251,11 +165,6 @@ function [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt)
                'Estimated Flat area','Estimated Flat volume',...
                'Power law hypsometry ratio',...
                'Convergence length'};
-    promptxt = sprintf('Select %s',plotxt.promptxt);
-    idv = listdlg("ListString",vardesc,"PromptString",promptxt,...
-                  'SelectionMode','single','ListSize',[200,160],...
-                  'Name','EDBtools');
-    if isempty(idv), var = []; plotxt = []; return; end 
 
     switch vardesc{idv}
         case 'Modified Basin area'  
@@ -306,7 +215,6 @@ function [var,plotxt] = setDerivedVariable(datadst,hydrodst,classdst,plotxt)
                 r(i,1) = hypsometry_exponent(hm(i),amp(i),str2double(inp{1}));
             end
             var = (r.*hm-amp);
-            var(var<0) = NaN;
             plotxt.label = 'd-a';
         case 'Convergence length'
             var = convergenceLength(datadst,classdst);
@@ -323,10 +231,11 @@ end
 %%
 function idh = selectDepth(hydrodst)
     %select the hydraulic depth to use
-    hydrodesc = hydrodst.VariableDescriptions;
-    idh = listdlg("ListString",hydrodesc(1:3),"PromptString",'Select hydraulic depth:',...
-                  'SelectionMode','single','ListSize',[200,100],...
-                  'Name','EDBtools');
+    % hydrodesc = hydrodst.VariableDescriptions;
+    % idh = listdlg("ListString",hydrodesc(1:3),"PromptString",'Select hydraulic depth:',...
+    %               'SelectionMode','single','ListSize',[200,100],...
+    %               'Name','EDBtools');
+    idh = 1;
 end
 
 %%
@@ -339,66 +248,19 @@ function plotxt = setVarName(plotxt,hydrodst,idh)
 end
 
 %%
-function empirical_plot(x,y,Lid,vartxt)
-    %plot selected empirical relationship    
-    promptxt = 'Change axis scale (Log-y for exponential):';
-    answer = questdlg(promptxt,'Log-axes','Linear','Log-Log','Log-y','Log-Log');
-    labels = questdlg('Include labels?','Point labels','Yes','No','No');
-   % labels = 'No';
+function tabout = regressionOutput(x,y,vartxt)
+    %write the results to screen
+    [ap,bp,Rp,~,~,txtp] = regression_model(x,y,'power',100,false);
+    [al,bl,Rl,~,~,txtl] = regression_model(x,y,'linear0',100,false);
+    txtv = sprintf('%s - %s',vartxt.title,vartxt.varname);
+    msg = sprintf('%s : Linear: %s | Power: %s\n',txtv,txtl,txtp);
+    fprintf(msg)
 
-    hf = figure('Resize','on','Tag','PlotFig');
-    ax = axes(hf);
-    hold on
-    if strcmp(labels,'Yes')
-        plot(ax,x,y,'o','Color',"#0072BD",'MarkerSize',11,...
-                   'DisplayName',vartxt.varname,'ButtonDownFcn',@godisplay); 
-        text(ax,x,y,Lid,'FontSize',6,'HorizontalAlignment','center','Clipping','on');   
-    else
-        plot(ax,x,y,'x','DisplayName',vartxt.varname,'ButtonDownFcn',@godisplay)
-    end
-    
-    %data range
-    mx = minmax(x);
-    my = minmax(y);
-    mm = [min([mx,my]),max([mx,my])];
-
-    %adjust axes based on user selection
-    if strcmp(answer,'Log-Log')
-        ax.XScale = 'log';
-        ax.YScale = 'log';
-        [~,~,~,xp,yp,txtp] = regression_model(x,y,'power',100,false);
-    elseif strcmp(answer,'Log-y')
-        ax.YScale = 'log';
-        [~,~,~,xp,yp,txtp] = regression_model(x,y,'exponential',100,false);
-    else
-        [~,~,~,xp,yp,txtp] = regression_model(x,y,'power',100,false);
-    end
-    [~,~,~,xl,yl,txtl] = regression_model(x,y,'linear0',100,false);
-    %fprintf('%s(%s) Linear: %s: Power: %s\n',vartxt.varname,vartxt.xlabel,txtl,txtp)
-
-    %add 1:1 line    
-    
-    %if mm(1)<100; mm(1) = 100; end
-    if ~strcmp(answer,'Log-y')
-        plot(ax,mm,mm,'--k','DisplayName','1:1','ButtonDownFcn',@godisplay)
-    end
-    plot(ax,xp,yp,'-.k','DisplayName','Power law fit','ButtonDownFcn',@godisplay)
-    plot(ax,xl,yl,':k','DisplayName','Linear (0 intercept)','ButtonDownFcn',@godisplay)
-
-    hold off
-
-    xlabel(vartxt.xlabel)
-    ylabel(vartxt.ylabel)
-    grid on
-    if strcmp(answer,'Log-Log')
-        axis equal
-        xlim(mm); ylim(mm);
-    end
-    legend('Location','northwest')
-    title(vartxt.title)
-    subtitle(sprintf('Linear: %s\nPower: %s',txtl,txtp))
+    %write output as a table
+    tabout = table(al,bl,Rl,ap,bp,Rp,'RowNames',{txtv});
 end
 
+%-calculation code---------------------------------------------------------
 %% 
 function mprism = modifiedPrism(datadst,hydrodst,classdst)
     %modify the prism to take account of the channel length
@@ -458,12 +320,6 @@ function mprism = modifiedPrism(datadst,hydrodst,classdst)
     % mm = [0,max(mprism)];
     % plot(mm,mm,'--k')
     % xlabel('Actual'); ylabel('Modified');    
-    % 
-    % hf = figure('Tag','PlotFig');
-    % ax = axes(hf);
-    % plot(hydrodst.Pr,ad,'x')
-    % ax.XScale = 'log';
-    % xlabel('Prism'); ylabel('2a/d');  
 end
 
 %%
@@ -475,7 +331,7 @@ function marea = modifiedArea(datadst,hydrodst,classdst,idh)
 
     %determine the tidal wavelength for channels and inlets/basins
     lambda = sqrt(g*Hsel).*Tp*3600;       %wavelength
-    k = 4./lambda;                     
+    k = 4./lambda;                    
     nest = height(datadst);
     for i=1:nest
         if strcmp(classdst.GeomorType{i},'Tidal inlet') || ...
@@ -507,8 +363,8 @@ function La = convergenceLength(datadst,classdst)
             %of 1 (space filling) whereas linear channels have exponent of 0.5
             if strcmp(classdst.GeomorType{i},'Tidal inlet') || ...
                     strcmp(classdst.GeomorType{i},'Tidal flat')
-                fact(i) = (1+datadst.Smlw(i)/datadst.Smhw(i))/datadst.Wmouth(i);  %  /datadst.Lchannel(i);    %
-                %fact(i) =1/datadst.Wmouth(i); % 1/datadst.Lchannel(i); 
+                fact(i) = (1+datadst.Smlw(i)/datadst.Smhw(i))/datadst.Wmouth(i); %/datadst.Lchannel(i); %
+                %fact(i) = 1/datadst.Lchannel(i); %1/datadst.Wmouth(i); %  
                 % fact(i) = 1e-3;
             else
                 exponent(i) = 0.5;
@@ -531,18 +387,3 @@ function r = hypsometry_exponent(hm,amp,gamma)
     options = optimset('TolX',1e-6);
     r = fminbnd(func,1,3,options);
 end
-
-%%
-function regressionOutput(x,y,vartxt)
-    %write the results to screen
-    [~,~,~,~,~,txtp] = regression_model(x,y,'power',100,false);
-    [~,~,~,~,~,txtl] = regression_model(x,y,'linear0',100,false);
-    txtv = sprintf('%s - %s',vartxt.title,vartxt.varname);
-    msg = sprintf('%s : Linear: %s | Power: %s\n',txtv,txtl,txtp);
-    fprintf(msg)
-end
-
-    
-    
-    
-    

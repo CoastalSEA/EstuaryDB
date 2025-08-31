@@ -25,6 +25,7 @@ function dst = edb_convergence_data(obj,dataset)
 %
     srcdst = obj.Data.(dataset); %dstable of along channel width hypsometry data
     [var,z,x] = edb_derived_hypsprops(srcdst,dataset);
+    if isempty(var), return; end
     mnmx = cellstr(num2str(minmax(z)'));
     dz = num2str(abs(z(2)-z(1)));
     [wl,selection] = edb_waterlevels(obj,mnmx,dz); %tidal level data   

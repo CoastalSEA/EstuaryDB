@@ -49,11 +49,11 @@ function get_ConvergencePlot(mobj)
     if isempty(cobj), return; end
     datasets = fields(cobj.Data);
     idd = 1;
-    % if length(datasets)>1
-    %     idd = listdlg('PromptString','Select table:','ListString',datasets,...
-    %                         'SelectionMode','single','ListSize',[160,200]);
-    %     if isempty(idd), return; end
-    % end
+    if length(datasets)>1
+        idd = listdlg('PromptString','Select table:','ListString',datasets,...
+                            'SelectionMode','single','ListSize',[160,200]);
+        if isempty(idd), return; end
+    end
     srcdst = cobj.Data.(datasets{idd});
     if any(contains(srcdst.VariableNames,'hLW'))
         dst = srcdst;

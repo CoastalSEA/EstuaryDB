@@ -193,17 +193,17 @@ classdef EstuaryDB < muiModelUI
                                      repmat({@obj.utilsMenuOptions},[1,4])];
             menu.Utilities(1).Separator = {'off','off','off','off','on','on'}; %separator preceeds item
 
-            menu.Utilities(2).List = {'Surface area','Width'};
-            menu.Utilities(2).Callback = repmat({@obj.utilsMenuOptions},[1,2]);
+            menu.Utilities(2).List = {'Surface area','Width','Export table'};
+            menu.Utilities(2).Callback = repmat({@obj.utilsMenuOptions},[1,3]);
 
             menu.Utilities(3).List = {'Add','Edit','Delete'};
             menu.Utilities(3).Callback = repmat({@obj.loadMenuOptions},[1,3]);
 
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics','Tabular Plots',...
-                                     'Hypsometry Plots','User Plots'};
-            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,5]);
-            menu.Analysis(1).Separator = {'off','off','on','off','on'}; %separator preceeds item
+                                     'Form Plots','Hypsometry models','User Plots'};
+            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,6]);
+            menu.Analysis(1).Separator = {'off','off','on','off','off','on'}; %separator preceeds item
             
             %% Help menu --------------------------------------------------
             menu.Help.List = {'Documentation','Manual'};
@@ -258,7 +258,7 @@ classdef EstuaryDB < muiModelUI
             msg = 'No results to display';
             switch src.Tag                                
                 case 'Plot' 
-                     tabPlot(cobj,obj,src);
+                     tabPlot(cobj,src,obj);
                 case 'Stats'
                     lobj = getClassObj(obj,'mUI','Stats',msg);
                     if isempty(lobj), return; end
@@ -266,7 +266,7 @@ classdef EstuaryDB < muiModelUI
                 case 'Summary'
                     classname = metaclass(cobj).Name;
                     if strcmp(classname,'EDBimport')
-                        tabSummary(cobj,obj,src)
+                        tabSummary(cobj,src,obj)
                     else
                         getdialog('Not an estuary data set (EDBimport)')
                     end
@@ -408,6 +408,8 @@ classdef EstuaryDB < muiModelUI
                     obj.mUI.ProbeUI = EDB_ProbeUI.getProbeUI(obj);
                 case {'Surface area','Width'}
                     EDBimport.loadTable(obj.Cases,src.Text); 
+                case 'Export table'
+                    EDBimport.exportTable(obj.Cases);
                 case 'Combine Tables'
                     EDBimport.combineTables(obj);
                 case 'Archive'
@@ -428,8 +430,10 @@ classdef EstuaryDB < muiModelUI
                     obj.mUI.StatsUI = muiStatsUI.getStatsUI(obj);
                 case 'Tabular Plots'
                     edb_table_plots(obj);  
-                case 'Hypsometry Plots'
-                    edb_hypsometry_plots(obj);  
+                case 'Form Plots'
+                    edb_form_plots(obj); 
+                case 'Hypsometry models'
+                    edb_hypsometry_models(obj);
                 case 'User Plots'                            
                     edb_user_plots(obj);     
             end            

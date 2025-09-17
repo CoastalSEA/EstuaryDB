@@ -437,8 +437,8 @@ classdef EDBimport < GD_ImportData
 %%
         function editTable(muicat,srctxt)
             %edit Estuary Properties Tables (Tides, Discharge, or Gross Properties)
-            promptxt = sprintf('Select Cases to delete rows from  %s table:',srctxt);
-            %prompt to select cases and return the case record number
+            promptxt = sprintf('Select Cases to edit rows from  %s table:',srctxt);
+            %prompt to select case
             [cobj,~] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
             if isempty(cobj), return; end
 
@@ -476,7 +476,7 @@ classdef EDBimport < GD_ImportData
         function deleteTable(muicat,srctxt)
             %delete an Estuary Properties Table (Tides, Discharge, or Gross Properties)
             promptxt = sprintf('Select Cases to delete rows from  %s table:',srctxt);
-            %prompt to select cases and return the case record number
+            %prompt to select case and return the case and record number
             [cobj,~,catrec] = selectCaseObj(muicat,[],{'EDBimport'},promptxt);
             if isempty(cobj), return; end
             
@@ -496,6 +496,42 @@ classdef EDBimport < GD_ImportData
             end
         end
 
+%%
+        function exportTable(muicat)
+            %export surface area or width hypsometry to an Excel file
+            promptxt = 'Select case with surface area or width hypsometry';
+            [cobj,~] = selectCaseObj(muicat,{'data'},{'EDBimport'},promptxt);
+            if isempty(cobj), return; end
+            dsetnames = fieldnames(cobj.Data);
+            idr = listdlg("PromptString",'Select dataset',...
+                                  "Name",'Export','SelectionMode','single',...
+                                  'ListSize',[180,120],'ListString',dsetnames);
+            if isempty(idr), return; end
+
+            dst = cobj.Data.(dsetnames{idr});
+            z = dst.Dimensions.Z;
+            if contains(dst.VariableNames,'Sa')  %surface area selected                
+                S = squeeze(dst.Sa)';
+                T = table(z,S,'VariableNames',{'z','S'});                
+            else                                 %width selected
+                x = dst.Dimensions.X;
+                xvar= arrayfun(@(x) ['x', num2str(x)],x,'UniformOutput',false);
+                %this only handles the sum of all reaches, W. To output
+                %reaches individually would need to write a new work sheet
+                %for each reach. Use Archive file to export all reaches
+                W = num2cell(squeeze(dst.W)',1);
+                T = table(z,W{:},'VariableNames',[{'z'},xvar']);  
+            end
+            
+            %write data to file
+            cname = [dst.Description,'_',dsetnames{idr}];
+            cname = inputdlg('Export file name:','Export',1,{cname});
+            if isempty(cname), return; end
+            fname = [pwd,filesep,cname{1},'.xlsx'];
+            writetable(T,fname,'Sheet','Hypsometry');
+            getdialog(sprintf('Data written to %s for %s',fname))
+        end
+        
 %%
         function combineTables(mobj)
             %combine tabular data held in EstuaryProps or MorphProps into a
@@ -760,7 +796,7 @@ function dsp = loadDSPproptables(dspvars,nr)
         end
 
 %%
-        function tabPlot(obj,~,src)
+        function tabPlot(obj,src,~)
             %generate plot for display on Q-Plot tab
             funcname = 'getPlot';
             datasetname = getDataSetName(obj);
@@ -849,7 +885,7 @@ function dsp = loadDSPproptables(dspvars,nr)
         end
 
 %%
-        function tabSummary(obj,mobj,src)
+        function tabSummary(obj,src,mobj)
             %display summary description of estuary on a tab
             ht = findobj(src,'-not','Type','uitab'); %clear any existing content
             delete(ht)

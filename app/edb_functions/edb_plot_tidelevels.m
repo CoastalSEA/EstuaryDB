@@ -1,4 +1,4 @@
-function ax = edb_plot_tidelevels(ax,tlevels)
+function ax = edb_plot_tidelevels(ax,tlevels,islegend)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -10,6 +10,7 @@ function ax = edb_plot_tidelevels(ax,tlevels)
 % INPUTS
 %   ax - handle to plot axes
 %   tlevels - dstable with the tidal levels to be used
+%   islegend - true to include line names in legend
 % OUTPUTS
 %   ax - handle to plot axes 
 % NOTES
@@ -22,8 +23,8 @@ function ax = edb_plot_tidelevels(ax,tlevels)
 % CoastalSEA (c) Feb 2025
 %--------------------------------------------------------------------------
 %
-    %add spring tide and mean tide levels to plot
-    
+    if nargin<3, islegend = true; end      
+
     if width(tlevels)==9        %HAT,MHHW,MHW,MLWW,MTL,MHLW,MLW,MLLW,LAT
         idx = [2,5,8];     
     elseif width(tlevels)==3    %HW,MTL,LW
@@ -45,9 +46,12 @@ function ax = edb_plot_tidelevels(ax,tlevels)
     hold on
 
     for i=1:3
-        plot(ax,xlim,z(i)*[1,1],'LineStyle',glines{i},'LineWidth',0.2,...
+        p1 = plot(ax,xlim,z(i)*[1,1],'LineStyle',glines{i},'LineWidth',0.2,...
                  'Color',clr{i},'Tag','tlevels','DisplayName',ztxt{i},...
-                 'ButtonDownFcn',@godisplay)
+                 'ButtonDownFcn',@godisplay);
+        if ~islegend
+            p1.Annotation.LegendInformation.IconDisplayStyle = 'off'; 
+        end
     end
     hold off
 end

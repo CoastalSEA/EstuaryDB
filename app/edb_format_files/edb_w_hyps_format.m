@@ -137,7 +137,7 @@ function ok = getPlot(obj,src,dsetname)
     hc.Label.String = zlabel;
     xlabel(dst.DimensionLabels{1})
     ylabel(dst.DimensionLabels{2});
-    title(sprintf('Case: %s(%s)',dst.Description,dsetname));
+    title(sprintf('Case: %s(%s)',dst.Description,answer));
     if ~isempty(obj.TidalProps)
         edb_plot_tidelevels(ax,obj.TidalProps);
     end

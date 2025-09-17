@@ -15,15 +15,20 @@ function output = edb_s_hyps_format(funcall,varargin)
 % OUTPUT
 %   output - function specific output
 % NOTES
-%   This file loads the surface area data for the whole estuary 
-%   Input data format is a spreadsheet with header row defining variables,
-%    first column defining z and the data starting in cell B2. This is the
-%    output from multi_hypsometry.m and is converted to an Excel
-%    spreadsheet using save_estuary_hypsometry.m
+%   This file loads the surface area data for the whole estuary
+%   Input data format is a spreadsheet with header row defining variables
+%    Option 1 - first column defining z and the data starting in cell B2. 
+%    This is the output from multi_hypsometry.m and can be converted to an 
+%    Excel spreadsheet using save_estuary_hypsometry.m
+%    [D:\Matlab Code\misc_git_repos\EstuaryDB_tools\code; D:\Matlab
+%                               Code\muiModels\EstuaryDB\app\Working Docs] 
 %           z |  h  |  S   |  V   | 
 %       -12.3 |  3  |  12  |  67  |
 %       -1.2  |  23 |  128 |  138 |
 %        1.2  |  42 |  226 |  446 |
+%   Option 2 - spreadsheet with just z and S
+%           z |  S   | 
+%       -12.3 |  12  | 
 %
 % Author: Ian Townend
 % CoastalSEA (c) Oct 2024
@@ -65,7 +70,11 @@ function newdst = getData(~,filename,metatxt)
     dsp = setDSproperties;                  %set metadata
     %load table and clean data to required format
     itable = readtable(filename);
-    itable = cleandata(itable,filename);
+    if width(itable)>2
+        %table has columns for z, hist, S, V. Load columns 1 and 3
+        itable = cleandata(itable,filename);
+        %else table contains z and S
+    end
     [~,estname] = fileparts(filename);
     dst = dstable(itable{:,2}','RowNames',{estname},'DSproperties',dsp);
     dst.Dimensions.Z = itable{:,1};

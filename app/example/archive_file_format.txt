@@ -1,0 +1,61 @@
+EstuaryDB archive file
+vNumber: version number
+Date: date archive file created
+Name: estuary name
+Location: latitute,longitude of mouth
+Creator: name of author
+Affiliation: affiliation
+Summary: text summarising key characteristics of estuary
+%
+% Property Tables --------------------------------
+%
+TidalProps:
+Name	Description	Unit	Label	QCflag	Data1
+...
+
+RiverProps:
+Name	Description	Unit	Label	QCflag	Data1
+...
+
+ClassProps:
+Name	Description	Unit	Label	QCflag	Data1
+...
+
+GrossProps:
+Name	Description	Unit	Label	QCflag	Data1	Data2
+...
+
+EndProps:
+%
+% Data Tables -------------------------------------
+%
+SurfaceArea: 2
+Name	Description	Unit	Label	QCflag
+...
+Sa: surface areas as a vector
+Z: elevations in fixed vertical increments
+WaterBody.X: x points of bounding lines and polygons separated by NaN
+WaterBody.Y: y points of bounding lines and polygons separated by NaN
+
+Width: 2
+Name	Description	Unit	Label	QCflag
+...
+W: widths as a [distance x elevation] array
+X: distances along channels
+Z: elevations in fixed vertical increments
+
+Boundary.X: x points of boundary linework
+Boundaray.Y: x points of boundary linework
+ChannelLine.X: x points of each reach centreline separated by NaN
+ChannelLine.Y: y points of each reach centreline separated by NaN
+SectionLines.X: x end points of each section separated by NaN
+SectionLines.Y: y end points of each section separated by NaN
+ChannelProps: properties maxwl, dexp and cint
+ChannelLengths: cumualtive distance to each point on centreline from mouth
+TopoEdges: End nodes of each edge, weight is the reach number (0=join), 
+           point indices of end nodes and line numbers being linked
+EndNodes_1	EndNodes_2	Weight	Node1	Node2	Line1	Line2
+...
+TopoNodes: Node name and distance		   
+Names	Distance
+...

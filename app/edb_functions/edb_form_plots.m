@@ -1,13 +1,13 @@
-function edb_hypsometry_plots(mobj)                       
+function edb_form_plots(mobj)                       
 %
 %-------function help------------------------------------------------------
 % NAME
-%   edb_hypsometry_plots.m
+%   edb_form_plots.m
 % PURPOSE
-%   functions to do provide bespoke hypsometry plot options using the 
-%   data loaded in EstuaryDB
+%   functions to do provide bespoke hypsometry and convergence plot options 
+%   using the data loaded in EstuaryDB
 % USAGE
-%   edb_hypsometry_plots(mobj)
+%   edb_form_plots(mobj)
 % INPUTS
 %   mobj - ModelUI instance
 % OUTPUT
@@ -48,6 +48,7 @@ function get_ConvergencePlot(mobj)
     cobj = selectCaseObj(mobj.Cases,[],{'EDBimport'},'Select Along-Channel dataset:');
     if isempty(cobj), return; end
     datasets = fields(cobj.Data);
+    datasets = datasets(contains(datasets,'Width'));
     idd = 1;
     if length(datasets)>1
         idd = listdlg('PromptString','Select table:','ListString',datasets,...
@@ -89,9 +90,10 @@ function  get_reachPlot(mobj,option)
         Xr = dst.UserData.Xr;
         nreach = length(Vr);
         if strcmp(option,'Reach CSA plot')
-            Vall = getCSA(X,Z,Vall);
+            %hypsometry cross-sectional area (as used in edb_derived_hypsprops.m)
+            Vall = cumtrapz(Z,Vall,2);  
             for i=1:nreach
-                Vr{i} = getCSA(Xr{i},Z,Vr{i});
+                Vr{i} = cumtrapz(Z,Vr{i},2);  %hypsometry cross-sectional area
             end
             plottxt{1} = 'CSA (m^2)'; vartxt = 'CSA';
         else
@@ -102,7 +104,7 @@ function  get_reachPlot(mobj,option)
     else
         nreach = 0;
         if strcmp(option,'Reach CSA plot')
-            Vall = getCSA(X,Z,Vall);
+            Vall = cumtrapz(Z,Vall,2);  %hypsometry cross-sectional area
             plottxt{1} = 'CSA (m^2)'; vartxt = 'CSA';
         else
             plottxt{1} = 'Width (m)'; vartxt = 'Width';
@@ -145,7 +147,6 @@ function  get_reachPlot(mobj,option)
     end
 end
 
-
 %%
 function hyps_plot(ax,W,x,z,plottxt,tlevels)
     %genereate plot of the width as a function of z
@@ -167,14 +168,14 @@ function hyps_plot(ax,W,x,z,plottxt,tlevels)
 end
 
 %%
-function A = getCSA(X,Z,W)
-    %compute the cross-section area by integrating width hypsometry
-    delZ = abs(Z(2)-Z(1));
-    A = zeros(size(W));
-    for i =1:length(X)
-        A(i,:) = cumsum(W(i,:))*delZ;  %hypsometry cross-sectiional area
-    end
-end
+% function A = getCSA(X,Z,W)
+%     %compute the cross-section area by integrating width hypsometry
+%     delZ = abs(Z(2)-Z(1));
+%     A = zeros(size(W));
+%     for i =1:length(X)
+%         A(i,:) = cumsum(W(i,:))*delZ;  %hypsometry cross-sectiional area
+%     end
+% end
 
 %%
 function get_surfaceArea(mobj)
@@ -191,7 +192,11 @@ function get_surfaceArea(mobj)
     end
     dst = cobj.Data.(datasets{idd});
     [var,Z] = edb_derived_hypsprops(dst,datasets{idd},'Sa'); %get S and V
-    shp = cobj.WaterBody;  %current saved waterbody polygon
+
+    shp = [];
+    if ~isempty(cobj.WaterBody) 
+        shp = cobj.WaterBody;  %current saved waterbody polygon
+    end
     %add spring tide levels and mtl to a plot (y-axis must be elevations)
     tlevels = [];
     if ~isempty(cobj.TidalProps)        
@@ -201,25 +206,34 @@ function get_surfaceArea(mobj)
     %gereate figure with plot of waterbody and hypsometry alongside
     hf = figure('Name','Hypsometry','Units','Normalized','Resize','on',...
                 'Position',[0.28 0.50 0.38 0.30],'Tag','PlotFig');
-    %plot bathymetry and bounding polygon
-    ax = PL_Sections.getGrid(cobj,hf);
+    %plot bathymetry and bounding polygon    
+    ax = PL_Sections.getGrid(cobj,hf); %returns empty plot if no Grid
     hold on
-    plot(ax,shp.x,shp.y,'r')
+    if ~isempty(shp), plot(ax,shp.x,shp.y,'r'); end
     hold off
 
-    %plot hypsometry and tidal levels (if available)
-    subplot(1,3,[1,2],ax);
-    s2 = subplot(1,3,3);
-    plot(s2,var.S,Z,'DisplayName','Surface area');
-    hold on
-    plot(s2,var.V,Z,'DisplayName','Volume');
+    if isempty(ax.Children)
+        hf.Position(3) = 0.22;
+        s2 = ax;
+        plot(s2,var.S,Z,'DisplayName','Surface area');
+        hold on
+        plot(s2,var.V,Z,'DisplayName','Volume');
+        ylabel('Elevation (mAD)')
+    else
+        %plot hypsometry and tidal levels (if available)
+        subplot(1,3,[1,2],ax);
+        s2 = subplot(1,3,3);
+        plot(s2,var.S,Z,'DisplayName','Surface area');
+        hold on
+        plot(s2,var.V,Z,'DisplayName','Volume');
+    end
 
     if ~isempty(tlevels)
         edb_plot_tidelevels(s2,tlevels);
     end 
     hold off
-    xlabel('Surface area & Volume');
-    legend('Location','southeast')
+    xlabel('Surface area & Volume');    
+    legend('Location','southeast')    
     sgtitle(sprintf('Surface area hypsometry for %s',dst.Description))
 end
 

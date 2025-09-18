@@ -38,15 +38,20 @@ function ax = edb_plot_tidelevels(ax,tlevels,islegend)
 
     %add lines to plot
        glines = {'-.','--','-.'};
-       if contains(class(ax.Children),'Line')
-           clr = {'k','b','k'};
-       else
+       if contains(class(ax.Children),'Contour')
            clr = {'c','m','c'};
+       else
+           clr = {'k','b','k'};
        end
     hold on
+    
+    fixlim = xlim;       %fix x-limits
+    if abs(ax.YLim(2)-z(1))<0.1
+        ax.YLim(2) = z(1)+0.1;    %add offset to y axis
+    end
 
     for i=1:3
-        p1 = plot(ax,xlim,z(i)*[1,1],'LineStyle',glines{i},'LineWidth',0.2,...
+        p1 = plot(ax,fixlim,z(i)*[1,1],'LineStyle',glines{i},'LineWidth',0.2,...
                  'Color',clr{i},'Tag','tlevels','DisplayName',ztxt{i},...
                  'ButtonDownFcn',@godisplay);
         if ~islegend

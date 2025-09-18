@@ -168,16 +168,6 @@ function hyps_plot(ax,W,x,z,plottxt,tlevels)
 end
 
 %%
-% function A = getCSA(X,Z,W)
-%     %compute the cross-section area by integrating width hypsometry
-%     delZ = abs(Z(2)-Z(1));
-%     A = zeros(size(W));
-%     for i =1:length(X)
-%         A(i,:) = cumsum(W(i,:))*delZ;  %hypsometry cross-sectiional area
-%     end
-% end
-
-%%
 function get_surfaceArea(mobj)
     %plot of bounding polygon and hypsomtery for surface area
     cobj = selectCaseObj(mobj.Cases,[],{'EDBimport'},'Select Surface area dataset:');

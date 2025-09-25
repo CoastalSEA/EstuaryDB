@@ -28,27 +28,12 @@ function res = edb_convergence_plot(obj,dst)
     casedesc = sprintf('%s using %s',dst.Description,dst.MetaData);
     [h_pan,h_lbl] = panelFigure('Convergence plots',casedesc);    
     lab.x = 'Distance from mouth (km)';
-    %lab.leg = {'Low water','Mean tide','High water'};
     lab.leg = {'LW','MT','HW'};
     res = table;
     xCh = dst.Dimensions.X;
     
-    if any(contains(fieldnames(obj.Data),'Grid','IgnoreCase',true)) ||...
-        any(contains(fieldnames(obj.Data),'GeoImage','IgnoreCase',true)) 
-        pobj = obj.Sections;
-        ax = viewPlanSections(pobj,obj,'Layout of Sections',h_pan);
-        subplot(2,2,1,ax);
-    elseif any(contains(fieldnames(obj.Data),'image','IgnoreCase',true))
-        dsetnames = fieldnames(obj.Data);
-        idn = contains(dsetnames,'image','IgnoreCase',true);
-        ax1 = subplot(2,2,1,'Parent',h_pan);
-        ax1.Position = [0.05,0.5,0.45,0.45];
-        estmap =  obj.Data.(dsetnames{idn}).DataTable{1,1};
-        image(ax1,estmap{1})
-        axis equal
-        axis off
-        set(ax1,'XTickLabel','','YTickLabel','')
-    end
+    ax = edb_location_plot(obj,h_pan,'Sections');
+    subplot(2,2,1,ax);
 
     var = {'aLW','aMT','aHW';...
            'wLW','wMT','wHW';...

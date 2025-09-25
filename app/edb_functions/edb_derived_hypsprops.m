@@ -11,8 +11,7 @@ function [var,Z,X] = edb_derived_hypsprops(dst,dsetname,invar)
 % INPUTS
 %   dst - dstable of hypsometry properties in EDBimport class instance
 %   dsetname - name of properties dataset to use
-%   invar - variable name to use (optional - used in edb_hypsometry_plots
-%   for reach widths)
+%   invar - variable name to use (optional)
 % OUTPUTS
 %   var - struct with defined and derived hypsometry properties (eg S and V) 
 %   Z - elevation relative to datum (mAD)

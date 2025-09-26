@@ -43,9 +43,9 @@ function ax = edb_plot_tidelevels(ax,tlevels,islegend)
        else
            clr = {'k','b','k'};
        end
-    hold on
+    hold(ax,'on')
     
-    fixlim = xlim;       %fix x-limits
+    fixlim = ax.XLim;       %fix x-limits
     if abs(ax.YLim(2)-z(1))<0.1
         ax.YLim(2) = z(1)+0.1;    %add offset to y axis
     end
@@ -58,7 +58,7 @@ function ax = edb_plot_tidelevels(ax,tlevels,islegend)
             p1.Annotation.LegendInformation.IconDisplayStyle = 'off'; 
         end
     end
-    hold off
+    hold(ax,'off')
 end
 
 %%

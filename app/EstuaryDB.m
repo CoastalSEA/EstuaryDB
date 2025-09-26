@@ -15,8 +15,8 @@ classdef EstuaryDB < muiModelUI
 % 
     properties  (Access = protected)
         %implement properties defined as Abstract in muiModelUI
-        vNumber = '2.0'
-        vDate   = 'March 2025'
+        vNumber = '2.1'
+        vDate   = 'Oct 2025'
         modelName = 'EstuaryDB'                        
         %Properties defined in muiModelUI that need to be defined in setGui
         % ModelInputs  %classes required by model: used in isValidModel check 

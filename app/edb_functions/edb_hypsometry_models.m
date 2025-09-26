@@ -78,8 +78,8 @@ function hf = model_Width(mobj)
     inp = listdlg("PromptString",'Select section to use','Name','Width',...
                   'SelectionMode','single','ListString',string(x));
     if isempty(inp), inp = 1; end
-    var.W = var.W(inp,:);
-    var.A = var.A(inp,:);
+    var.W = var.W(inp,:)';
+    var.A = var.A(inp,:)';
 
     %plot labels, plots of data and models
     ptxt = struct('var1','W','vardesc1','Width (m)','var2','A',...
@@ -131,7 +131,7 @@ function hf = addPlots(cobj,z,var,ptxt)
     z(idx) = [];  var.(ptxt.var1)(idx) = [];   var.(ptxt.var2)(idx) = [];
 
     zr = (z-d)/znorm;                           %relative elevation    
-    fact = [HWL,d,maxvar1,maxvar2];                   %ratio of Vmx/Smx or Amx/Wmx
+    fact = [HWL,d,maxvar1,maxvar2];             %ratio of Vmx/Smx or Amx/Wmx
     var.(ptxt.var1) = var.(ptxt.var1)/maxvar1;  %relative S or W
     var.(ptxt.var2) = var.(ptxt.var2)/maxvar2;  %relative V or A
     %adjust tide levels to relative elevations
@@ -158,7 +158,7 @@ function hf = addPlots(cobj,z,var,ptxt)
 end
 %%
 function [hf,sp] = plotHypsometry(z,var,ptxt,tlevels)
-    %gereate figure with source data
+    %create figure with source data
     hf = figure('Name','Hypsometry','Tag','PlotFig','Units','Normalized',...
                 'Position',[0.28 0.50 0.38 0.30]);
     answer = questdlg('Plot errors?','Hypsometry','Yes','No','Yes');

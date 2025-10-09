@@ -89,12 +89,12 @@ function [var,Z,ptxt] = get_surfaceArea(mobj,option)
         Z(1) = [];
     end
     xlabtxt = option;
-    plot(sp,Svar,Z,'DisplayName','Surface area');
+    plot(sp,Svar,Z,'DisplayName','Surface area''ButtonDownFcn',@godisplay);
 
     addvol = questdlg('Include volume?','Hypsometry','Yes','No','No');
     if strcmp(addvol,'Yes')
         hold(sp,'on')
-        plot(sp,Vvar,Z,'DisplayName','Volume');    
+        plot(sp,Vvar,Z,'DisplayName','Volume''ButtonDownFcn',@godisplay);    
         hold(sp,'off')
         if contains(xlabtxt,'Increment')
             xlabtxt = 'Surface area and Volume Increments';

@@ -20,11 +20,12 @@ function edb_empirical_props(mobj)
 %--------------------------------------------------------------------------
 %
 
-    % promptxt = 'Select observed data for empirical relationships:';
-    % [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
-    % if isempty(cobj), return; end
-    % datadst = cobj.Data.(datasets{idd});   %selected observed variable dataset
-    % 
+    promptxt = 'Select observed data for empirical relationships:';
+    [cobj,~,datasets,idd] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
+    if isempty(cobj), return; end
+    datadst = cobj.Data.(datasets{idd});   %selected observed variable dataset
+
+    %following code does not work if there is only a single dataset
     % ok = 0;
     % while ok<1
     %     promptxt = 'Select hydraulic properties to use:';
@@ -33,18 +34,47 @@ function edb_empirical_props(mobj)
     %     hydrodst = hydobj.Data.(datasets{idl});  %selected hydraulic variable dataset 
     %     if any(strcmp(hydrodst.VariableNames,'Hmlw')), ok = 1; end
     % end
+    %
+    % ok = 0;
+    % while ok<1
+    %     promptxt = 'Select classifiction properties to use:';
+    %     [classobj,~,datasets,idc] = selectCaseDataset(mobj.Cases,[],{'muiTableImport'},promptxt);
+    %     if isempty(classobj), return; end
+    %     classdst = classobj.Data.(datasets{idc});  %selected classification variable dataset 
+    %     if ~isempty(classdst), ok = 1; end
+    % end
+   
+    %ASSUME that hydro and class datasets are in the same muiTableImport
+    %object as a struct of datasets
+    if length(fieldnames(cobj.Data))<3
+        hw = warndlg(sprintf('Empricical properties requires tabular datasets for gross properties,\nclassification and derived hydraulic properties'));
+        waitfor(hw)
+        return; 
+    else
+        fnames = fieldnames(cobj.Data);
+        promptxt = 'Select hydraulic properties to use:';
+        hsel = listdlg("PromptString",promptxt,"ListSize",[200,160],...
+                             "SelectionMode","single","ListString",fnames);
+        if isempty(hsel), return; end
+        hydrodst = cobj.Data.(fnames{hsel});  %selected hydraulic variable dataset 
+        promptxt = 'Select classifiction properties to use:';
+        csel = listdlg("PromptString",promptxt,"ListSize",[200,160],...
+                             "SelectionMode","single","ListString",fnames);
+        if isempty(csel), return; end
+        classdst = cobj.Data.(fnames{csel});  %selected classification variable dataset 
+    end
 
-        %Bespoke selection
-        answer = questdlg('Select dataset','Empirical','UK','WS','UK');
-        if strcmp(answer,'UK')
-            datadst = mobj.Cases.DataSets.muiTableImport(1).Data.UKdata;
-            hydrodst = mobj.Cases.DataSets.muiTableImport(1).Data.HydroProps;
-            classdst = mobj.Cases.DataSets.muiTableImport(1).Data.UKclass;
-        else
-            datadst = mobj.Cases.DataSets.muiTableImport(2).Data.WSdata;
-            hydrodst = mobj.Cases.DataSets.muiTableImport(2).Data.HydroProps;
-            classdst = mobj.Cases.DataSets.muiTableImport(2).Data.WSclass;
-        end
+    % %Bespoke selection
+        % answer = questdlg('Select dataset','Empirical','UK','WS','UK');
+        % if strcmp(answer,'UK')
+        %     datadst = mobj.Cases.DataSets.muiTableImport(1).Data.UKdata;
+        %     hydrodst = mobj.Cases.DataSets.muiTableImport(1).Data.HydroProps;
+        %     classdst = mobj.Cases.DataSets.muiTableImport(1).Data.UKclass;
+        % else
+        %     datadst = mobj.Cases.DataSets.muiTableImport(2).Data.WSdata;
+        %     hydrodst = mobj.Cases.DataSets.muiTableImport(2).Data.HydroProps;
+        %     classdst = mobj.Cases.DataSets.muiTableImport(2).Data.WSclass;
+        % end
 
     %option to remove selected estuaries from the dataset
     % answer = questdlg('Mask dataset','Mask','Yes','No','Yes');

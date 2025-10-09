@@ -11,10 +11,12 @@ function cnvdst = edb_convergence_analysis(dst)
 %   dst - selected dataset to use for analysis
 % OUTPUT
 %   cnvdst - table of convergence properties for estuary data set
+%            Variables include: 'a','L','Rsq','Le','Xo','Vo','emean','estd'
+%            UserData holds table with: 'Start-X','End_X','L_obs'
 % NOTES
-%    selectd case must have variables that use the ZM SeaZone data set
+%    selected case must have variables that use the ZM SeaZone data set
 %    conventions, with variables named:
-%    'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW','xCh'
+%    'hLW','hMT','hHW','wLW','wMT','wHW','aLW','aMT','aHW'
 % SEE ALSO
 %   EstuaryDB, called from edb_user_tools. edb_convergence_plots.
 %
@@ -25,8 +27,24 @@ function cnvdst = edb_convergence_analysis(dst)
     var = {'aLW','aMT','aHW';...
            'wLW','wMT','wHW';...
            'hLW','hMT','hHW'};    
-	nrec = length(dst);
-    a = zeros(nrec,3,3); L = a; Rsq = a; emean = a; estd = a; Vo = a; Le = a; 
+	nrec = length(dst);  
+
+    %check that selected data has the required variables (all variables in
+    %the dst array should have the same names)
+    idv = contains(var,dst(1).VariableNames);
+    if all(idv,'all')
+        %full dataset
+    elseif any(idv,'all')
+        %sub-set of variables available
+        missingvar = sprintf('%s ',var{~idv});
+        warndlg(sprintf('The following variables are missing or misspelt: %s', missingvar))
+    else
+        warndlg(sprintf('Convergence analysis requires variables:\nhLW, hMT, hHW, wLW, wM, wHW, aLW, aMT, aHW'));
+        return        
+    end
+
+    a = zeros(nrec,3,3); L = a; Rsq = a; emean = a; estd = a; Xo = a; 
+    Vo = a; Le = a; 
     rownames{nrec,1} = [];
     rangetable = emptyTable();
     for i=1:nrec        
@@ -35,17 +53,18 @@ function cnvdst = edb_convergence_analysis(dst)
         rownames{i} = d.Description;
         [n,m] = edb_convergence_limits(x,d,var);
         t1 = table(x(n),x(m),x(end),'RowNames',rownames(i),...
-                             'VariableNames', {'Start-X','End_X','Lobs'});
+                             'VariableNames', {'Start-X','End_X','L_obs'});
         rangetable = [rangetable;t1]; %#ok<AGROW>
 
-        for j=1:3
-            for k=1:3
+        for j=1:size(var,1)
+            for k=1:size(var,2)
                 y = d.(var{j,k});
                 [a(i,j,k),b,Rsq(i,j,k),~,~,~] = regression_model(x(n:m)-x(n),y(n:m),'Exponential');
                 if isinf(Rsq(i,j,k)), Rsq(i,j,k) = 0; end
                 L(i,j,k) = 1/b;
+                Xo(i,j,k) = x(n);                
                 Vo(i,j,k) = y(n);
-                Le(i,j,k) = x(find(y>0,1,'last'))-x(n);
+                Le(i,j,k) = x(m)-x(n);
                 emean(i,j,k) = mean(y(n:m),'omitnan');
                 estd(i,j,k) = std(y(n:m),'omitnan');
             end
@@ -53,7 +72,7 @@ function cnvdst = edb_convergence_analysis(dst)
     end
 
     dsp = getDSproperties;
-    cnvdst = dstable(a,L,Rsq,Le,Vo,emean,estd,'RowNames',rownames,...
+    cnvdst = dstable(a,L,Rsq,Le,Xo,Vo,emean,estd,'RowNames',rownames,...
                                                     'DSproperties',dsp);
     cnvdst.Dimensions.Var = ["Area","Width","Depth"];
     cnvdst.Dimensions.WL = ["LW","MT","HW"];
@@ -72,15 +91,15 @@ function dsp = getDSproperties()
     
     %struct entries are cell arrays and can be column or row vectors
     dsp.Variables = struct(...                      
-        'Name',{'a','L','Rsq','Le','Vo','emean','estd'},...
+        'Name',{'a','L','Rsq','Le','Xo','Vo','emean','estd'},...
         'Description',{'Scale parameter','Convergence length',...
                        'Coefficient of determination','Channel length',...
-                       'Mouth value','Mean value','Std.dev.value'},...
-        'Unit',{'','','','','','',''},...
+                       'Mouth distance','Mouth value','Mean value','Std.dev.value'},...
+        'Unit',{'','m','-','m','m','','',''},...
         'Label',{'Scale parameter','Convergence length',...
                        'Coefficient of determination','Channel length',...
-                       'Mouth value','Mean value','Std.dev.value'},...
-        'QCflag',repmat({'analysis'},1,7)); 
+                       'Mouth distance','Mouth value','Mean value','Std.dev.value'},...
+        'QCflag',repmat({'analysis'},1,8)); 
     dsp.Row = struct(...
         'Name',{'Location'},...
         'Description',{''},...
@@ -88,10 +107,10 @@ function dsp = getDSproperties()
         'Label',{'Location'},...
         'Format',{''});        
     dsp.Dimensions = struct(...    
-        'Name',{'Var','WL'},...
-        'Description',{'Variable','Tidal level'},...
+        'Name',{'CSVar','WL'},...
+        'Description',{'Cross-section variable','Tidal level'},...
         'Unit',{'-','-'},...
-        'Label',{'Variable','Tidal level'},...
+        'Label',{'Cross-section variable','Tidal level'},...
         'Format',{'',''});   
 end
 
@@ -101,7 +120,7 @@ function T = emptyTable()
     % Define number of rows (zero for empty), variable types, and names
     sz = [0 3];  % 0 rows, 3 variables
     varTypes = {'double', 'double', 'double'};
-    varNames = {'Start-X', 'End_X',  'Lobs'};
+    varNames = {'Start-X', 'End_X',  'L_obs'};
     
     % Create the empty table
     T = table('Size', sz, 'VariableTypes', varTypes, 'VariableNames', varNames);

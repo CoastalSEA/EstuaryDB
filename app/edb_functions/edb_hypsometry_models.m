@@ -100,13 +100,13 @@ function hf = addPlots(cobj,z,var,ptxt)
     end
 
     %non-dimensionalise the variables
-    d = min(z);
+    
     if isempty(tlevels)
         warndlg('Not tidal data available. Using maximum z value to scale')
         inp = inputdlg('Tidal amplitude','Tide',1,string(max(z))); 
-        if isempty(inp), hf = []; return; else; HWL = str2double(inp{1}); end
-        LWL = -HWL;
-        znorm = (HWL-d);
+        if isempty(inp), hf = []; return; else; WL.HW = str2double(inp{1}); end
+        WL.LW = -WL.HW;
+        WL.MT = 0;        
     else
         if width(tlevels)==9        %HAT,MHHW,MHW,MLWW,MTL,MHLW,MLW,MLLW,LAT
             idx = [2,5,8];     
@@ -117,25 +117,31 @@ function hf = addPlots(cobj,z,var,ptxt)
             idx = 1:nrec;       
             idx = [2,round(median(idx)),idx(end-1)];  %offset if nrec even
         end     
-        HWL = tlevels.DataTable{1,idx(1)};
-        LWL = tlevels.DataTable{1,idx(3)};
-        znorm = (HWL-d);
+        WL.HW = tlevels.DataTable{1,idx(1)};
+        WL.LW = tlevels.DataTable{1,idx(3)};
+        WL.MT = WL.LW+(WL.HW-WL.LW)/2;
         % tr = tlevels.DataTable{1,1}-tlevels.DataTable{1,3};
         % znorm = tr;        
     end
-    maxvar1 = interp1(z,var.(ptxt.var1),HWL);     %Smx or Wmx at z=+a
-    maxvar2 = interp1(z,var.(ptxt.var2),HWL);     %Vmx or Amx at z=+a
+
+    maxvar1 = interp1(z,var.(ptxt.var1),WL.HW);     %Smx or Wmx at z=+a
+    maxvar2 = interp1(z,var.(ptxt.var2),WL.HW);     %Vmx or Amx at z=+a
 
     %remove data above highwater
-    idx = z>HWL;
+    idx = z>WL.HW;
     z(idx) = [];  var.(ptxt.var1)(idx) = [];   var.(ptxt.var2)(idx) = [];
+    %remove negligable areas 
+    idv = var.(ptxt.var1)<1;
+    z(idv) = [];  var.(ptxt.var1)(idv) = [];   var.(ptxt.var2)(idv) = [];
+    WL.zm = min(z);
 
-    zr = (z-d)/znorm;                           %relative elevation    
-    fact = [HWL,d,maxvar1,maxvar2];             %ratio of Vmx/Smx or Amx/Wmx
-    var.(ptxt.var1) = var.(ptxt.var1)/maxvar1;  %relative S or W
-    var.(ptxt.var2) = var.(ptxt.var2)/maxvar2;  %relative V or A
+    znorm = (WL.HW-WL.zm);
+    zr = (z-WL.zm)/znorm;                           %relative elevation    
+    fact = [WL.HW,WL.zm,maxvar1,maxvar2];           %ratio of Vmx/Smx or Amx/Wmx
+    var.v1r = var.(ptxt.var1)/maxvar1;  %relative S or W
+    var.v2r = var.(ptxt.var2)/maxvar2;  %relative V or A
     %adjust tide levels to relative elevations
-    tfunc = @(x) (x-d)/znorm;
+    tfunc = @(x) (x-WL.zm)/znorm;
     tlevels = varfun(tfunc,tlevels);  %calls function in dstable
 
     [hf,sp] = plotHypsometry(zr,var,ptxt,tlevels);
@@ -143,12 +149,12 @@ function hf = addPlots(cobj,z,var,ptxt)
     %add fit lines for selected non-linear regression model
     ok = 0;
     while ok<1
-        modelist = {'Power law','Logisitc','Modified Strahler'};
+        modelist = {'Power law','Logisitc','Modified Strahler','Boon (1975)','CKFA form'};
         inp = listdlg('PromptString','Select model to add','Name','Model',...
                       'SelectionMode','single','ListSize',[160,100],...
                       'ListString',modelist);
         if isempty(inp), ok = 1; continue; end
-        [mdl,mfunc] = getModel(zr,var,HWL,modelist{inp},ptxt);
+        [mdl,mfunc] = getModel(zr,var,WL,modelist{inp},ptxt);
         [sp,fit(:,1),fit(:,2)] = plotModel(sp,zr,mdl,mfunc,modelist{inp},fact);
 
         if length(sp)==4   %add error plots
@@ -170,7 +176,7 @@ function [hf,sp] = plotHypsometry(z,var,ptxt,tlevels)
     end
 
     sp(1) = nexttile(t);
-    plot(sp(1),var.(ptxt.var1),z,'DisplayName',ptxt.vardesc1)
+    plot(sp(1),var.v1r,z,'DisplayName',ptxt.vardesc1,'ButtonDownFcn',@godisplay)
     if ~isempty(tlevels)
         edb_plot_tidelevels(sp(1),tlevels,false); %exclude labels from legend
     end 
@@ -179,7 +185,7 @@ function [hf,sp] = plotHypsometry(z,var,ptxt,tlevels)
     set_tile_legend(sp(1),'southeast') 
 
     sp(2) = nexttile(t);
-    plot(sp(2),var.(ptxt.var2),z,'DisplayName',ptxt.vardesc2)
+    plot(sp(2),var.v2r,z,'DisplayName',ptxt.vardesc2,'ButtonDownFcn',@godisplay)
     if ~isempty(tlevels)
         edb_plot_tidelevels(sp(2),tlevels,false); %exclude labels from legend
     end 
@@ -213,10 +219,11 @@ function [hf,sp] = plotHypsometry(z,var,ptxt,tlevels)
 end
 
 %%
-function [mdl,mfunc] = getModel(zr,var,LWL,model,ptxt)
+function [mdl,mfunc] = getModel(zr,var,param,model,ptxt)
     %add the selected model to the plot and return the model fit parameters
     % zr = relative elevation
     idx = 2:length(zr);
+
     switch model
         case 'Power law'
             % s' = q.(z')^v and: b(1) = v, b(2) = q
@@ -231,27 +238,111 @@ function [mdl,mfunc] = getModel(zr,var,LWL,model,ptxt)
             G = @(b,z) b(3).*z.^b(1);
             mfunc = @(b,z) G(b,z)./(G(b,z).*(1-b(2))+b(2));
             n = 3;
-        % case 'Boon (1975)'  %only applies between high and low water
-        %     % s' = q.(1-(1-z')^v/((1-z')^v.(1-q)+q)and: b(1) = v, b(2) = q
-        %     G = @(b,z) (1-z).^b(1);
-        %     mfunc = @(b,z) b(2).*G(b,z)./(G(b,z).*(1-b(2))+b(2));
-        %     n = 2;
-        %     idx = idx-1;
+        case 'Boon (1975)'  %only applies between high and low water
+            % s' = q.(1-(1-z')^v/((1-z')^v.(1-q)+q)and: b(1) = v, b(2) = q
+            G = @(b,z) (1-z).^(1./b(1));
+            mfunc = @(b,z) b(2).*(1-G(b,z))./(G(b,z).*(1-b(2))+b(2));
+            n = 2;
+        case 'CKFA form'
+            param = CKFAparameters(zr,var,param,'v1r');
+            if isempty(param), mdl = []; mfunc = []; return; end 
+            mfunc = @(b,z) CKFAform(b,z,param);
+            n = 2;
+            beta0 = [2,param.Le/2];
+            opts = optimset('TolFun',1e-12,'TolX',1e-12);
+            % [mdl,resnorm] = lsqcurvefit(mfunc,beta0,zr,var.v1r,[0,param.Le/100],[2,param.Le],options);
+            % return;
+            %**************************************************************
+            %currently this return a reasonable fit but the values of the
+            %fit coefficients n and Lw are nonsensical. There may be a
+            %problem is the non-dimesionalisation of along-channel length
+            %which is then used in the integration to get S
+            %**************************************************************
     end
-    
     % Initial guesses for [v, q, k]
-    beta0 = ones(1,n);
+    % beta0 = ones(1,n);
     % Fit the model
-    tbl = table(zr, var.(ptxt.var1));
+    tbl = table(zr, var.v1r);
     mdl = fitnlm(tbl(idx,:),mfunc,beta0);  %remove zr=0 (first row in table) 
-    display(mdl)                             %for Strahler model to converge
+    display(mdl)                                       %for Strahler model to converge
+end
+
+%%
+function param = CKFAparameters(zr,var,param,ptxt)
+    %param contains WL data: HW,MT,LW, 
+    %Add additional parameters needed for CKFA model
+    answer = inputdlg({'Depth at head','Estuary length'},'CKFA',1,{'1','10000'});
+    if isempty(answer), param = []; return; end 
+    param.dh = str2double(answer{1});
+    param.Le = str2double(answer{2});
+    param.x = (1:1000:param.Le)';
+
+    amp = (param.HW-param.LW)/2;    
+    z0 = (param.LW+amp);
+    dm = z0-param.zm-amp;
+    znorm = 2*amp+dm;  
+
+    param.zlw = dm/znorm;
+    param.Slwr = interp1(zr,var.(ptxt),param.zlw);
+    param.Shwr = 1;
+
+    Ld = -param.Le/log(-amp/param.zm);
+    param.dn = dm*exp(-param.x/Ld)/znorm;
+   
+    param.amp = amp/znorm;
+    param.z0 = (amp+dm)/znorm;
+
+    % figure; plot(var.(ptxt),zr)
+    % hold on
+    % plot(xlim,[1,1]*param.zlw)
+    % plot(xlim,[1,1]*param.z0)
+    % hold off
+end
+
+%%
+function mfunc = CKFAform(b,zc,p)
+    %define the CKFA form model using surfacae area hypsometry
+
+    z = zc';
+    %Wlwm = @(b) p.Slwr/b(2)/(1-exp(-p.Le/b(2)));
+    %Wmtl(b) = @(b) Smt/b(2)/(1-exp(-Le/b(2)));
+    %Whwm = @(b) p.Shwr/b(2)/(1-exp(-p.Le/b(2)));
+    %Wlw = @(b) Wlwm(b)*exp(-p.x/b(2));
+    %Wmt = @(b) Wmtl(b)*(exp(-x/b(2));
+    Wlw = @(b) p.Slwr*exp(-p.x/b(2));
+    Whw = @(b) 1*exp(-p.x/b(2));
+    Lstar = @(b) (Whw(b)-Wlw(b))/2.57;
+
+    nx = length(p.x);
+    ychannel = @(b,z) diag(Wlw(b))*(1 + (1./p.dn)*(z-p.zlw)).^(1/b(1));    
+    ylower = @(b,z) Lstar(b)*(1+(z-p.z0)/p.amp) + Wlw(b);
+    yupper = @(b,z) Lstar(b)*(1+asin((z-p.z0)/p.amp)) + Wlw(b);
+    Y = @(b,z) real(ychannel(b,z).*repmat(z<p.zlw,nx,1)+...
+                       ylower(b,z).*repmat(z>=p.zlw & z<p.z0,nx,1)+...
+                                       yupper(b,z).*repmat(z>=p.z0,nx,1));
+    % yy = Y(b,z);
+    % [X,Z] = meshgrid(p.x,z);
+    % figure('Tag','PlotFig');
+    % surf(X,yy',Z)
+   
+    mfunc = trapz(p.x,Y(b,z),1)';
+    mfunc = mfunc/max(mfunc);
+    mfunc(mfunc<0) = 0;
+    % figure('Tag','PlotFig');
+    % plot(mfunc,z)
 end
 
 %%
 function [sp,S_fit,V_fit] = plotModel(sp,zr,mdl,mfunc,model,fact)
     %add the selcted model to the plot
     % Extract fitted parameters
+    % if contains(model,'CKFA')
+    %     params = mdl;
+    % else
+    %     params = mdl.Coefficients.Estimate;
+    % end
     params = mdl.Coefficients.Estimate;
+
     txt = sprintf('Fitted parameters:\n');
     for i = 1:length(params)
         txt = sprintf('%sb%d = %.4f\n',txt,i,params(i));
@@ -262,7 +353,7 @@ function [sp,S_fit,V_fit] = plotModel(sp,zr,mdl,mfunc,model,fact)
     S_fit = mfunc(params, zr);
 
     hold(sp(1),'on')
-    plot(sp(1),S_fit,zr,'--','DisplayName',model)
+    plot(sp(1),S_fit,zr,'--','DisplayName',model,'ButtonDownFcn',@godisplay)
     hold(sp(1),'off')
     set_tile_legend(sp(1),'southeast')
     
@@ -276,7 +367,7 @@ function [sp,S_fit,V_fit] = plotModel(sp,zr,mdl,mfunc,model,fact)
 
     %plot results
     hold(sp(2),'on')
-    plot(sp(2),V_fit,zr,'--','DisplayName',model)
+    plot(sp(2),V_fit,zr,'--','DisplayName',model,'ButtonDownFcn',@godisplay)
     hold(sp(2),'off')
     set_tile_legend(sp(2),'southeast')
 end
@@ -288,13 +379,13 @@ function sp = plotErrors(sp,z,var,fit,ptxt,model)
     errV = var.(ptxt.var2)-fit(:,2);
 
     hold(sp(3),'on')
-    plot(sp(3),errS,z,'DisplayName',model)
+    plot(sp(3),errS,z,'DisplayName',model,'ButtonDownFcn',@godisplay)
     hold(sp(3),'off')
     set_tile_legend(sp(3),'southeast');
     drawnow expose
 
     hold(sp(4),'on')
-    plot(sp(4),errV,z,'DisplayName',model)
+    plot(sp(4),errV,z,'DisplayName',model,'ButtonDownFcn',@godisplay)
     hold(sp(4),'off')
     set_tile_legend(sp(4),'southeast');
 end

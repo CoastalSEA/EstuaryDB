@@ -4,7 +4,7 @@ function [n,m] = edb_convergence_limits(x,dst,var)
 % NAME
 %   edb_convergence_limits.m
 % PURPOSE
-%   use figure to allow user to define X start and end range
+%   use plot of CSA(x) to allow user to define x start and end range
 % USAGE
 %   [n,m] = edb_convergence_limits(x,dst,var)
 % INPUTS
@@ -28,7 +28,7 @@ function [n,m] = edb_convergence_limits(x,dst,var)
     ax = axes(hf);
     hold on
     for i=1:size(var,2)
-        plot(ax,x,dst.(var{1,i}),'.-','DisplayName',var{1,i})
+        plot(ax,x,dst.(var{1,i}),'.-','DisplayName',var{1,i}) %use CSA to define limits
     end
     hold off
     xlabel('Distance from mouth')

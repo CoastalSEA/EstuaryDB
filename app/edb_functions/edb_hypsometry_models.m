@@ -27,8 +27,10 @@ function hf = edb_hypsometry_models(mobj)
     end
 
     answer = questdlg('Data type','Hypsometry','Surface area','Width','Surface area');
-
-    if strcmp(answer,'Surface area')
+    
+    if isempty(answer)
+        return;
+    elseif strcmp(answer,'Surface area')
         hf = model_surfaceArea(mobj);
     else
         hf = model_Width(mobj);

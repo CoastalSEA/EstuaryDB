@@ -21,7 +21,7 @@ function edb_user_tools(mobj)
 %--------------------------------------------------------------------------
 %     
     listxt = {'Table figure','Hydraulic properties','Empirical properties',...
-              'Convergence table','Export convergence table','User bespoke tool'};
+              'Convergence table','Export convergence table','Bespoke tools'};
     ok = 1;
     while ok>0
         selection = listdlg("ListString",listxt,"PromptString",...
@@ -32,7 +32,7 @@ function edb_user_tools(mobj)
         switch listxt{selection}
             case 'Table figure'
                 get_dataTable(mobj);
-            case 'Hydraulic properties'
+            case 'Hydraulic properties'                
                 edb_hydraulic_props(mobj);
             case 'Empirical properties'
                 edb_empirical_props(mobj);
@@ -40,8 +40,8 @@ function edb_user_tools(mobj)
                 get_ConvergenceTable(mobj);
             case 'Export convergence table'
                 exportTable(mobj);
-            case 'User bespoke tool'
-                edb_user_bespoke_tool(mobj);
+            case 'Bespoke tools'
+                edb_user_bespoke_tools(mobj);
         end
     end
 end

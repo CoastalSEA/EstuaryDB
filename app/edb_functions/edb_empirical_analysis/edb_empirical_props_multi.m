@@ -12,7 +12,7 @@ function edb_empirical_props_multi(mobj)
 % OUTPUT
 %   generates regression outputs to the command window
 % NOTES
-%   called from edb_user_tools in EstuaryDB
+%   called from edb_user_bespoke_tools in EstuaryDB
 %   NB: hydraulic properties have to be added to dataset
 %
 % Author: Ian Townend
